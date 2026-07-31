@@ -1,0 +1,8 @@
+# リポジトリ内は LF に統一。チェックアウト時は OS 標準に従う。
+* text=auto
+
+# バイナリ扱い
+*.png binary
+*.jpg binary
+*.pdf binary
+*.xlsx binary
