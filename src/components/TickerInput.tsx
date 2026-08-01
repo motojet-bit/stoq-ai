@@ -1,14 +1,25 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { IconSearch } from "@/components/Icons";
 
 interface Props {
   /** ティッカーが確定したときに呼ばれる（大文字化済み） */
   onSubmit: (ticker: string) => void;
+  /**
+   * 外から入力欄にセットしたい値（検討中銘柄のクリックなど）。
+   * 同じ銘柄を続けて選べるよう、値ではなく `seq` の変化で反映する。
+   */
+  preset?: { ticker: string; seq: number } | null;
 }
 
 /** ティッカー入力フォーム */
-export default function TickerInput({ onSubmit }: Props) {
+export default function TickerInput({ onSubmit, preset = null }: Props) {
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (preset) setValue(preset.ticker);
+    // seq が変わったときだけ反映する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset?.seq]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

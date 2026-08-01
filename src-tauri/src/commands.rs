@@ -5,11 +5,13 @@ use tauri::ipc::Channel;
 use tauri::AppHandle;
 
 use crate::analyses::{self, SavedAnalysis};
+use crate::candidates::{self, CandidateInput, CandidateStock};
 use crate::chats::{self, ChatMessage, ChatSession};
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
+use crate::prompts::{self, StoredPrompt};
 use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
 use crate::yahoo::{self, Fundamentals};
@@ -270,9 +272,68 @@ pub fn chat_rename_session(
     chats::rename_session(&app, &id, &title)
 }
 
+/// アーカイブへ移動 / アーカイブから復元する。会話は削除しない。
+#[tauri::command]
+pub fn chat_set_archived(
+    app: AppHandle,
+    id: String,
+    archived: bool,
+) -> Result<Vec<ChatSession>> {
+    chats::set_archived(&app, &id, archived)
+}
+
 #[tauri::command]
 pub fn chat_delete_session(app: AppHandle, id: String) -> Result<Vec<ChatSession>> {
     chats::delete_session(&app, &id)
+}
+
+// ------------------------------------------------------------ 検討中銘柄
+
+#[tauri::command]
+pub fn candidates_list(app: AppHandle) -> Result<Vec<CandidateStock>> {
+    candidates::list(&app)
+}
+
+/// パース済みの行をまとめて登録する。既存のティッカーは上書きされる。
+#[tauri::command]
+pub fn candidates_add(
+    app: AppHandle,
+    items: Vec<CandidateInput>,
+) -> Result<Vec<CandidateStock>> {
+    candidates::add_many(&app, items)
+}
+
+#[tauri::command]
+pub fn candidates_remove(app: AppHandle, id: String) -> Result<Vec<CandidateStock>> {
+    candidates::remove(&app, &id)
+}
+
+#[tauri::command]
+pub fn candidates_clear(app: AppHandle) -> Result<Vec<CandidateStock>> {
+    candidates::clear(&app)
+}
+
+// ------------------------------------------------------ プロンプトライブラリ
+
+#[tauri::command]
+pub fn prompts_list(app: AppHandle) -> Result<Vec<StoredPrompt>> {
+    prompts::list(&app)
+}
+
+/// `id` を渡すと更新、渡さなければ新規作成。
+#[tauri::command]
+pub fn prompts_save(
+    app: AppHandle,
+    id: Option<String>,
+    title: String,
+    body: String,
+) -> Result<Vec<StoredPrompt>> {
+    prompts::save(&app, id, &title, &body)
+}
+
+#[tauri::command]
+pub fn prompts_remove(app: AppHandle, id: String) -> Result<Vec<StoredPrompt>> {
+    prompts::remove(&app, &id)
 }
 
 #[tauri::command]

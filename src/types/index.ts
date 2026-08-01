@@ -105,7 +105,31 @@ export interface ChatSession {
   id: string;
   title: string;
   ticker: string | null;
+  /** アーカイブ済みか。削除せずに一覧から退避させた状態 */
+  isArchived: boolean;
   messageCount: number;
+  createdAtMs: number;
+  updatedAtMs: number;
+}
+
+/** サイドバーの「検討中銘柄」1 件（SQLite に保存される） */
+export interface CandidateStock {
+  id: string;
+  ticker: string;
+  /** 社名。未入力なら空文字 */
+  name: string;
+  /** ジャンル・テーマ。未入力なら空文字 */
+  genre: string;
+  createdAtMs: number;
+}
+
+/** ストックした AI の役割設定（システムプロンプト）1 件 */
+export interface StoredPrompt {
+  id: string;
+  title: string;
+  body: string;
+  /** 既定で用意した役割か */
+  builtin: boolean;
   createdAtMs: number;
   updatedAtMs: number;
 }

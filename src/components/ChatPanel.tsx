@@ -12,6 +12,8 @@ import {
 import type { SlotId } from "@/lib/ui/layoutStore";
 import { IconMessage } from "@/components/Icons";
 import PanelHeader from "@/components/PanelHeader";
+import PromptLibraryMenu from "@/components/PromptLibraryMenu";
+import { activeSystemPrompt } from "@/lib/prompts/promptLibrary";
 
 interface Props {
   settings: AppSettings | null;
@@ -23,10 +25,6 @@ interface Props {
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
 }
-
-const SYSTEM_PROMPT =
-  "あなたは米国株・グローバル株のファンダメンタル分析を支援するアシスタントです。" +
-  "根拠を明示し、断定できない点は不確実であると述べてください。回答は日本語で行ってください。";
 
 const newId = () => crypto.randomUUID();
 
@@ -76,7 +74,8 @@ export default function ChatPanel({
     try {
       const { text: reply } = await streamChat(
         {
-          system: SYSTEM_PROMPT,
+          // 送信時点で選ばれている役割を使う（対話中に切り替えられる）
+          system: activeSystemPrompt(),
           // エラー表示用のメッセージは送らない
           messages: history
             .filter((m) => !m.error)
@@ -120,12 +119,15 @@ export default function ChatPanel({
         onToggleCollapse={onToggleCollapse}
         collapseDisabledReason={collapseDisabledReason}
         actions={
-          settings && (
-            <span className="t-label truncate font-mono text-slate-600">
-              {providerLabel(settings, settings.provider)}
-              {activeModel ? ` / ${activeModel}` : ""}
-            </span>
-          )
+          <>
+            {settings && (
+              <span className="t-label min-w-0 truncate font-mono text-slate-600">
+                {providerLabel(settings, settings.provider)}
+                {activeModel ? ` / ${activeModel}` : ""}
+              </span>
+            )}
+            <PromptLibraryMenu />
+          </>
         }
       />
 

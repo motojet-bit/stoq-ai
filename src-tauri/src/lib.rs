@@ -4,6 +4,7 @@
 //! 「4.1 なぜ HTTP を Rust 側に置くのか」を参照。
 
 mod analyses;
+mod candidates;
 mod chats;
 mod commands;
 mod documents;
@@ -11,7 +12,9 @@ mod edgar;
 mod error;
 mod html;
 mod http;
+mod library;
 mod llm;
+mod prompts;
 mod quarterly;
 mod settings;
 mod yahoo;
@@ -36,7 +39,15 @@ pub fn run() {
             commands::chat_list_sessions,
             commands::chat_create_session,
             commands::chat_rename_session,
+            commands::chat_set_archived,
             commands::chat_delete_session,
+            commands::candidates_list,
+            commands::candidates_add,
+            commands::candidates_remove,
+            commands::candidates_clear,
+            commands::prompts_list,
+            commands::prompts_save,
+            commands::prompts_remove,
             commands::chat_load_messages,
             commands::chat_append_message,
             commands::documents_list,

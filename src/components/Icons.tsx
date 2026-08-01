@@ -171,3 +171,36 @@ export const IconKey = (p: IconProps) => (
     <path d="m11 11 9-9M18 4l2 2M15 7l2 2" />
   </Svg>
 );
+
+/** アーカイブ（箱にしまう） */
+export const IconArchive = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="4" rx="1" />
+    <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
+    <path d="M10 12h4" />
+  </Svg>
+);
+
+/** アーカイブから戻す */
+export const IconUnarchive = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="4" rx="1" />
+    <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
+    <path d="M12 17v-6M9 14l3-3 3 3" />
+  </Svg>
+);
+
+/** 検討中銘柄（ブックマーク） */
+export const IconBookmark = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
+  </Svg>
+);
+
+/** 役割（人物） */
+export const IconPersona = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" />
+  </Svg>
+);

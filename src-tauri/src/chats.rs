@@ -3,9 +3,12 @@
 //! 左サイドバーのセッション一覧の実体。`<app_data_dir>/chats.db` に保存する。
 //!
 //! ```text
-//! chat_sessions(id, title, ticker, created_at_ms, updated_at_ms)
+//! chat_sessions(id, title, ticker, is_archived, created_at_ms, updated_at_ms)
 //! chat_messages(id, session_id, role, content, created_at_ms)
 //! ```
+//!
+//! `is_archived` は後から足した列。既存 DB には `ALTER TABLE` で追加するため、
+//! アプリを更新しても過去の会話は失われない（`migrate` のテストを参照）。
 //!
 //! セッションを削除するとメッセージも一緒に消える（ON DELETE CASCADE）。
 
@@ -24,6 +27,8 @@ pub struct ChatSession {
     pub title: String,
     /// 紐づく銘柄（あれば）
     pub ticker: Option<String>,
+    /// アーカイブ済みか。削除せずに一覧から退避させるための印。
+    pub is_archived: bool,
     pub message_count: i64,
     pub created_at_ms: i64,
     pub updated_at_ms: i64,
@@ -56,7 +61,12 @@ fn open(app: &AppHandle) -> Result<Connection> {
 fn open_at(path: &std::path::Path) -> Result<Connection> {
     let conn = Connection::open(path)
         .map_err(|e| AppError::msg(format!("チャット履歴データベースを開けません: {e}")))?;
+    migrate(&conn)?;
+    Ok(conn)
+}
 
+/// スキーマを最新にする。既存 DB に対しても安全に呼べる。
+pub fn migrate(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         "PRAGMA foreign_keys = ON;
          CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -78,7 +88,14 @@ fn open_at(path: &std::path::Path) -> Result<Connection> {
     )
     .map_err(|e| AppError::msg(format!("チャット履歴テーブルを作成できません: {e}")))?;
 
-    Ok(conn)
+    // 後から足した列。すでにあればエラーになるので黙って無視する。
+    // 既存行は DEFAULT 0（＝アーカイブしていない）になり、会話は消えない。
+    let _ = conn.execute(
+        "ALTER TABLE chat_sessions ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0",
+        [],
+    );
+
+    Ok(())
 }
 
 // ---------------------------------------------------------------- セッション
@@ -90,10 +107,10 @@ pub fn list_sessions(app: &AppHandle) -> Result<Vec<ChatSession>> {
 fn list_sessions_in(conn: &Connection) -> Result<Vec<ChatSession>> {
     let mut stmt = conn
         .prepare(
-            "SELECT s.id, s.title, s.ticker, s.created_at_ms, s.updated_at_ms,
+            "SELECT s.id, s.title, s.ticker, s.is_archived, s.created_at_ms, s.updated_at_ms,
                     (SELECT COUNT(*) FROM chat_messages m WHERE m.session_id = s.id)
              FROM chat_sessions s
-             ORDER BY s.updated_at_ms DESC",
+             ORDER BY s.is_archived ASC, s.updated_at_ms DESC",
         )
         .map_err(|e| AppError::msg(format!("履歴を取得できません: {e}")))?;
 
@@ -103,9 +120,10 @@ fn list_sessions_in(conn: &Connection) -> Result<Vec<ChatSession>> {
                 id: row.get(0)?,
                 title: row.get(1)?,
                 ticker: row.get(2)?,
-                created_at_ms: row.get(3)?,
-                updated_at_ms: row.get(4)?,
-                message_count: row.get(5)?,
+                is_archived: row.get::<_, i64>(3)? != 0,
+                created_at_ms: row.get(4)?,
+                updated_at_ms: row.get(5)?,
+                message_count: row.get(6)?,
             })
         })
         .map_err(|e| AppError::msg(format!("履歴を取得できません: {e}")))?;
@@ -134,6 +152,7 @@ fn create_session_in(
             .filter(|t| !t.is_empty())
             .unwrap_or_else(|| "新しいチャット".to_string()),
         ticker: ticker.filter(|t| !t.trim().is_empty()),
+        is_archived: false,
         message_count: 0,
         created_at_ms: now,
         updated_at_ms: now,
@@ -172,6 +191,25 @@ fn rename_session_in(conn: &Connection, id: &str, title: &str) -> Result<Vec<Cha
             params![id, title],
         )
         .map_err(|e| AppError::msg(format!("タイトルを変更できません: {e}")))?;
+
+    if changed == 0 {
+        return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
+    }
+    list_sessions_in(conn)
+}
+
+/// アーカイブ状態を切り替える。会話とメッセージは残したまま一覧から退避させる。
+pub fn set_archived(app: &AppHandle, id: &str, archived: bool) -> Result<Vec<ChatSession>> {
+    set_archived_in(&open(app)?, id, archived)
+}
+
+fn set_archived_in(conn: &Connection, id: &str, archived: bool) -> Result<Vec<ChatSession>> {
+    let changed = conn
+        .execute(
+            "UPDATE chat_sessions SET is_archived = ?2 WHERE id = ?1",
+            params![id, i64::from(archived)],
+        )
+        .map_err(|e| AppError::msg(format!("アーカイブ状態を変更できません: {e}")))?;
 
     if changed == 0 {
         return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
@@ -325,19 +363,11 @@ fn now_ms() -> i64 {
 mod tests {
     use super::*;
 
-    /// メモリ上の DB でスキーマだけ作る。
+    /// メモリ上の DB にスキーマを作る。
     fn db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
-        conn.execute_batch(
-            "PRAGMA foreign_keys = ON;
-             CREATE TABLE chat_sessions (
-                id TEXT PRIMARY KEY, title TEXT NOT NULL, ticker TEXT,
-                created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);
-             CREATE TABLE chat_messages (
-                id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
-                role TEXT NOT NULL, content TEXT NOT NULL, created_at_ms INTEGER NOT NULL);",
-        )
+        migrate(&conn).unwrap();
+        conn.execute_batch("PRAGMA foreign_keys = ON;")
         .unwrap();
         conn
     }
@@ -483,5 +513,118 @@ mod tests {
         append_message_in(&conn, &s.id, "user", "\n\n  \n").unwrap();
         let title = list_sessions_in(&conn).unwrap()[0].title.clone();
         assert_eq!(title, "新しいチャット");
+    }
+
+    // ------------------------------------------------ アーカイブ
+
+    #[test]
+    fn アーカイブしても会話とメッセージは残る() {
+        let conn = db();
+        let s = create_session_in(&conn, Some("決算メモ".into()), None).unwrap();
+        append_message_in(&conn, &s.id, "user", "AAPL の粗利率は？").unwrap();
+
+        let list = set_archived_in(&conn, &s.id, true).unwrap();
+        let target = list.iter().find(|x| x.id == s.id).unwrap();
+        assert!(target.is_archived);
+        assert_eq!(target.message_count, 1, "メッセージは消えない");
+        assert_eq!(target.title, "決算メモ");
+        assert_eq!(load_messages_in(&conn, &s.id).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn アーカイブから復元できる() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        set_archived_in(&conn, &s.id, true).unwrap();
+
+        let list = set_archived_in(&conn, &s.id, false).unwrap();
+        assert!(!list.iter().find(|x| x.id == s.id).unwrap().is_archived);
+    }
+
+    #[test]
+    fn アーカイブ済みは一覧の後ろに回る() {
+        let conn = db();
+        let older = create_session_in(&conn, Some("古い".into()), None).unwrap();
+        let newer = create_session_in(&conn, Some("新しい".into()), None).unwrap();
+        // 「古い」を最新に更新したうえでアーカイブする
+        conn.execute(
+            "UPDATE chat_sessions SET updated_at_ms = ?2 WHERE id = ?1",
+            params![older.id, i64::MAX],
+        )
+        .unwrap();
+
+        let list = set_archived_in(&conn, &older.id, true).unwrap();
+        assert_eq!(list[0].id, newer.id, "更新が新しくてもアーカイブは後ろ");
+        assert_eq!(list[1].id, older.id);
+    }
+
+    #[test]
+    fn 存在しないセッションのアーカイブはエラーになる() {
+        assert!(set_archived_in(&db(), "chat-none", true).is_err());
+    }
+
+    // ------------------------------------------------ マイグレーション
+
+    /// `is_archived` を持たない旧スキーマ。アプリ更新前の DB を再現する。
+    fn legacy_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "PRAGMA foreign_keys = ON;
+             CREATE TABLE chat_sessions (
+                id TEXT PRIMARY KEY, title TEXT NOT NULL, ticker TEXT,
+                created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);
+             CREATE TABLE chat_messages (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+                role TEXT NOT NULL, content TEXT NOT NULL, created_at_ms INTEGER NOT NULL);",
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO chat_sessions (id, title, ticker, created_at_ms, updated_at_ms)
+             VALUES ('old-1', '過去の会話', 'AAPL', 100, 200)",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO chat_messages (id, session_id, role, content, created_at_ms)
+             VALUES ('old-msg-1', 'old-1', 'user', '過去の質問', 150)",
+            [],
+        )
+        .unwrap();
+        conn
+    }
+
+    #[test]
+    fn 旧_db_に列を足しても既存の会話が壊れない() {
+        let conn = legacy_db();
+        migrate(&conn).unwrap();
+
+        let list = list_sessions_in(&conn).unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].id, "old-1");
+        assert_eq!(list[0].title, "過去の会話");
+        assert_eq!(list[0].ticker.as_deref(), Some("AAPL"));
+        assert_eq!(list[0].message_count, 1);
+        assert!(!list[0].is_archived, "既存行は未アーカイブ扱いになる");
+
+        let messages = load_messages_in(&conn, "old-1").unwrap();
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].content, "過去の質問");
+    }
+
+    #[test]
+    fn マイグレーションを何度実行しても既存データは変わらない() {
+        let conn = legacy_db();
+        migrate(&conn).unwrap();
+        set_archived_in(&conn, "old-1", true).unwrap();
+
+        // 再起動を 2 回ぶん
+        migrate(&conn).unwrap();
+        migrate(&conn).unwrap();
+
+        let list = list_sessions_in(&conn).unwrap();
+        assert_eq!(list.len(), 1);
+        assert!(list[0].is_archived, "アーカイブ状態が初期化されない");
+        assert_eq!(load_messages_in(&conn, "old-1").unwrap().len(), 1);
     }
 }

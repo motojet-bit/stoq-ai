@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ChatSession } from "@/types";
-import { IconClose, IconMessage, IconPencil } from "@/components/Icons";
+import {
+  IconArchive,
+  IconClose,
+  IconMessage,
+  IconPencil,
+  IconUnarchive,
+} from "@/components/Icons";
 
 interface Props {
   session: ChatSession;
   active: boolean;
   onSelect: () => void;
   onRename: (title: string) => void;
+  /** アーカイブへ移動 / アーカイブから復元 */
+  onArchive: () => void;
   onDelete: () => void;
 }
 
@@ -32,6 +40,7 @@ export default function ChatHistoryItem({
   active,
   onSelect,
   onRename,
+  onArchive,
   onDelete,
 }: Props) {
   const [editing, setEditing] = useState(false);
@@ -122,6 +131,27 @@ export default function ChatHistoryItem({
               className="rounded p-1 text-slate-500 hover:bg-slate-700 hover:text-emerald-300"
             >
               <IconPencil className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={onArchive}
+              aria-label={
+                session.isArchived
+                  ? `${session.title} をアーカイブから戻す`
+                  : `${session.title} をアーカイブ`
+              }
+              title={
+                session.isArchived
+                  ? "アーカイブから戻す"
+                  : "アーカイブへ移動（削除はされません）"
+              }
+              className="rounded p-1 text-slate-500 hover:bg-slate-700 hover:text-emerald-300"
+            >
+              {session.isArchived ? (
+                <IconUnarchive className="h-3 w-3" />
+              ) : (
+                <IconArchive className="h-3 w-3" />
+              )}
             </button>
             <button
               type="button"

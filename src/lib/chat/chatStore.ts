@@ -126,6 +126,20 @@ export async function renameSession(id: string, title: string): Promise<void> {
   }
 }
 
+/**
+ * アーカイブへ移動 / アーカイブから復元する。
+ * 削除ではないので、開いている会話も本文はそのまま残す。
+ */
+export async function archiveSession(id: string, archived: boolean): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    sessions = await invoke<ChatSession[]>("chat_set_archived", { id, archived });
+    emit();
+  } catch (e) {
+    toastError("アーカイブ状態を変更できませんでした", e);
+  }
+}
+
 export async function deleteSession(id: string): Promise<void> {
   if (!isTauri()) return;
   try {

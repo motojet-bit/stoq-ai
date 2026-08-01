@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { WorkspaceTab } from "@/types";
 import { INITIAL_TABS } from "@/lib/sampleData";
 import {
+  archiveSession,
   createSession,
   deleteSession,
   loadChatSessions,
@@ -10,6 +11,8 @@ import {
   useActiveSessionId,
   useChatSessions,
 } from "@/lib/chat/chatStore";
+import { loadCandidates } from "@/lib/candidates/candidateStore";
+import { loadPrompts } from "@/lib/prompts/promptLibrary";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
 import { loadTicker, useAnalyses } from "@/lib/api/analysisStore";
 import {
@@ -55,6 +58,11 @@ export default function App() {
 
   const [currentTicker, setCurrentTicker] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // 検討中銘柄をクリックしたときに入力欄へ流し込む値。
+  // 同じ銘柄を続けて選べるよう連番を添える
+  const [tickerPreset, setTickerPreset] = useState<{ ticker: string; seq: number } | null>(
+    null,
+  );
 
   // 枠ごとの折りたたみ状態。畳んだ枠は描画せず、最上部バーの復元ボタンに退避する
   const slots = useSlots();
@@ -127,6 +135,8 @@ export default function App() {
     void loadSettings();
     void loadStagedDocuments();
     void loadChatSessions();
+    void loadCandidates();
+    void loadPrompts();
   }, []);
 
   /** 枠に入っているパネルを描画する。ドラッグで入れ替えられる。 */
@@ -256,6 +266,15 @@ export default function App() {
     void createSession(activeTicker);
   };
 
+  /**
+   * 検討中銘柄をクリックしたとき。
+   * 上部の入力欄にセットしたうえで、そのまま分析を開始する。
+   */
+  const handleCandidateSelect = (ticker: string) => {
+    setTickerPreset({ ticker, seq: Date.now() });
+    handleTickerSubmit(ticker);
+  };
+
   /** ティッカーが確定したら分析タブを開き、YF と SEC の取得を開始する */
   const handleTickerSubmit = (ticker: string) => {
     setCurrentTicker(ticker);
@@ -318,6 +337,7 @@ export default function App() {
       <CommandBar
         settings={settings}
         onTickerSubmit={handleTickerSubmit}
+        tickerPreset={tickerPreset}
         onFiles={(files) => void ingestFiles(files)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -338,8 +358,10 @@ export default function App() {
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           onSelectSession={(id) => void selectSession(id)}
           onRenameSession={(id, title) => void renameSession(id, title)}
+          onArchiveSession={(id, archived) => void archiveSession(id, archived)}
           onDeleteSession={(id) => void deleteSession(id)}
           onNewChat={handleNewChat}
+          onSelectTicker={handleCandidateSelect}
         />
 
         <main className="flex min-w-0 flex-1 flex-col">

@@ -6,6 +6,8 @@ import ProviderMenu from "@/components/ProviderMenu";
 interface Props {
   settings: AppSettings | null;
   onTickerSubmit: (ticker: string) => void;
+  /** 検討中銘柄のクリックなどで入力欄にセットしたい値 */
+  tickerPreset?: { ticker: string; seq: number } | null;
   onFiles: (files: File[]) => void;
   onOpenSettings: () => void;
 }
@@ -17,12 +19,13 @@ interface Props {
 export default function CommandBar({
   settings,
   onTickerSubmit,
+  tickerPreset = null,
   onFiles,
   onOpenSettings,
 }: Props) {
   return (
     <div className="flex min-h-12 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-900/60 px-3">
-      <TickerInput onSubmit={onTickerSubmit} />
+      <TickerInput onSubmit={onTickerSubmit} preset={tickerPreset} />
 
       <div className="h-6 w-px bg-slate-800" />
 
