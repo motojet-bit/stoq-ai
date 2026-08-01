@@ -17,7 +17,7 @@ export const BUILTIN_PROVIDERS: BuiltinProviderMeta[] = [
     id: "openai",
     label: "OpenAI",
     keyPlaceholder: "sk-proj-…",
-    modelHint: "例: gpt-4o / gpt-4o-mini",
+    modelHint: "例: gpt-5.6 / gpt-4o",
     keySource: "platform.openai.com/api-keys",
   },
   {

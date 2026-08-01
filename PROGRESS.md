@@ -77,6 +77,16 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 
 ## 作業履歴
 
+### 2026-08-01 — 修正: GPT-5 系で送信が 400 になる問題 ✅
+- OpenAI のキー投入後、`Unsupported parameter: 'max_tokens' ... Use 'max_completion_tokens' instead`
+  で送信が失敗する不具合を修正
+- 原因: OpenAI互換 API 間でパラメータの方言が揃っていない
+  - GPT-5 系は `max_completion_tokens` のみ受け付け、`temperature` も既定値以外を拒否
+  - DeepSeek 等の他社互換は `max_tokens` のみ
+- 対応: `llm/openai.rs` に方言吸収を実装。400 のエラーメッセージを読んで
+  パラメータを調整し自動で再送する（最大 3 回、出力上限の切り替えは 1 回のみ）
+- 対話パネルに、選択中プロバイダの設定不足を常時知らせる警告バーを追加
+
 ### 2026-08-01 — Phase 2 Step 1.1: OpenAI互換プロバイダの可変長リスト化 ✅
 - 固定 1 枠だった OpenAI互換プロバイダを、**任意個追加・削除できるリスト**に変更
   - `CustomProvider { id, label, base_url, model }` を導入し、`Settings.custom_providers: Vec<_>` で保持

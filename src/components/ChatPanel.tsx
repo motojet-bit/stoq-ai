@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { AppSettings, DisplayMessage } from "@/types";
 import { streamChat } from "@/lib/llm/client";
-import { isActiveProviderReady } from "@/lib/config/settingsStore";
-import { providerLabel } from "@/lib/config/providers";
+import { providerLabel, providerReadiness } from "@/lib/config/providers";
 import { IconMessage } from "@/components/Icons";
 
 interface Props {
@@ -24,7 +23,9 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const ready = isActiveProviderReady(settings);
+  const { ready, reason } = settings
+    ? providerReadiness(settings, settings.provider)
+    : { ready: false, reason: null };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -146,6 +147,20 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
       </div>
 
       <div className="shrink-0 border-t border-slate-800 p-2">
+        {settings && !ready && (
+          <p className="mb-2 rounded border border-amber-900/70 bg-amber-950/40 px-2 py-1.5 text-[11px] leading-relaxed text-amber-300">
+            選択中のプロバイダ「{providerLabel(settings, settings.provider)}」は
+            {reason ?? "設定が不足しています"}
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="ml-1 underline underline-offset-2 hover:text-amber-200"
+            >
+              設定を開く
+            </button>
+          </p>
+        )}
+
         <div className="flex items-end gap-2">
           <textarea
             rows={2}

@@ -141,7 +141,7 @@ pub async fn ensure_success(res: reqwest::Response, provider: &str) -> Result<re
     )))
 }
 
-fn extract_error_message(body: &str) -> Option<String> {
+pub fn extract_error_message(body: &str) -> Option<String> {
     let json: serde_json::Value = serde_json::from_str(body).ok()?;
     for pointer in ["/error/message", "/message", "/error"] {
         if let Some(s) = json.pointer(pointer).and_then(|v| v.as_str()) {
