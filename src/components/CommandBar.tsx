@@ -2,7 +2,6 @@ import type { AppSettings } from "@/types";
 import TickerInput from "@/components/TickerInput";
 import PdfDropZone from "@/components/PdfDropZone";
 import ProviderMenu from "@/components/ProviderMenu";
-import FontSizeControl from "@/components/FontSizeControl";
 
 interface Props {
   settings: AppSettings | null;
@@ -31,14 +30,9 @@ export default function CommandBar({
 
       <div className="h-6 w-px bg-slate-800" />
 
-      {/*
-        右上のコントロール群は `.ui-fixed` で文字サイズ連動から切り離す。
-        上の「AI設定」が太るとスライダーが下へずれ、ドラッグ中に
-        カーソルから逃げてしまうため、まとめて固定する。
-      */}
-      <div className="ui-fixed flex shrink-0 flex-col items-end gap-1">
+      {/* AI設定は文字サイズ連動から切り離す（太るとレイアウトが動くため） */}
+      <div className="ui-fixed flex shrink-0 items-center">
         <ProviderMenu settings={settings} onOpenSettings={onOpenSettings} />
-        <FontSizeControl />
       </div>
     </div>
   );

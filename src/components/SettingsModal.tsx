@@ -11,6 +11,7 @@ import {
 } from "@/lib/config/settingsStore";
 import { IconClose, IconKey, IconPlus } from "@/components/Icons";
 import ModelCombo from "@/components/ModelCombo";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Props {
   open: boolean;
@@ -40,6 +41,8 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  // 誤操作防止。削除対象のプロバイダ ID を持つ
+  const [deletingKeyOf, setDeletingKeyOf] = useState<ProviderId | null>(null);
 
   // モーダルを開いた時点の設定値を入力欄の初期値にする
   useEffect(() => {
@@ -50,6 +53,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     setSecUserAgent(settings.secUserAgent);
     setError(null);
     setSavedAt(null);
+    setDeletingKeyOf(null);
     // open の切り替わり時のみ初期化する（入力中に settings が更新されても上書きしない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -112,21 +116,25 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     const status = keyStatus(id);
     return (
       <label className="block">
+        {/*
+          「未設定」「sk-…3f9a」が縦に折り返されないようにする。
+          flex の子は既定で縮むため、min-w-0 と shrink-0 を明示的に分ける。
+        */}
         <span className="mb-1 flex items-center justify-between gap-2 t-label text-slate-500">
-          <span>APIキー{source ? `（${source}）` : ""}</span>
+          <span className="min-w-0 truncate">APIキー{source ? `（${source}）` : ""}</span>
           {status?.configured ? (
-            <span className="flex items-center gap-1.5 text-emerald-400">
+            <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-emerald-400">
               <span className="font-mono">{status.masked}</span>
               <button
                 type="button"
-                onClick={() => void run(() => setApiKey(id, ""))}
-                className="rounded border border-slate-700 px-1.5 text-slate-400 hover:border-red-800 hover:text-red-300"
+                onClick={() => setDeletingKeyOf(id)}
+                className="shrink-0 whitespace-nowrap rounded border border-slate-700 px-1.5 text-slate-400 hover:border-red-800 hover:text-red-300"
               >
                 削除
               </button>
             </span>
           ) : (
-            <span className="text-slate-600">未設定</span>
+            <span className="shrink-0 whitespace-nowrap text-slate-600">未設定</span>
           )}
         </span>
         <input
@@ -403,6 +411,22 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
             </button>
           </div>
         </footer>
+
+        {/* APIキーの削除は取り消せないので確認を挟む */}
+        <ConfirmDialog
+          open={deletingKeyOf !== null}
+          title="APIキーの削除"
+          message="登録されているAPIキーを削除しますか？"
+          confirmLabel="削除する"
+          cancelLabel="キャンセル"
+          destructive
+          onConfirm={() => {
+            const target = deletingKeyOf;
+            setDeletingKeyOf(null);
+            if (target) void run(() => setApiKey(target, ""));
+          }}
+          onCancel={() => setDeletingKeyOf(null)}
+        />
       </div>
     </div>
   );

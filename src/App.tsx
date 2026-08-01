@@ -26,7 +26,7 @@ import {
 } from "@/lib/prompts/analysisRunner";
 import { providerReadiness } from "@/lib/config/providers";
 import { initFontSize } from "@/lib/ui/fontStore";
-import { useSlots, type PanelId, type SlotId } from "@/lib/ui/layoutStore";
+import { SLOT_IDS, useSlots, type PanelId, type SlotId } from "@/lib/ui/layoutStore";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
 import CommandBar from "@/components/CommandBar";
@@ -41,6 +41,7 @@ import SettingsModal from "@/components/SettingsModal";
 import ToastHost from "@/components/ToastHost";
 import DocumentTray from "@/components/DocumentTray";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import PanelRestoreBar from "@/components/PanelRestoreBar";
 
 const newId = () => crypto.randomUUID();
 
@@ -55,7 +56,7 @@ export default function App() {
   const [currentTicker, setCurrentTicker] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // 枠ごとの折りたたみ状態。左上と右は同時に畳めない（片方は必ず表示する）
+  // 枠ごとの折りたたみ状態。畳んだ枠は描画せず、最上部バーの復元ボタンに退避する
   const slots = useSlots();
   const [collapsedSlots, setCollapsedSlots] = useState<Record<SlotId, boolean>>({
     leftTop: false,
@@ -63,14 +64,18 @@ export default function App() {
     right: false,
   });
 
-  const toggleSlot = (slot: SlotId) => {
-    setCollapsedSlots((prev) => {
-      const next = { ...prev, [slot]: !prev[slot] };
-      // 左上と右を同時に畳むと本文が消えるので、片方を開く
-      if (slot === "leftTop" && next.leftTop) next.right = false;
-      if (slot === "right" && next.right) next.leftTop = false;
-      return next;
-    });
+  const visibleSlots = SLOT_IDS.filter((slot) => !collapsedSlots[slot]);
+  // 最後の 1 枚まで畳むと画面が空になるので、それだけは許さない
+  const collapseDisabledReason =
+    visibleSlots.length <= 1 ? "最後のパネルは最小化できません" : null;
+
+  const collapseSlot = (slot: SlotId) => {
+    if (collapseDisabledReason !== null) return;
+    setCollapsedSlots((prev) => ({ ...prev, [slot]: true }));
+  };
+
+  const restoreSlot = (slot: SlotId) => {
+    setCollapsedSlots((prev) => ({ ...prev, [slot]: false }));
   };
 
   // 一次資料が無い状態で分析を実行しようとしたときの確認
@@ -127,8 +132,7 @@ export default function App() {
   /** 枠に入っているパネルを描画する。ドラッグで入れ替えられる。 */
   const renderPanel = (slot: SlotId) => {
     const panel: PanelId = slots[slot];
-    const collapsed = collapsedSlots[slot];
-    const onToggleCollapse = () => toggleSlot(slot);
+    const onToggleCollapse = () => collapseSlot(slot);
 
     switch (panel) {
       case "market":
@@ -136,9 +140,9 @@ export default function App() {
           <WorkspacePanel
             tab={activeTab}
             analysis={activeAnalysis}
-            collapsed={collapsed}
             slot={slot}
             onToggleCollapse={onToggleCollapse}
+            collapseDisabledReason={collapseDisabledReason}
             onRetry={(ticker) => void loadTicker(ticker)}
           />
         );
@@ -149,9 +153,9 @@ export default function App() {
             run={activeRun}
             ready={llm.ready}
             readyReason={llm.reason}
-            collapsed={collapsed}
             slot={slot}
             onToggleCollapse={onToggleCollapse}
+            collapseDisabledReason={collapseDisabledReason}
             onRun={handleRunAnalysis}
             onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
             onClear={() => activeTicker && void clearAnalysis(activeTicker)}
@@ -163,13 +167,63 @@ export default function App() {
           <ChatPanel
             settings={settings}
             ticker={activeTicker}
-            collapsed={collapsed}
             slot={slot}
             onToggleCollapse={onToggleCollapse}
+            collapseDisabledReason={collapseDisabledReason}
             onOpenSettings={() => setSettingsOpen(true)}
           />
         );
     }
+  };
+
+  /**
+   * 本文の分割レイアウトを組み立てる。
+   *
+   * **畳んだ枠は分割そのものから外す。** 帯として残すと、
+   * 残ったパネルが画面いっぱいに広がらず無駄な余白になるため。
+   */
+  const renderWorkspace = () => {
+    const leftOpen = (["leftTop", "leftBottom"] as SlotId[]).filter(
+      (slot) => !collapsedSlots[slot],
+    );
+    const rightOpen = !collapsedSlots.right;
+
+    const pane = (slot: SlotId, className: string) => (
+      <div className={className}>{renderPanel(slot)}</div>
+    );
+
+    const left =
+      leftOpen.length === 2 ? (
+        <ResizableSplit
+          direction="vertical"
+          initialFirstSize={Math.round(window.innerHeight * 0.45)}
+          minFirstSize={140}
+          minSecondSize={140}
+          first={renderPanel("leftTop")}
+          second={pane("leftBottom", "flex min-h-0 flex-1 flex-col border-t border-slate-800")}
+        />
+      ) : leftOpen.length === 1 ? (
+        pane(leftOpen[0], "flex min-h-0 min-w-0 flex-1 flex-col")
+      ) : null;
+
+    const right = rightOpen
+      ? pane("right", "flex min-h-0 min-w-0 flex-1 flex-col border-l border-slate-800")
+      : null;
+
+    if (left && right) {
+      return (
+        <ResizableSplit
+          direction="horizontal"
+          initialFirstSize={Math.round(window.innerWidth / 2)}
+          minFirstSize={280}
+          minSecondSize={320}
+          first={left}
+          second={right}
+        />
+      );
+    }
+    // 片方だけのときは分割せず、そのまま 100% を占有させる
+    return left ?? right;
   };
 
   // Ctrl+B でサイドバー開閉 / Ctrl+, で設定
@@ -250,7 +304,16 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-slate-950 text-slate-200">
-      <MenuBar onAction={handleMenuAction} />
+      <MenuBar
+        onAction={handleMenuAction}
+        right={
+          <PanelRestoreBar
+            slots={slots}
+            collapsedSlots={collapsedSlots}
+            onRestore={restoreSlot}
+          />
+        }
+      />
 
       <CommandBar
         settings={settings}
@@ -292,46 +355,9 @@ export default function App() {
             2 カラム構造。左右の仕切りが画面最下部まで一直線に伸びる。
               左カラム: 上＝市場データ / 下＝対話ウィンドウ
               右カラム: 20項目の分析結果（縦長）
+            最小化した枠はここに現れず、残ったパネルが 100% を占有する。
           */}
-          <ResizableSplit
-            direction="horizontal"
-            initialFirstSize={Math.round(window.innerWidth / 2)}
-            minFirstSize={280}
-            minSecondSize={320}
-            collapsed={
-              collapsedSlots.leftTop && collapsedSlots.leftBottom
-                ? "first"
-                : collapsedSlots.right
-                  ? "second"
-                  : null
-            }
-            first={
-              <ResizableSplit
-                direction="vertical"
-                initialFirstSize={Math.round(window.innerHeight * 0.45)}
-                minFirstSize={140}
-                minSecondSize={140}
-                collapsed={
-                  collapsedSlots.leftTop
-                    ? "first"
-                    : collapsedSlots.leftBottom
-                      ? "second"
-                      : null
-                }
-                first={renderPanel("leftTop")}
-                second={
-                  <div className="flex min-h-0 flex-1 flex-col border-t border-slate-800">
-                    {renderPanel("leftBottom")}
-                  </div>
-                }
-              />
-            }
-            second={
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-slate-800">
-                {renderPanel("right")}
-              </div>
-            }
-          />
+          {renderWorkspace()}
         </main>
       </div>
 

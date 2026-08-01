@@ -12,9 +12,10 @@ interface Props {
   /** LLM を呼べる状態か（APIキー等がそろっているか） */
   ready: boolean;
   readyReason: string | null;
-  collapsed: boolean;
   slot?: SlotId;
   onToggleCollapse: () => void;
+  /** 最小化できない場合の理由（最後の 1 枚は畳ませない） */
+  collapseDisabledReason?: string | null;
   onRun: () => void;
   onCancel: () => void;
   onClear: () => void;
@@ -36,9 +37,9 @@ export default function AnalysisPanel({
   run,
   ready,
   readyReason,
-  collapsed,
   slot,
   onToggleCollapse,
+  collapseDisabledReason = null,
   onRun,
   onCancel,
   onClear,
@@ -69,14 +70,14 @@ export default function AnalysisPanel({
     ) : undefined;
 
   return (
-    <section className="panel bg-slate-950">
+    <section className="panel bg-slate-950" data-panel-slot={slot}>
       <PanelHeader
         icon={<IconChart className="h-3.5 w-3.5" />}
         title="分析結果"
         subtitle={subtitle}
-        collapsed={collapsed}
         slot={slot}
         onToggleCollapse={onToggleCollapse}
+        collapseDisabledReason={collapseDisabledReason}
         actions={
           <>
             {result && result.averageScore !== null && (
@@ -123,7 +124,7 @@ export default function AnalysisPanel({
       />
 
       {/* 何をもとに分析したかを常に見えるようにする */}
-      {!collapsed && run && run.basis.length > 0 && (
+      {run && run.basis.length > 0 && (
         <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/30 px-4 py-1.5">
           <span className="t-label shrink-0 text-slate-500">分析根拠:</span>
           {run.basis.map((item) => (
@@ -138,8 +139,7 @@ export default function AnalysisPanel({
         </div>
       )}
 
-      {!collapsed && (
-        <div ref={scrollRef} className="panel-scroll px-4 py-3">
+      <div ref={scrollRef} className="panel-scroll px-4 py-3">
           {!ticker ? (
             <p className="t-body text-slate-500">
               上部にティッカーを入力して「分析」を押すと、この銘柄の
@@ -233,8 +233,7 @@ export default function AnalysisPanel({
               )}
             </>
           )}
-        </div>
-      )}
+      </div>
     </section>
   );
 }

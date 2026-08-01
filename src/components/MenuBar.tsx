@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import FontSizeControl from "@/components/FontSizeControl";
 
 /** メニュー項目。action が未設定のものは未実装。 */
 interface MenuItem {
@@ -60,10 +61,18 @@ const MENUS: Menu[] = [
 
 interface Props {
   onAction: (action: MenuAction) => void;
+  /** 右端に差し込む要素（最小化したパネルの復元ボタンなど） */
+  right?: ReactNode;
 }
 
-/** 最上部の水平機能メニューバー */
-export default function MenuBar({ onAction }: Props) {
+/**
+ * 最上部の水平機能メニューバー。
+ *
+ * **このバー自体は `.ui-fixed` で文字サイズ連動から切り離している。**
+ * ここにフォント調整 UI を置くため、バーの高さが変わると
+ * スライダーがカーソルの下から動いてしまうため。
+ */
+export default function MenuBar({ onAction, right }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -89,10 +98,10 @@ export default function MenuBar({ onAction }: Props) {
   return (
     <div
       ref={barRef}
-      className="relative z-50 flex min-h-9 shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-2"
+      className="ui-fixed relative z-50 flex h-9 shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-2"
     >
       <div className="mr-2 flex items-center gap-2 pl-1 pr-3">
-        <span className="t-body font-semibold tracking-tight">
+        <span className="text-[13px] font-semibold tracking-tight">
           <span className="text-emerald-400">StoQ</span>
           <span className="ml-1 text-slate-300">AI Analyzer</span>
         </span>
@@ -104,7 +113,7 @@ export default function MenuBar({ onAction }: Props) {
             type="button"
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
             onPointerEnter={() => openIndex !== null && setOpenIndex(i)}
-            className={`rounded px-3 py-1 t-body transition-colors ${
+            className={`rounded px-3 py-1 transition-colors ${
               openIndex === i
                 ? "bg-slate-700 text-slate-100"
                 : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
@@ -124,13 +133,13 @@ export default function MenuBar({ onAction }: Props) {
                       setOpenIndex(null);
                       if (item.action) onAction(item.action);
                     }}
-                    className={`flex w-full items-center justify-between gap-8 px-3 py-1.5 text-left t-body hover:bg-slate-700 hover:text-slate-100 ${
+                    className={`flex w-full items-center justify-between gap-8 px-3 py-1.5 text-left hover:bg-slate-700 hover:text-slate-100 ${
                       item.action ? "text-slate-300" : "text-slate-500"
                     }`}
                   >
                     <span>{item.label}</span>
                     {item.shortcut && (
-                      <span className="font-mono t-label text-slate-500">{item.shortcut}</span>
+                      <span className="font-mono text-[11px] text-slate-500">{item.shortcut}</span>
                     )}
                   </button>
                 </div>
@@ -139,6 +148,12 @@ export default function MenuBar({ onAction }: Props) {
           )}
         </div>
       ))}
+
+      {/* 右端: 最小化パネルの復元ボタン ＋ 全域フォントサイズ調整 */}
+      <div className="ml-auto flex shrink-0 items-center gap-3 pl-3">
+        {right}
+        <FontSizeControl />
+      </div>
     </div>
   );
 }

@@ -11,9 +11,10 @@ interface Props {
   tab: WorkspaceTab | undefined;
   /** アクティブなタブの銘柄の取得状態。銘柄タブ以外では undefined */
   analysis: TickerAnalysis | undefined;
-  collapsed: boolean;
   slot?: SlotId;
   onToggleCollapse: () => void;
+  /** 最小化できない場合の理由（最後の 1 枚は畳ませない） */
+  collapseDisabledReason?: string | null;
   onRetry: (ticker: string) => void;
 }
 
@@ -21,22 +22,22 @@ interface Props {
 export default function WorkspacePanel({
   tab,
   analysis,
-  collapsed,
   slot,
   onToggleCollapse,
+  collapseDisabledReason = null,
   onRetry,
 }: Props) {
   return (
-    <section className="panel bg-slate-950">
+    <section className="panel bg-slate-950" data-panel-slot={slot}>
       <PanelHeader
         icon={<IconChart className="h-3.5 w-3.5" />}
         title="市場データ"
         subtitle={tab?.ticker ?? undefined}
-        collapsed={collapsed}
         slot={slot}
         onToggleCollapse={onToggleCollapse}
+        collapseDisabledReason={collapseDisabledReason}
       />
-      {!collapsed && <PanelBody tab={tab} analysis={analysis} onRetry={onRetry} />}
+      <PanelBody tab={tab} analysis={analysis} onRetry={onRetry} />
     </section>
   );
 }

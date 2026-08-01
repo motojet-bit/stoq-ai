@@ -1,102 +1,103 @@
-import { useState, type DragEvent, type ReactNode } from "react";
-import { movePanel, type SlotId } from "@/lib/ui/layoutStore";
-import { IconGrip, IconMinimize, IconRestore } from "@/components/Icons";
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import type { SlotId } from "@/lib/ui/layoutStore";
+import {
+  cancelPanelDrag,
+  endPanelDrag,
+  startPanelDrag,
+  updatePanelDrag,
+  usePanelDrag,
+} from "@/lib/ui/panelDrag";
+import { IconGrip, IconMinimize } from "@/components/Icons";
 
 interface Props {
   icon: ReactNode;
   title: string;
   /** タイトル横に出す補足 */
   subtitle?: ReactNode;
-  collapsed: boolean;
   onToggleCollapse: () => void;
+  /** 最小化できない場合の理由（最後の 1 枚は畳ませない） */
+  collapseDisabledReason?: string | null;
   /** 右端に置く操作ボタン群 */
   actions?: ReactNode;
   /** このパネルが今どの枠にあるか。指定すると入れ替えドラッグが有効になる */
   slot?: SlotId;
 }
 
-const DRAG_TYPE = "application/x-stoq-panel";
-
 /**
  * 各ペイン共通のヘッダー。
  *
- * - 右端の「_」で最小化し、畳んだ状態ではこのヘッダーだけが残る
- * - ヘッダーをドラッグして別のパネルのヘッダーに落とすと、配置が入れ替わる
+ * - 右端の「_」で最小化する（畳んだパネルは最上部バーの復元ボタンに退避する）
+ * - 左端のグリップを **Pointer Events で**ドラッグし、
+ *   別のパネルの上で離すと配置が入れ替わる（`panelDrag.ts` を参照）
  */
 export default function PanelHeader({
   icon,
   title,
   subtitle,
-  collapsed,
   onToggleCollapse,
+  collapseDisabledReason = null,
   actions,
   slot,
 }: Props) {
-  const [dropActive, setDropActive] = useState(false);
+  const gripRef = useRef<HTMLButtonElement>(null);
+  const drag = usePanelDrag();
 
-  const onDragStart = (e: DragEvent<HTMLElement>) => {
-    if (!slot) return;
-    e.dataTransfer.setData(DRAG_TYPE, slot);
-    // 一部の環境ではカスタム MIME だけだとドラッグが成立しないため、
-    // 標準の text/plain にも同じ値を入れておく
-    e.dataTransfer.setData("text/plain", slot);
-    e.dataTransfer.effectAllowed = "move";
+  const dragging = drag !== null && drag.from === slot;
+  const dropActive = drag !== null && drag.over === slot && drag.from !== slot;
+
+  // ドラッグ中は Esc で中断できるようにする
+  useEffect(() => {
+    if (!dragging) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cancelPanelDrag();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [dragging]);
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!slot || e.button !== 0) return;
+    // ポインタを捕捉しておくと、パネルの外へ出ても move / up を取りこぼさない
+    e.currentTarget.setPointerCapture(e.pointerId);
+    startPanelDrag(slot, e.clientX, e.clientY);
   };
 
-  /**
-   * ドロップを許可する。
-   *
-   * HTML5 Drag and Drop はドロップ先が **dragenter と dragover の両方で
-   * `preventDefault()` を呼ばない限り、ブラウザ既定の「拒否」が働いて
-   * 進入禁止マーク（🚫）が出る**。判定を挟まず必ず打ち消すこと。
-   */
-  const allowDrop = (e: DragEvent<HTMLElement>) => {
-    if (!slot) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDropActive(true);
+  const onPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    updatePanelDrag(e.clientX, e.clientY);
   };
 
-  const onDragLeave = (e: DragEvent<HTMLElement>) => {
-    // 子要素へ移っただけのときは消さない（枠がちらつくため）
-    const next = e.relatedTarget as Node | null;
-    if (next && e.currentTarget.contains(next)) return;
-    setDropActive(false);
-  };
-
-  const onDrop = (e: DragEvent<HTMLElement>) => {
-    if (!slot) return;
-    e.preventDefault();
-    setDropActive(false);
-    const from = (e.dataTransfer.getData(DRAG_TYPE) ||
-      e.dataTransfer.getData("text/plain")) as SlotId;
-    if (from && from !== slot) movePanel(from, slot);
+  const onPointerUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    // 離した瞬間の位置で判定する（move が来ないまま up になる場合がある）
+    updatePanelDrag(e.clientX, e.clientY);
+    endPanelDrag();
   };
 
   return (
     <header
-      onDragEnter={allowDrop}
-      onDragOver={allowDrop}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
       className={`flex min-h-9 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-900/60 px-2 py-1 ${
         dropActive ? "bg-emerald-950/60 ring-1 ring-inset ring-emerald-500" : ""
-      }`}
+      } ${dragging ? "opacity-60" : ""}`}
     >
       {slot && (
-        // グリップだけをドラッグ対象にする。ヘッダー全体を draggable にすると
+        // グリップだけをドラッグ対象にする。ヘッダー全体を対象にすると
         // 中のボタンやスライダーが操作しづらくなるため。
-        <span
-          draggable
-          onDragStart={onDragStart}
-          onDragEnd={() => setDropActive(false)}
-          role="button"
+        <button
+          ref={gripRef}
+          type="button"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={cancelPanelDrag}
           aria-label={`${title} パネルを移動`}
           title="ドラッグして他のパネルと位置を入れ替え"
-          className="shrink-0 cursor-grab rounded px-0.5 py-1 text-slate-600 hover:bg-slate-800 hover:text-emerald-400 active:cursor-grabbing"
+          className={`shrink-0 touch-none rounded px-0.5 py-1 hover:bg-slate-800 hover:text-emerald-400 ${
+            dragging ? "cursor-grabbing text-emerald-400" : "cursor-grab text-slate-600"
+          }`}
         >
           <IconGrip className="h-4 w-4" />
-        </span>
+        </button>
       )}
       <span className="shrink-0 text-slate-600">{icon}</span>
       <span className="t-heading shrink-0 font-medium text-slate-300">{title}</span>
@@ -104,21 +105,17 @@ export default function PanelHeader({
       {subtitle && <span className="t-label min-w-0 truncate text-slate-500">{subtitle}</span>}
 
       <div className="ml-auto flex items-center gap-2">
-        {!collapsed && actions}
+        {actions}
 
         <button
           type="button"
           onClick={onToggleCollapse}
-          title={collapsed ? "元に戻す" : "最小化"}
-          aria-label={collapsed ? "元に戻す" : "最小化"}
-          aria-expanded={!collapsed}
-          className="shrink-0 rounded border border-slate-700 p-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800 hover:text-slate-100"
+          disabled={collapseDisabledReason !== null}
+          title={collapseDisabledReason ?? "最小化"}
+          aria-label="最小化"
+          className="shrink-0 rounded border border-slate-700 p-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          {collapsed ? (
-            <IconRestore className="h-3 w-3" />
-          ) : (
-            <IconMinimize className="h-3 w-3" />
-          )}
+          <IconMinimize className="h-3 w-3" />
         </button>
       </div>
     </header>

@@ -93,6 +93,16 @@ body,
   outline-offset: -2px;
 }
 
+/*
+ * パネルのグリップをドラッグしている間。
+ * ポインタを捕捉しているので、どこにカーソルがあっても掴んでいる見た目にする。
+ */
+body.is-dragging-panel,
+body.is-dragging-panel * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
 body {
   margin: 0;
   overflow: hidden;

@@ -12,8 +12,6 @@ interface Props {
   initialFirstSize?: number;
   minFirstSize?: number;
   minSecondSize?: number;
-  /** どちらかを畳んでいるときは境界を出さない */
-  collapsed?: "first" | "second" | null;
 }
 
 /**
@@ -22,6 +20,9 @@ interface Props {
  * **1 番目のペインに明示サイズを与え、2 番目に残りを割り当てる。**
  * 2 番目を固定にすると、中身が空のとき 1 番目が 0 まで潰れて
  * 仕切り線を掴めなくなるため（`splitMath.ts` の説明を参照）。
+ *
+ * 折りたたみは扱わない。畳んだパネルは呼び出し側（`App.tsx`）が
+ * **分割そのものから外す**ので、ここには常に表示中の 2 枚だけが来る。
  */
 export default function ResizableSplit({
   direction,
@@ -30,7 +31,6 @@ export default function ResizableSplit({
   initialFirstSize = 320,
   minFirstSize = 120,
   minSecondSize = 120,
-  collapsed = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstSize, setFirstSize] = useState(initialFirstSize);
@@ -103,19 +103,6 @@ export default function ResizableSplit({
   }, [isVertical, minFirstSize, minSecondSize]);
 
   const axis = isVertical ? "flex-col" : "flex-row";
-
-  // 畳んでいる側があるときは、もう片方を全面に出す
-  if (collapsed === "first" || collapsed === "second") {
-    const collapsedPane = collapsed === "first" ? first : second;
-    const openPane = collapsed === "first" ? second : first;
-    return (
-      <div className={`flex min-h-0 min-w-0 flex-1 ${axis}`}>
-        {collapsed === "first" && <div className="flex shrink-0 flex-col">{collapsedPane}</div>}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">{openPane}</div>
-        {collapsed === "second" && <div className="flex shrink-0 flex-col">{collapsedPane}</div>}
-      </div>
-    );
-  }
 
   return (
     <div ref={containerRef} className={`flex min-h-0 min-w-0 flex-1 ${axis}`}>

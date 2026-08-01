@@ -17,7 +17,8 @@ interface Props {
   settings: AppSettings | null;
   /** 現在開いている銘柄。新規チャットに紐づける */
   ticker: string | null;
-  collapsed: boolean;
+  /** 最小化できない場合の理由（最後の 1 枚は畳ませない） */
+  collapseDisabledReason?: string | null;
   slot?: SlotId;
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
@@ -33,7 +34,7 @@ const newId = () => crypto.randomUUID();
 export default function ChatPanel({
   settings,
   ticker,
-  collapsed,
+  collapseDisabledReason = null,
   slot,
   onToggleCollapse,
   onOpenSettings,
@@ -111,13 +112,13 @@ export default function ChatPanel({
   };
 
   return (
-    <section className="panel bg-slate-950">
+    <section className="panel bg-slate-950" data-panel-slot={slot}>
       <PanelHeader
         icon={<IconMessage className="h-3.5 w-3.5" />}
         title="対話"
-        collapsed={collapsed}
         slot={slot}
         onToggleCollapse={onToggleCollapse}
+        collapseDisabledReason={collapseDisabledReason}
         actions={
           settings && (
             <span className="t-label truncate font-mono text-slate-600">
@@ -128,8 +129,7 @@ export default function ChatPanel({
         }
       />
 
-      {!collapsed && (
-        <>
+      <>
           <div ref={scrollRef} className="panel-scroll px-4 py-3">
             {loadingHistory ? (
               <div className="space-y-2">
@@ -233,8 +233,7 @@ export default function ChatPanel({
               </button>
             </div>
           </div>
-        </>
-      )}
+      </>
     </section>
   );
 }
