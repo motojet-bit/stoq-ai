@@ -13,21 +13,24 @@ interface Props {
  * **畳んだパネルは画面から完全に取り除き、ここへ退避させる。**
  * 畳んだ枠を帯として残すと、残ったパネルが画面幅いっぱいに広がらず
  * 無駄な余白になるため（IBKR 等のプロ向けツールと同じ考え方）。
+ *
+ * 見落とすと「パネルが消えた」と誤解されるので、
+ * 黄色のアクセント背景＋白の太字で強く目立たせている。
  */
 export default function PanelRestoreBar({ slots, collapsedSlots, onRestore }: Props) {
   const hidden = SLOT_IDS.filter((slot) => collapsedSlots[slot]);
   if (hidden.length === 0) return null;
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      <span className="shrink-0 whitespace-nowrap text-slate-600">最小化中:</span>
+    <div className="flex shrink-0 items-center gap-1.5">
+      <span className="shrink-0 whitespace-nowrap font-bold text-amber-300">最小化中:</span>
       {hidden.map((slot) => (
         <button
           key={slot}
           type="button"
           onClick={() => onRestore(slot)}
           title={`${PANEL_TITLES[slots[slot]]} を元に戻す`}
-          className="flex min-h-[22px] shrink-0 items-center gap-1 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-1.5 text-slate-300 hover:border-emerald-700 hover:text-emerald-300"
+          className="flex min-h-[22px] shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-amber-500 px-2 font-bold text-white shadow-sm shadow-amber-900/40 ring-1 ring-amber-300/60 transition-colors duration-150 hover:bg-amber-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           <IconRestore className="h-3 w-3 shrink-0" />
           {PANEL_TITLES[slots[slot]]}

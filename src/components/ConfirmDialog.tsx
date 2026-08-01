@@ -16,6 +16,10 @@ interface Props {
 /**
  * 取り消せない操作の前に出す確認ダイアログ。
  * Esc と背景クリックはキャンセル扱いにする。
+ *
+ * **文字サイズはここで固定する（`.ui-fixed`）。**
+ * 本文の可変フォントに引きずられると、タイトル・本文・ボタンの比率が崩れて
+ * 野暮ったく見えるため、ダイアログは常に同じ見た目にする。
  */
 export default function ConfirmDialog({
   open,
@@ -40,39 +44,52 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 p-6"
+      className="ui-fixed fixed inset-0 z-200 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
+        className="w-full max-w-md overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/60 ring-1 ring-white/5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 pb-4 pt-5">
-          <h2 className="mb-3 t-body font-semibold text-slate-100">{title}</h2>
-          <p className="selectable whitespace-pre-wrap t-body leading-[1.9] text-slate-300">
-            {message}
-          </p>
+        <div className="flex gap-3.5 px-6 pb-5 pt-6">
+          <span
+            aria-hidden="true"
+            className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[16px] ${
+              destructive
+                ? "bg-red-950 text-red-300 ring-1 ring-red-800/70"
+                : "bg-emerald-950 text-emerald-300 ring-1 ring-emerald-800/70"
+            }`}
+          >
+            {destructive ? "!" : "?"}
+          </span>
+
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-semibold leading-snug text-slate-50">{title}</h2>
+            <p className="selectable mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-slate-400">
+              {message}
+            </p>
+          </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-800 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-slate-800 bg-slate-950/40 px-6 py-4">
           <button
             type="button"
             onClick={onCancel}
             autoFocus
-            className="min-h-8 rounded-md border border-slate-600 px-4 t-body text-slate-200 hover:bg-slate-800"
+            className="rounded-lg border border-slate-600 px-4 py-2 text-[13px] font-medium text-slate-200 transition-colors duration-150 hover:border-slate-500 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`h-8 rounded-md px-4 t-body font-medium text-white transition-colors ${
+            className={`rounded-lg px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 ${
               destructive
-                ? "bg-red-700 hover:bg-red-600"
-                : "bg-emerald-600 hover:bg-emerald-500"
+                ? "bg-red-600 hover:bg-red-500 focus-visible:ring-red-400/70"
+                : "bg-emerald-600 hover:bg-emerald-500 focus-visible:ring-emerald-400/70"
             }`}
           >
             {confirmLabel}

@@ -14,6 +14,7 @@ use crate::llm::{self, LlmEvent, LlmRequest};
 use crate::prompts::{self, StoredPrompt};
 use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
+use crate::shortcuts::{self, ShortcutOverride};
 use crate::yahoo::{self, Fundamentals};
 
 #[derive(Serialize)]
@@ -334,6 +335,29 @@ pub fn prompts_save(
 #[tauri::command]
 pub fn prompts_remove(app: AppHandle, id: String) -> Result<Vec<StoredPrompt>> {
     prompts::remove(&app, &id)
+}
+
+// ------------------------------------------------------ ショートカットキー
+
+/// ユーザーが変更した割り当てだけを返す（既定はフロント側が持つ）。
+#[tauri::command]
+pub fn shortcuts_list(app: AppHandle) -> Result<Vec<ShortcutOverride>> {
+    shortcuts::list(&app)
+}
+
+/// `binding` を省略すると既定へ戻す。
+#[tauri::command]
+pub fn shortcuts_set(
+    app: AppHandle,
+    action: String,
+    binding: Option<String>,
+) -> Result<Vec<ShortcutOverride>> {
+    shortcuts::set(&app, &action, binding)
+}
+
+#[tauri::command]
+pub fn shortcuts_reset(app: AppHandle) -> Result<Vec<ShortcutOverride>> {
+    shortcuts::reset(&app)
 }
 
 #[tauri::command]

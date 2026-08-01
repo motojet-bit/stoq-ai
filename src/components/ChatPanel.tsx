@@ -14,6 +14,7 @@ import { IconMessage } from "@/components/Icons";
 import PanelHeader from "@/components/PanelHeader";
 import PromptLibraryMenu from "@/components/PromptLibraryMenu";
 import { activeSystemPrompt } from "@/lib/prompts/promptLibrary";
+import { isMac } from "@/lib/ui/shortcutKeys";
 
 interface Props {
   settings: AppSettings | null;
@@ -43,6 +44,21 @@ export default function ChatPanel({
   const [sending, setSending] = useState(false);
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const sendKeyLabel = isMac() ? "⌘+Enter" : "Ctrl+Enter";
+
+  /*
+   * 入力量に合わせて高さを自動調整する。
+   * 一度 auto に戻してから scrollHeight を測らないと、縮むときに追従しない。
+   * CSS 側の max-height を超えたぶんはスクロールに任せる。
+   */
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input]);
 
   // onDelta の中から最新の本文を参照するための保持
   const messagesRef = useRef<DisplayMessage[]>(messages);
@@ -102,9 +118,12 @@ export default function ChatPanel({
     }
   };
 
+  /**
+   * **Ctrl+Enter（mac は Cmd+Enter）で送信、Enter は改行。**
+   * 長文プロンプトを書く途中で誤送信しないための割り当て。
+   */
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter で送信、Shift+Enter で改行
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       void send();
     }
@@ -213,27 +232,38 @@ export default function ChatPanel({
 
             <div className="flex items-end gap-2">
               <textarea
+                ref={inputRef}
                 rows={2}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={sending}
+                title={`${sendKeyLabel} で送信 / Enter で改行（手動で縦にも広げられます）`}
                 placeholder={
                   ready
-                    ? "質問を入力（Enter で送信 / Shift+Enter で改行）"
+                    ? `長文もどうぞ。${sendKeyLabel} で送信 / Enter で改行`
                     : "APIキーを設定すると送信できます"
                 }
-                className="selectable t-body max-h-40 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed"
+                /*
+                 * 入力量に合わせて自動で伸び、上限に達したらスクロールする。
+                 * `resize-y` も付けて、ユーザーが自分で高さを決められるようにする。
+                 */
+                className="selectable t-body max-h-64 min-h-11 min-w-0 flex-1 resize-y overflow-y-auto rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed"
               />
               <button
                 type="button"
                 onClick={() => void send()}
                 disabled={sending || input.trim().length === 0}
+                title={`${sendKeyLabel} でも送信できます`}
                 className="t-body min-h-11 shrink-0 rounded-md bg-emerald-600 px-4 font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
               >
                 {sending ? "送信中…" : "送信"}
               </button>
             </div>
+
+            <p className="t-label mt-1 text-right text-slate-600">
+              {sendKeyLabel} で送信 / Enter で改行
+            </p>
           </div>
       </>
     </section>

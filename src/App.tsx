@@ -13,6 +13,8 @@ import {
 } from "@/lib/chat/chatStore";
 import { loadCandidates } from "@/lib/candidates/candidateStore";
 import { loadPrompts } from "@/lib/prompts/promptLibrary";
+import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
+import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
 import { loadTicker, useAnalyses } from "@/lib/api/analysisStore";
 import {
@@ -63,6 +65,8 @@ export default function App() {
   const [tickerPreset, setTickerPreset] = useState<{ ticker: string; seq: number } | null>(
     null,
   );
+  // 検討中銘柄のインポート。ショートカットからも開けるよう App が持つ
+  const [candidateImportOpen, setCandidateImportOpen] = useState(false);
 
   // 枠ごとの折りたたみ状態。畳んだ枠は描画せず、最上部バーの復元ボタンに退避する
   const slots = useSlots();
@@ -137,6 +141,7 @@ export default function App() {
     void loadChatSessions();
     void loadCandidates();
     void loadPrompts();
+    void loadShortcuts();
   }, []);
 
   /** 枠に入っているパネルを描画する。ドラッグで入れ替えられる。 */
@@ -236,21 +241,54 @@ export default function App() {
     return left ?? right;
   };
 
-  // Ctrl+B でサイドバー開閉 / Ctrl+, で設定
+  /*
+   * ショートカットキーの入り口。割り当ては `shortcutStore` が持ち、
+   * 設定画面から変更できる（既定は `SHORTCUTS`）。
+   *
+   * 入力欄にフォーカスがあるときは、文字入力を奪わないよう
+   * `allowInInput` のアクションしか発火させない。
+   */
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!e.ctrlKey || e.shiftKey) return;
-      if (e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setSidebarCollapsed((v) => !v);
-      } else if (e.key === ",") {
-        e.preventDefault();
-        setSettingsOpen(true);
+      const target = e.target as HTMLElement | null;
+      const inInput =
+        target !== null &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
+      const def = resolveAction(bindingFromEvent(e), inInput);
+      if (!def) return;
+
+      e.preventDefault();
+      switch (def.action) {
+        case "chat.new":
+          handleNewChat();
+          break;
+        case "candidates.add":
+          setSidebarCollapsed(false);
+          setCandidateImportOpen(true);
+          break;
+        case "ticker.focus":
+          document.querySelector<HTMLInputElement>('input[data-ticker-input="true"]')?.focus();
+          break;
+        case "analysis.run":
+          handleRunAnalysis();
+          break;
+        case "sidebar.toggle":
+          setSidebarCollapsed((v) => !v);
+          break;
+        case "app.settings":
+          setSettingsOpen(true);
+          break;
+        case "chat.send":
+          // 入力欄側で処理する
+          break;
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  });
 
   // 銘柄タブを開いたら、保存済みの分析結果を復元する。
   // 表示中・実行中の結果があるときは何もしない（restoreAnalysis 側で判定）。
@@ -362,6 +400,8 @@ export default function App() {
           onDeleteSession={(id) => void deleteSession(id)}
           onNewChat={handleNewChat}
           onSelectTicker={handleCandidateSelect}
+          candidateImportOpen={candidateImportOpen}
+          onCandidateImportOpenChange={setCandidateImportOpen}
         />
 
         <main className="flex min-w-0 flex-1 flex-col">

@@ -1,9 +1,32 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import type { ChatSession } from "@/types";
 import ChatHistoryItem from "@/components/ChatHistoryItem";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CandidateStocksPanel from "@/components/CandidateStocksPanel";
+import { clampFirstSize } from "@/lib/ui/splitMath";
 import { IconArchive, IconPanelLeft, IconPlus } from "@/components/Icons";
+
+const HEIGHT_KEY = "stockanalyzer.candidatesHeight";
+const COLLAPSED_KEY = "stockanalyzer.candidatesCollapsed";
+const DEFAULT_HEIGHT = 160;
+
+function readStored(key: string, fallback: number): number {
+  try {
+    const raw = localStorage.getItem(key);
+    const value = raw === null ? Number.NaN : Number(raw);
+    return Number.isFinite(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function store(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // 保存できなくても動作は続ける
+  }
+}
 
 interface Props {
   collapsed: boolean;
@@ -17,6 +40,9 @@ interface Props {
   onNewChat: () => void;
   /** 検討中銘柄をクリックしたとき */
   onSelectTicker: (ticker: string) => void;
+  /** 検討中銘柄のインポートモーダル（ショートカットからも開ける） */
+  candidateImportOpen: boolean;
+  onCandidateImportOpenChange: (open: boolean) => void;
 }
 
 /** Chatbox 風の会話履歴サイドバー（折りたたみ可能） */
@@ -31,9 +57,68 @@ export default function Sidebar({
   onDeleteSession,
   onNewChat,
   onSelectTicker,
+  candidateImportOpen,
+  onCandidateImportOpenChange,
 }: Props) {
   const [deleting, setDeleting] = useState<ChatSession | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+
+  const asideRef = useRef<HTMLElement>(null);
+  const [candidatesHeight, setCandidatesHeight] = useState(() =>
+    readStored(HEIGHT_KEY, DEFAULT_HEIGHT),
+  );
+  const [candidatesCollapsed, setCandidatesCollapsed] = useState(
+    () => readStored(COLLAPSED_KEY, 0) === 1,
+  );
+  const [resizing, setResizing] = useState(false);
+
+  /*
+   * 境界線のドラッグ。カーソル位置からサイドバー下端までを小窓の高さにする。
+   * 履歴側の最小（160px）を割り込まないよう `clampFirstSize` で丸める。
+   */
+  const onPointerMove = useCallback((e: globalThis.PointerEvent) => {
+    const rect = asideRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setCandidatesHeight(
+      clampFirstSize({
+        desired: rect.bottom - e.clientY,
+        total: rect.height,
+        minFirst: 64,
+        minSecond: 160,
+      }),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!resizing) return;
+
+    const stop = () => setResizing(false);
+    document.body.classList.add("is-resizing-v");
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", stop);
+    document.addEventListener("pointercancel", stop);
+    return () => {
+      document.body.classList.remove("is-resizing-v");
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", stop);
+      document.removeEventListener("pointercancel", stop);
+    };
+  }, [resizing, onPointerMove]);
+
+  useEffect(() => {
+    store(HEIGHT_KEY, String(Math.round(candidatesHeight)));
+  }, [candidatesHeight]);
+
+  useEffect(() => {
+    store(COLLAPSED_KEY, candidatesCollapsed ? "1" : "0");
+  }, [candidatesCollapsed]);
+
+  const startResize = (e: PointerEvent) => {
+    if (candidatesCollapsed) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setResizing(true);
+  };
 
   const archived = sessions.filter((s) => s.isArchived);
   const shown = showArchived ? archived : sessions.filter((s) => !s.isArchived);
@@ -62,7 +147,10 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900">
+    <aside
+      ref={asideRef}
+      className="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900"
+    >
       <div className="flex min-h-11 shrink-0 items-center justify-between gap-2 px-2">
         <button
           type="button"
@@ -146,7 +234,15 @@ export default function Sidebar({
         )}
       </nav>
 
-      <CandidateStocksPanel onSelectTicker={onSelectTicker} />
+      <CandidateStocksPanel
+        onSelectTicker={onSelectTicker}
+        height={candidatesHeight}
+        collapsed={candidatesCollapsed}
+        onToggleCollapsed={() => setCandidatesCollapsed((v) => !v)}
+        onResizeStart={startResize}
+        importOpen={candidateImportOpen}
+        onImportOpenChange={onCandidateImportOpenChange}
+      />
 
       <ConfirmDialog
         open={deleting !== null}

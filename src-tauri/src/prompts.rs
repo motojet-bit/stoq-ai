@@ -1,6 +1,6 @@
 //! AI の役割設定（システムプロンプト）ライブラリ。
 //!
-//! 「プロの株式ジャーナリスト」「テンバガー発掘アナリスト」のような役割を
+//! 「プロの株式ジャーナリスト」「高成長・グロース株アナリスト」のような役割を
 //! ストックしておき、対話パネルからワンタップで切り替える。
 //! `<app_data_dir>/library.db` の `prompts` テーブルに保存する。
 //!
@@ -40,11 +40,12 @@ const DEFAULTS: &[(&str, &str)] = &[
          推測を述べるときは「推測」と明示し、断定を避けてください。回答は日本語で行ってください。",
     ),
     (
-        "テンバガー発掘アナリスト",
-        "あなたは中小型グロース株から将来の 10 倍株を探すアナリストです。\
-         市場規模（TAM）、成長率の持続性、参入障壁、経営陣の実行力を重視して評価してください。\
-         ただし赤字継続・希薄化・資金繰りのリスクは必ず併記し、\
-         期待だけで評価を持ち上げないでください。回答は日本語で行ってください。",
+        // 将来の株価騰貴を断定・保証すると受け取られる表現は避ける（金商法・景表法）
+        "高成長・グロース株アナリスト",
+        "あなたは中小型グロース株の売上・利益成長率や競争優位性を分析するアナリストです。\
+         市場規模（TAM）、成長率の持続性、参入障壁、経営陣の実行力を客観的に評価してください。\
+         赤字継続・希薄化・資金繰りのリスクは必ず併記し、\
+         将来の株価や騰落を断定・保証する表現は用いないでください。回答は日本語で行ってください。",
     ),
     (
         "慎重な高配当アナリスト",
@@ -72,7 +73,24 @@ pub fn migrate(conn: &Connection) -> Result<()> {
     )
     .map_err(|e| AppError::msg(format!("プロンプトテーブルを作成できません: {e}")))?;
 
-    seed_defaults(conn)
+    seed_defaults(conn)?;
+    rename_legacy_defaults(conn)
+}
+
+/// 旧バージョンで投入した既定役割の表現を差し替える。
+///
+/// 「テンバガー発掘」は将来の株価騰貴を断定・保証すると受け取られうるため、
+/// **すでに配布済みの DB に入っている行も**客観的な表現へ寄せる。
+/// ユーザーが編集した行（`builtin = 0`、または本文を書き換えたもの）は触らない。
+fn rename_legacy_defaults(conn: &Connection) -> Result<()> {
+    let (title, body) = DEFAULTS[1];
+    conn.execute(
+        "UPDATE prompts SET title = ?1, body = ?2
+         WHERE builtin = 1 AND title = 'テンバガー発掘アナリスト'",
+        params![title, body],
+    )
+    .map_err(|e| AppError::msg(format!("既定の役割を更新できません: {e}")))?;
+    Ok(())
 }
 
 /// 既定の役割を一度だけ投入する。
@@ -226,7 +244,11 @@ mod tests {
         let list = list_in(&db()).unwrap();
         assert_eq!(list.len(), DEFAULTS.len());
         assert!(list.iter().all(|p| p.builtin));
-        assert!(list.iter().any(|p| p.title == "テンバガー発掘アナリスト"));
+        assert!(list.iter().any(|p| p.title == "高成長・グロース株アナリスト"));
+        assert!(
+            list.iter().all(|p| !p.title.contains("テンバガー")),
+            "断定的な表現は既定役割に含めない"
+        );
         assert!(list.iter().all(|p| !p.body.trim().is_empty()));
     }
 
@@ -279,6 +301,35 @@ mod tests {
         let conn = db();
         assert!(save_in(&conn, Some("prompt-none".into()), "a", "b").is_err());
         assert!(remove_in(&conn, "prompt-none").is_err());
+    }
+
+    #[test]
+    fn 旧版の断定的な役割名は客観的な表現へ差し替えられる() {
+        let conn = Connection::open_in_memory().unwrap();
+        // 旧バージョンが投入した状態を再現する
+        conn.execute_batch(
+            "CREATE TABLE prompts (
+                id TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL,
+                builtin INTEGER NOT NULL DEFAULT 0,
+                created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);
+             CREATE TABLE prompt_seed (key TEXT PRIMARY KEY, done_at_ms INTEGER NOT NULL);
+             INSERT INTO prompts VALUES
+                ('p1', 'テンバガー発掘アナリスト', '将来の 10 倍株を探す', 1, 1, 1),
+                ('p2', '自作の役割', 'テンバガー発掘アナリストのように考える', 0, 1, 1);
+             INSERT INTO prompt_seed VALUES ('defaults', 1);",
+        )
+        .unwrap();
+
+        migrate(&conn).unwrap();
+
+        let list = list_in(&conn).unwrap();
+        let builtin = list.iter().find(|p| p.id == "p1").unwrap();
+        assert_eq!(builtin.title, "高成長・グロース株アナリスト");
+        assert!(builtin.body.contains("売上・利益成長率"));
+
+        // ユーザーが自分で作った役割には触れない
+        let mine = list.iter().find(|p| p.id == "p2").unwrap();
+        assert_eq!(mine.title, "自作の役割");
     }
 
     #[test]

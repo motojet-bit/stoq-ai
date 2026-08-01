@@ -59,6 +59,58 @@ describe("parseCandidates（正常系）", () => {
   });
 });
 
+describe("parseCandidates（ティッカーだけの羅列）", () => {
+  it("改行区切りのティッカーだけでも社名省略で取り込める", () => {
+    const { items, errors } = parseCandidates("AAPL\nNVDA\nMSFT");
+
+    expect(errors).toEqual([]);
+    expect(items).toEqual([
+      { ticker: "AAPL", name: "", genre: "" },
+      { ticker: "NVDA", name: "", genre: "" },
+      { ticker: "MSFT", name: "", genre: "" },
+    ]);
+  });
+
+  it("カンマ・読点・タブ区切りの羅列も 1 行で取り込める", () => {
+    expect(parseCandidates("AAPL, NVDA,MSFT").items.map((i) => i.ticker)).toEqual([
+      "AAPL",
+      "NVDA",
+      "MSFT",
+    ]);
+    expect(parseCandidates("AAPL\tNVDA").items.map((i) => i.ticker)).toEqual([
+      "AAPL",
+      "NVDA",
+    ]);
+    expect(parseCandidates("AAPL、NVDA").items.map((i) => i.ticker)).toEqual([
+      "AAPL",
+      "NVDA",
+    ]);
+  });
+
+  it("羅列とパイプ区切りが混ざっていても両方取り込む", () => {
+    const { items, errors } = parseCandidates("AAPL\nNVDA|NVIDIA|AI Chip\nMSFT");
+
+    expect(errors).toEqual([]);
+    expect(items).toEqual([
+      { ticker: "AAPL", name: "", genre: "" },
+      { ticker: "NVDA", name: "NVIDIA", genre: "AI Chip" },
+      { ticker: "MSFT", name: "", genre: "" },
+    ]);
+  });
+
+  it("羅列でも重複はまとめる", () => {
+    const { items, duplicates } = parseCandidates("AAPL\nNVDA\naapl");
+    expect(items.map((i) => i.ticker)).toEqual(["AAPL", "NVDA"]);
+    expect(duplicates).toEqual(["AAPL"]);
+  });
+
+  it("パイプ無しでも不正なティッカーはエラーになる", () => {
+    const { items, errors } = parseCandidates("アップル\nNVDA");
+    expect(items.map((i) => i.ticker)).toEqual(["NVDA"]);
+    expect(errors).toHaveLength(1);
+  });
+});
+
 describe("parseCandidates（エラー検知）", () => {
   it("ティッカーが空の行を弾く", () => {
     const { items, errors } = parseCandidates("|Apple|Phone\nNVDA|NVIDIA|AI Chip");

@@ -37,6 +37,7 @@ export default function TickerInput({ onSubmit, preset = null }: Props) {
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          data-ticker-input="true"
           placeholder="ティッカー（例: NVDA, 7203.T, ASML.AS）"
           spellCheck={false}
           autoComplete="off"

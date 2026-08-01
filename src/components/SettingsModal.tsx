@@ -12,6 +12,7 @@ import {
 import { IconClose, IconKey, IconPlus } from "@/components/Icons";
 import ModelCombo from "@/components/ModelCombo";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ShortcutSettings from "@/components/ShortcutSettings";
 
 interface Props {
   open: boolean;
@@ -43,6 +44,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   // 誤操作防止。削除対象のプロバイダ ID を持つ
   const [deletingKeyOf, setDeletingKeyOf] = useState<ProviderId | null>(null);
+  const [tab, setTab] = useState<"providers" | "shortcuts">("providers");
 
   // モーダルを開いた時点の設定値を入力欄の初期値にする
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     setError(null);
     setSavedAt(null);
     setDeletingKeyOf(null);
+    setTab("providers");
     // open の切り替わり時のみ初期化する（入力中に settings が更新されても上書きしない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -174,8 +177,33 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
           </button>
         </header>
 
+        <div className="flex shrink-0 items-center gap-1 border-b border-slate-800 px-4">
+          {(
+            [
+              ["providers", "APIキー・モデル"],
+              ["shortcuts", "ショートカット"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              aria-pressed={tab === id}
+              className={`-mb-px border-b-2 px-3 py-2 t-body transition-colors ${
+                tab === id
+                  ? "border-emerald-500 font-medium text-emerald-300"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-          {!settings ? (
+          {tab === "shortcuts" ? (
+            <ShortcutSettings />
+          ) : !settings ? (
             <p className="t-body text-slate-400">設定を読み込んでいます…</p>
           ) : (
             <>
@@ -389,9 +417,11 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
 
         <footer className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4">
           <span className="t-label text-slate-600">
-            {savedAt
-              ? `保存しました（${savedAt}）`
-              : "APIキーは OS のアプリ設定ディレクトリに保存され、画面には表示されません。"}
+            {tab === "shortcuts"
+              ? "ショートカットの変更は即座に保存されます。"
+              : savedAt
+                ? `保存しました（${savedAt}）`
+                : "APIキーは OS のアプリ設定ディレクトリに保存され、画面には表示されません。"}
           </span>
           <div className="flex gap-2">
             <button
@@ -404,7 +434,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
             <button
               type="button"
               onClick={() => void handleSave()}
-              disabled={busy || !settings}
+              disabled={busy || !settings || tab !== "providers"}
               className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
               {busy ? "保存中…" : "保存"}

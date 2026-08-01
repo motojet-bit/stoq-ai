@@ -17,6 +17,7 @@ mod llm;
 mod prompts;
 mod quarterly;
 mod settings;
+mod shortcuts;
 mod yahoo;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -48,6 +49,9 @@ pub fn run() {
             commands::prompts_list,
             commands::prompts_save,
             commands::prompts_remove,
+            commands::shortcuts_list,
+            commands::shortcuts_set,
+            commands::shortcuts_reset,
             commands::chat_load_messages,
             commands::chat_append_message,
             commands::documents_list,
