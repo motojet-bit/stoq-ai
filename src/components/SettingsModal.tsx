@@ -16,6 +16,7 @@ import ShortcutSettings from "@/components/ShortcutSettings";
 import MarketProviderSettings from "@/components/MarketProviderSettings";
 import ThresholdSettings from "@/components/ThresholdSettings";
 import DisplaySettings from "@/components/DisplaySettings";
+import LicenseSettings from "@/components/LicenseSettings";
 import ModalShell from "@/components/ModalShell";
 
 interface Props {
@@ -49,7 +50,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   // 誤操作防止。削除対象のプロバイダ ID を持つ
   const [deletingKeyOf, setDeletingKeyOf] = useState<ProviderId | null>(null);
   const [tab, setTab] = useState<
-    "providers" | "market" | "thresholds" | "display" | "shortcuts"
+    "providers" | "market" | "thresholds" | "display" | "shortcuts" | "license"
   >("providers");
 
   // モーダルを開いた時点の設定値を入力欄の初期値にする
@@ -166,8 +167,10 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
       footer={
         <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
           <span className="t-label text-slate-600">
-            {tab === "shortcuts" || tab === "display"
-              ? "この画面の変更は即座に保存されます。"
+            {tab === "license"
+              ? "ライセンスキーは OS のアプリ設定ディレクトリに保存されます。"
+              : tab === "shortcuts" || tab === "display"
+                ? "この画面の変更は即座に保存されます。"
               : tab === "thresholds"
                 ? "閾値の変更は即座に保存され、次回の分析から反映されます。"
                 : tab === "market"
@@ -204,6 +207,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
             ["thresholds", "分析ルール・閾値"],
             ["display", "表示"],
             ["shortcuts", "ショートカット"],
+            ["license", "ライセンス認証"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -223,7 +227,9 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
       </div>
 
       <div className="px-4 py-4">
-          {tab === "shortcuts" ? (
+          {tab === "license" ? (
+            <LicenseSettings />
+          ) : tab === "shortcuts" ? (
             <ShortcutSettings />
           ) : tab === "display" ? (
             <DisplaySettings />

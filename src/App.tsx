@@ -19,6 +19,7 @@ import {
   loadArchive,
   loadPortfolios,
 } from "@/lib/portfolio/portfolioStore";
+import { loadLicense } from "@/lib/license/licenseStore";
 import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
 import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
@@ -171,6 +172,7 @@ export default function App() {
     void loadAnalystRoles();
     void loadPortfolios();
     void loadArchive();
+    void loadLicense();
 
     try {
       if (localStorage.getItem(TOUR_SEEN_KEY) !== "1") setTourOpen(true);
@@ -219,6 +221,7 @@ export default function App() {
             onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
             onClear={() => activeTicker && void clearAnalysis(activeTicker)}
             onSaveToPortfolio={() => activeTicker && setSavingTicker(activeTicker)}
+            analysis={activeAnalysis}
             onOpenSettings={() => setSettingsOpen(true)}
           />
         );

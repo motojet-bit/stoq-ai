@@ -53,6 +53,9 @@ pub struct Settings {
     /// AI の合否判定に使う閾値。**ユーザーが変えた項目だけ**入る。
     /// 項目の定義と既定値はフロント側（`src/lib/prompts/thresholds.ts`）が持つ。
     pub thresholds: BTreeMap<String, f64>,
+    /// ライセンスキー（生の値）。フロントへはマスク済みしか返さない
+    #[serde(default)]
+    pub license_key: String,
 
     /// 旧形式（カスタム枠が 1 つ固定だった頃）の Base URL。
     /// 読み込み時に `custom_providers` へ移行し、以降は空になる。
@@ -76,6 +79,7 @@ impl Default for Settings {
             max_prompt_tokens: 180_000,
             market_provider: crate::market::DEFAULT_PROVIDER.to_string(),
             thresholds: BTreeMap::new(),
+            license_key: String::new(),
             custom_base_url: String::new(),
         }
     }
@@ -99,6 +103,8 @@ pub struct SettingsView {
     pub market_providers: Vec<crate::market::ProviderStatus>,
     /// ユーザーが変更した閾値だけ
     pub thresholds: BTreeMap<String, f64>,
+    /// ライセンスの状態（生のキーは含まない）
+    pub license: crate::license::LicenseStatus,
     /// 組み込み + カスタムの全プロバイダのキー状態
     pub keys: Vec<KeyStatus>,
 }
@@ -168,6 +174,7 @@ impl Settings {
             market_provider: crate::market::normalize_id(&self.market_provider),
             market_providers: crate::market::all_statuses(self),
             thresholds: self.thresholds.clone(),
+            license: crate::license::status_of(&self.license_key),
             keys: self
                 .provider_ids()
                 .into_iter()

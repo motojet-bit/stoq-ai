@@ -55,6 +55,8 @@ export interface AppSettings {
   marketProviders: MarketProviderStatus[];
   /** AI の合否判定に使う閾値。既定から変更した項目だけ入る */
   thresholds: Record<string, number>;
+  /** ライセンスの状態 */
+  license: LicenseStatus;
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
 }
@@ -118,7 +120,17 @@ export interface SavedAnalysis {
   notes: string[];
   /** 分析に使ったデータ元 */
   basis: string[];
+  /** 構造化した分析データ（JSON 文字列）。未保存なら `{}` */
+  record: string;
   savedAtMs: number;
+}
+
+/** ライセンスの状態（生のキーは含まない） */
+export interface LicenseStatus {
+  activated: boolean;
+  /** 例: `A1B2…7890`。未設定なら null */
+  masked: string | null;
+  message: string;
 }
 
 /** 分析アーカイブ 1 件（本文は含まない） */
@@ -131,6 +143,8 @@ export interface ArchiveEntry {
   averageScore: number | null;
   /** 対象四半期などのラベル（例: FY2026 Q3） */
   periodLabel: string | null;
+  /** 構造化した分析データ（JSON 文字列）。未保存なら `{}` */
+  record: string;
   savedAtMs: number;
 }
 

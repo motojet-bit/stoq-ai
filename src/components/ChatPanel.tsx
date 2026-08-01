@@ -16,6 +16,8 @@ import PromptLibraryMenu from "@/components/PromptLibraryMenu";
 import { activeSystemPrompt } from "@/lib/prompts/promptLibrary";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { useChatDraft } from "@/lib/chat/chatDraft";
+import { ingestFiles, useStagedDocuments } from "@/lib/parser/documentStore";
+import { IconPaperclip } from "@/components/Icons";
 
 interface Props {
   settings: AppSettings | null;
@@ -46,6 +48,9 @@ export default function ChatPanel({
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // 単発のプレスリリースなどをここから直接読み込ませる
+  const fileRef = useRef<HTMLInputElement>(null);
+  const documents = useStagedDocuments();
 
   const sendKeyLabel = isMac() ? "⌘+Enter" : "Ctrl+Enter";
 
@@ -247,6 +252,32 @@ ${draft.text}`));
             )}
 
             <div className="flex items-end gap-2">
+              {/* 最新の一次資料をその場で足せるようにする */}
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                accept=".pdf,.txt,.md,.markdown,.pptx,.docx,.html,.htm,.csv,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  if (files.length > 0) void ingestFiles(files);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                title="一次資料を添付（PDF / TXT / MD / PPTX / DOCX）"
+                aria-label="一次資料を添付"
+                className="flex min-h-11 shrink-0 items-center gap-1 rounded-md border border-slate-700 px-2 text-slate-400 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+              >
+                <IconPaperclip className="h-4 w-4" />
+                {documents.length > 0 && (
+                  <span className="font-mono t-label">{documents.length}</span>
+                )}
+              </button>
+
               <textarea
                 ref={inputRef}
                 rows={2}
@@ -277,8 +308,12 @@ ${draft.text}`));
               </button>
             </div>
 
-            <p className="t-label mt-1 text-right text-slate-600">
-              {sendKeyLabel} で送信 / Enter で改行
+            <p className="t-label mt-1 flex flex-wrap items-center justify-between gap-2 text-slate-600">
+              <span>
+                📎 で最新のプレスリリース等を添付できます
+                {documents.length > 0 ? `（読み込み済み ${documents.length} 件）` : ""}
+              </span>
+              <span>{sendKeyLabel} で送信 / Enter で改行</span>
             </p>
           </div>
       </>

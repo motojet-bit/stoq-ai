@@ -18,6 +18,7 @@ const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   maxPromptTokens: 180_000,
   marketProvider: "yahoo",
   thresholds: {},
+  license: { activated: false, masked: null, message: "未登録" },
   marketProviders: [
     { id: "yahoo", label: "Yahoo Finance", requiresKey: false, ready: true, reason: null },
     {

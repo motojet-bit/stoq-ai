@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
 import type { AnalysisRun } from "@/lib/prompts/analysisRunner";
+import type { TickerAnalysis } from "@/types";
 import { CRITERIA } from "@/lib/prompts/criteria";
 import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
 import AnalystRoleMenu from "@/components/AnalystRoleMenu";
+import ExportMenu from "@/components/ExportMenu";
+import { buildAnalysisRecord } from "@/lib/export/analysisRecord";
 import {
   IconBookmark,
   IconChart,
@@ -28,6 +31,8 @@ interface Props {
   onClear: () => void;
   /** マイポートフォリオへの保存先を選ぶ */
   onSaveToPortfolio: () => void;
+  /** エクスポート用。市場データが要るので親から受け取る */
+  analysis?: TickerAnalysis;
   onOpenSettings: () => void;
 }
 
@@ -53,6 +58,7 @@ export default function AnalysisPanel({
   onCancel,
   onClear,
   onSaveToPortfolio,
+  analysis,
   onOpenSettings,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -96,6 +102,23 @@ export default function AnalysisPanel({
               <span className="t-label shrink-0 font-mono text-emerald-400">
                 平均 {result.averageScore.toFixed(1)} / 5
               </span>
+            )}
+
+            {hasContent && !streaming && ticker && (
+              <ExportMenu
+                label="エクスポート"
+                records={() => [
+                  buildAnalysisRecord({
+                    ticker,
+                    raw: run?.raw ?? "",
+                    fundamentals: analysis?.fundamentals ?? null,
+                    quarterly: analysis?.quarterly ?? null,
+                    provider: run?.provider ?? null,
+                    model: run?.model ?? null,
+                    savedAtMs: run?.savedAtMs ?? Date.now(),
+                  }),
+                ]}
+              />
             )}
 
             {hasContent && !streaming && (

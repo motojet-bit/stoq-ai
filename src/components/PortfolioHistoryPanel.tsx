@@ -2,13 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { loadArchive, useArchive, useArchiveLoading } from "@/lib/portfolio/portfolioStore";
 import { groupByTicker, periodLabelOf } from "@/lib/portfolio/archive";
-import { pushChatDraft } from "@/lib/chat/chatDraft";
+import { buildTransferText } from "@/lib/portfolio/heatmap";
 import {
-  setPortfolioSplit,
-  usePortfolioSplit,
-} from "@/lib/ui/portfolioLayout";
+  buildAnalysisRecord,
+  parseAnalysisRecord,
+  type AnalysisRecord,
+} from "@/lib/export/analysisRecord";
+import { pushChatDraft } from "@/lib/chat/chatDraft";
+import { setPortfolioSplit, usePortfolioSplit } from "@/lib/ui/portfolioLayout";
 import { toastError, toastSuccess } from "@/lib/ui/toastStore";
 import PanelHeader from "@/components/PanelHeader";
+import PortfolioHeatmap from "@/components/PortfolioHeatmap";
+import ExportMenu from "@/components/ExportMenu";
 import {
   IconChart,
   IconLayoutColumns,
@@ -24,9 +29,10 @@ interface Props {
 /**
  * マイポートフォリオ画面の左（上）ペイン。
  *
- * 銘柄ごとの分析ログを時系列で並べ、**そのまま AI に投げられる**ようにする。
+ * **まず全体の傾向をヒートマップで見せ**、気になった銘柄をクリックして
+ * 四半期タイムラインへ降りる流れにしている。
  * 過去の自分の分析と突き合わせるのが目的なので、
- * コピーと「対話へ引用」の 2 つの導線を用意している。
+ * コピー・引用・全期の一括転送・エクスポートの導線を用意した。
  */
 export default function PortfolioHistoryPanel({
   onToggleCollapse,
@@ -36,7 +42,10 @@ export default function PortfolioHistoryPanel({
   const loading = useArchiveLoading();
   const split = usePortfolioSplit();
 
+  // 一覧（ヒートマップ）とタイムラインを行き来する
+  const [view, setView] = useState<"heatmap" | "timeline">("heatmap");
   const [openTicker, setOpenTicker] = useState<string | null>(null);
+  const [transferring, setTransferring] = useState(false);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [body, setBody] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
@@ -46,11 +55,59 @@ export default function PortfolioHistoryPanel({
   }, []);
 
   const archives = useMemo(() => groupByTicker(archive), [archive]);
+  const selected = archives.find((a) => a.ticker === openTicker) ?? null;
 
-  // 最初の銘柄を開いておく（空の画面から始めさせない）
-  useEffect(() => {
-    if (openTicker === null && archives.length > 0) setOpenTicker(archives[0].ticker);
-  }, [archives, openTicker]);
+  const openTimeline = (ticker: string) => {
+    setOpenTicker(ticker);
+    setOpenEntry(null);
+    setBody(null);
+    setView("timeline");
+  };
+
+  /**
+   * 過去全期の本文をまとめて対話へ流し込む。
+   * **1 件ずつ開かせない**——時系列で比べたいときに手間が大きすぎるため。
+   */
+  const transferAll = async (
+    ticker: string,
+    items: { id: string; label: string; score: number | null; savedAtMs: number }[],
+  ) => {
+    setTransferring(true);
+    try {
+      const sections = [];
+      for (const item of items) {
+        const raw = isTauri()
+          ? await invoke<string | null>("analysis_history_raw", { id: item.id }).catch(
+              () => null,
+            )
+          : null;
+        if (raw) sections.push({ ...item, body: raw });
+      }
+      pushChatDraft(buildTransferText(ticker, sections));
+      toastSuccess(`${ticker} の ${sections.length} 期分を対話へ転送しました`);
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+  /** エクスポート用のレコード。保存済みの構造化 JSON を優先する。 */
+  const recordsFor = (ticker: string): AnalysisRecord[] => {
+    const target = archives.find((a) => a.ticker === ticker);
+    if (!target) return [];
+    return target.entries.map(
+      (entry) =>
+        parseAnalysisRecord(entry.record ?? "{}") ??
+        buildAnalysisRecord({
+          ticker,
+          raw: "",
+          fundamentals: null,
+          quarterly: null,
+          provider: entry.provider,
+          model: entry.model,
+          savedAtMs: entry.savedAtMs,
+        }),
+    );
+  };
 
   const openLog = async (id: string) => {
     if (openEntry === id) {
@@ -89,8 +146,6 @@ export default function PortfolioHistoryPanel({
     );
     toastSuccess("対話ウィンドウに引用しました");
   };
-
-  const selected = archives.find((a) => a.ticker === openTicker) ?? null;
 
   return (
     <section className="panel bg-slate-950">
@@ -134,36 +189,56 @@ export default function PortfolioHistoryPanel({
       />
 
       <div className="panel-scroll px-3 py-2">
-        {archives.length === 0 ? (
-          <p className="t-body leading-relaxed text-slate-500">
-            まだ分析の履歴がありません。
-            <br />
-            銘柄を分析すると、実行のたびにここへ蓄積され、
-            決算期をまたいだ推移を追えるようになります。
-          </p>
+        {view === "heatmap" ? (
+          <PortfolioHeatmap entries={archive} onSelectTicker={openTimeline} />
         ) : (
           <>
-            {/* 銘柄の切替 */}
-            <div className="mb-2 flex flex-wrap gap-1">
-              {archives.map((a) => (
-                <button
-                  key={a.ticker}
-                  type="button"
-                  onClick={() => {
-                    setOpenTicker(a.ticker);
-                    setOpenEntry(null);
-                    setBody(null);
-                  }}
-                  className={`flex min-h-6 items-center gap-1 rounded border px-1.5 font-mono t-label transition-colors ${
-                    a.ticker === openTicker
-                      ? "border-emerald-600 bg-emerald-950/40 text-emerald-300"
-                      : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600"
-                  }`}
-                >
-                  {a.ticker}
-                  <span className="text-slate-600">{a.entries.length}</span>
-                </button>
-              ))}
+            {/* タイムライン。一覧へ戻る導線は必ず残す */}
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setView("heatmap")}
+                className="min-h-6 shrink-0 rounded border border-slate-700 px-2 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+              >
+                ← 一覧へ戻る
+              </button>
+              <span className="font-mono t-body font-semibold text-emerald-300">
+                {selected?.ticker ?? "—"}
+              </span>
+              <span className="t-label text-slate-500">
+                {selected?.entries.length ?? 0} 期分
+              </span>
+
+              <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                {selected && selected.entries.length > 0 && (
+                  <button
+                    type="button"
+                    disabled={transferring}
+                    onClick={() =>
+                      void transferAll(
+                        selected.ticker,
+                        selected.entries.map((e) => ({
+                          id: e.id,
+                          label: periodLabelOf(e),
+                          score: e.averageScore,
+                          savedAtMs: e.savedAtMs,
+                        })),
+                      )
+                    }
+                    title="過去全四半期の分析を構造化テキストとして対話へ送る"
+                    className="flex min-h-6 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-2 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:opacity-40"
+                  >
+                    📋 {transferring ? "転送中…" : "全期の分析データを対話へ転送"}
+                  </button>
+                )}
+                {selected && (
+                  <ExportMenu
+                    label="エクスポート"
+                    records={() => recordsFor(selected.ticker)}
+                    disabled={selected.entries.length === 0}
+                  />
+                )}
+              </span>
             </div>
 
             {selected && (
@@ -171,6 +246,7 @@ export default function PortfolioHistoryPanel({
                 {selected.entries.map((entry) => {
                   const label = periodLabelOf(entry);
                   const expanded = openEntry === entry.id;
+                  const record = parseAnalysisRecord(entry.record ?? "{}");
 
                   return (
                     <li
@@ -191,6 +267,9 @@ export default function PortfolioHistoryPanel({
                             ? entry.averageScore.toFixed(1)
                             : "—"}
                         </span>
+                        {record?.summary.statusIcon && (
+                          <span className="shrink-0">{record.summary.statusIcon}</span>
+                        )}
                         <span className="min-w-0 flex-1 truncate t-label text-slate-600">
                           {new Date(entry.savedAtMs).toLocaleString("ja-JP")}
                           {entry.model ? ` / ${entry.model}` : ""}
@@ -202,6 +281,87 @@ export default function PortfolioHistoryPanel({
 
                       {expanded && (
                         <div className="border-t border-slate-800 px-2.5 py-2">
+                          {/* 構造化データがあれば要点を先に見せる */}
+                          {record && record.blockScores.length > 0 && (
+                            <div className="mb-2 grid gap-2 sm:grid-cols-2">
+                              <div>
+                                <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
+                                  ブロック別スコア
+                                </div>
+                                <ul className="space-y-0.5">
+                                  {record.blockScores.map((b) => (
+                                    <li
+                                      key={b.id}
+                                      className="flex items-baseline justify-between gap-2 t-label"
+                                    >
+                                      <span className="text-slate-400">{b.label}</span>
+                                      <span className="font-mono text-slate-200">
+                                        {b.score === null ? "—" : b.score.toFixed(1)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
+                                  主要数値
+                                </div>
+                                <ul className="space-y-0.5">
+                                  {record.keyMetrics.slice(0, 6).map((m) => (
+                                    <li
+                                      key={m.key}
+                                      className="flex items-baseline justify-between gap-2 t-label"
+                                    >
+                                      <span className="truncate text-slate-400">
+                                        {m.label}
+                                      </span>
+                                      <span className="shrink-0 font-mono text-slate-200">
+                                        {m.value}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {record &&
+                            (record.evaluations.strengths.length > 0 ||
+                              record.evaluations.risks.length > 0) && (
+                              <div className="mb-2 grid gap-2 sm:grid-cols-2">
+                                <div>
+                                  <div className="mb-1 t-label font-medium text-emerald-400">
+                                    適合・強み
+                                  </div>
+                                  <ul className="space-y-0.5">
+                                    {record.evaluations.strengths.map((item) => (
+                                      <li
+                                        key={item}
+                                        className="selectable t-label text-slate-300"
+                                      >
+                                        ・{item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                <div>
+                                  <div className="mb-1 t-label font-medium text-amber-400">
+                                    基準未達・リスク
+                                  </div>
+                                  <ul className="space-y-0.5">
+                                    {record.evaluations.risks.map((item) => (
+                                      <li
+                                        key={item}
+                                        className="selectable t-label text-slate-300"
+                                      >
+                                        ・{item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+
                           {fetching ? (
                             <p className="t-label text-slate-500">読み込み中…</p>
                           ) : (

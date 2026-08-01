@@ -10,9 +10,11 @@ mod commands;
 mod documents;
 mod edgar;
 mod error;
+mod exports;
 mod html;
 mod http;
 mod library;
+mod license;
 mod llm;
 mod market;
 mod personas;
@@ -45,6 +47,10 @@ pub fn run() {
             commands::analysis_history,
             commands::analysis_history_raw,
             commands::analysis_history_delete,
+            commands::export_write_file,
+            commands::license_status,
+            commands::license_activate,
+            commands::license_clear,
             commands::portfolios_list,
             commands::portfolios_create,
             commands::portfolios_rename,

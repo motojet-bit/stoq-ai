@@ -27,6 +27,9 @@ pub struct SavedAnalysis {
     pub notes: Vec<String>,
     /// 分析に使ったデータ元（例: "財務指標(YF)", "SEC開示書類 10-Q", "添付資料 2件"）
     pub basis: Vec<String>,
+    /// 構造化した分析データ（JSON 文字列）。未保存なら `{}`
+    #[serde(default)]
+    pub record: String,
     pub saved_at_ms: i64,
 }
 
@@ -66,6 +69,16 @@ pub fn migrate(conn: &Connection) -> Result<()> {
         "ALTER TABLE analyses ADD COLUMN basis TEXT NOT NULL DEFAULT '[]'",
         [],
     );
+    /*
+     * 構造化した分析データ（fiscal_quarter / summary / block_scores /
+     * key_metrics / evaluations）を JSON で持つ。
+     * **生テキストとは別に持つ。** 構造化に失敗しても原文は残したいうえ、
+     * エクスポートのたびにパースし直すのは無駄なため。
+     */
+    let _ = conn.execute(
+        "ALTER TABLE analyses ADD COLUMN record TEXT NOT NULL DEFAULT '{}'",
+        [],
+    );
 
     /*
      * 実行のたびに積む履歴。`analyses` は「銘柄ごとの最新 1 件」なので、
@@ -81,12 +94,19 @@ pub fn migrate(conn: &Connection) -> Result<()> {
             model         TEXT,
             average_score REAL,
             period_label  TEXT,
+            record        TEXT NOT NULL DEFAULT '{}',
             saved_at_ms   INTEGER NOT NULL
          );
          CREATE INDEX IF NOT EXISTS idx_history_ticker
             ON analysis_history(ticker, saved_at_ms DESC);",
     )
     .map_err(|e| AppError::msg(format!("分析履歴テーブルを作成できません: {e}")))?;
+
+    // 既存の履歴テーブルへの追加カラム
+    let _ = conn.execute(
+        "ALTER TABLE analysis_history ADD COLUMN record TEXT NOT NULL DEFAULT '{}'",
+        [],
+    );
 
     Ok(())
 }
@@ -103,9 +123,12 @@ pub struct ArchiveEntry {
     pub average_score: Option<f64>,
     /// 対象四半期などのラベル（例: `FY2026 Q3`）
     pub period_label: Option<String>,
+    /// 構造化した分析データ（JSON 文字列）
+    pub record: String,
     pub saved_at_ms: i64,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn append_history(
     conn: &Connection,
     ticker: &str,
@@ -114,12 +137,13 @@ fn append_history(
     model: Option<&str>,
     average_score: Option<f64>,
     period_label: Option<&str>,
+    record: &str,
     saved_at_ms: i64,
 ) -> Result<()> {
     conn.execute(
         "INSERT INTO analysis_history
-            (id, ticker, raw, provider, model, average_score, period_label, saved_at_ms)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            (id, ticker, raw, provider, model, average_score, period_label, record, saved_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
         params![
             format!("hist-{saved_at_ms}-{ticker}"),
             ticker,
@@ -128,6 +152,7 @@ fn append_history(
             model,
             average_score,
             period_label,
+            record,
             saved_at_ms
         ],
     )
@@ -142,7 +167,8 @@ pub fn history(app: &AppHandle, ticker: Option<String>) -> Result<Vec<ArchiveEnt
 
 pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<ArchiveEntry>> {
     let upper = ticker.map(|t| t.trim().to_uppercase());
-    let sql = "SELECT id, ticker, provider, model, average_score, period_label, saved_at_ms
+    let sql = "SELECT id, ticker, provider, model, average_score, period_label,
+                      record, saved_at_ms
                FROM analysis_history
                WHERE (?1 IS NULL OR ticker = ?1)
                ORDER BY saved_at_ms DESC";
@@ -160,7 +186,8 @@ pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<Archive
                 model: row.get(3)?,
                 average_score: row.get(4)?,
                 period_label: row.get(5)?,
-                saved_at_ms: row.get(6)?,
+                record: row.get(6)?,
+                saved_at_ms: row.get(7)?,
             })
         })
         .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))?;
@@ -200,6 +227,7 @@ pub fn save(
     basis: &[String],
     average_score: Option<f64>,
     period_label: Option<&str>,
+    record: Option<&str>,
 ) -> Result<SavedAnalysis> {
     let ticker = ticker.trim().to_uppercase();
     if raw.trim().is_empty() {
@@ -209,12 +237,14 @@ pub fn save(
     let saved_at_ms = now_ms();
     let notes_json = serde_json::to_string(notes)?;
     let basis_json = serde_json::to_string(basis)?;
+    let record_json = record.unwrap_or("{}");
 
     let conn = open(app)?;
     conn
         .execute(
-            "INSERT INTO analyses (ticker, raw, provider, model, prompt_tokens, notes, basis, saved_at_ms)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            "INSERT INTO analyses
+                (ticker, raw, provider, model, prompt_tokens, notes, basis, record, saved_at_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
              ON CONFLICT(ticker) DO UPDATE SET
                 raw = excluded.raw,
                 provider = excluded.provider,
@@ -222,8 +252,12 @@ pub fn save(
                 prompt_tokens = excluded.prompt_tokens,
                 notes = excluded.notes,
                 basis = excluded.basis,
+                record = excluded.record,
                 saved_at_ms = excluded.saved_at_ms",
-            params![ticker, raw, provider, model, prompt_tokens, notes_json, basis_json, saved_at_ms],
+            params![
+                ticker, raw, provider, model, prompt_tokens, notes_json, basis_json,
+                record_json, saved_at_ms
+            ],
         )
         .map_err(|e| AppError::msg(format!("分析結果を保存できません: {e}")))?;
 
@@ -236,6 +270,7 @@ pub fn save(
         model,
         average_score,
         period_label,
+        record_json,
         saved_at_ms,
     )?;
 
@@ -247,6 +282,7 @@ pub fn save(
         prompt_tokens,
         notes: notes.to_vec(),
         basis: basis.to_vec(),
+        record: record_json.to_string(),
         saved_at_ms,
     })
 }
@@ -258,7 +294,7 @@ pub fn load(app: &AppHandle, ticker: &str) -> Result<Option<SavedAnalysis>> {
     let conn = open(app)?;
     let row = conn
         .query_row(
-            "SELECT raw, provider, model, prompt_tokens, notes, basis, saved_at_ms
+            "SELECT raw, provider, model, prompt_tokens, notes, basis, record, saved_at_ms
              FROM analyses WHERE ticker = ?1",
             params![ticker],
             |row| {
@@ -269,7 +305,8 @@ pub fn load(app: &AppHandle, ticker: &str) -> Result<Option<SavedAnalysis>> {
                     row.get::<_, i64>(3)?,
                     row.get::<_, String>(4)?,
                     row.get::<_, String>(5)?,
-                    row.get::<_, i64>(6)?,
+                    row.get::<_, String>(6)?,
+                    row.get::<_, i64>(7)?,
                 ))
             },
         )
@@ -277,15 +314,18 @@ pub fn load(app: &AppHandle, ticker: &str) -> Result<Option<SavedAnalysis>> {
         .map_err(|e| AppError::msg(format!("分析結果を読み出せません: {e}")))?;
 
     Ok(row.map(
-        |(raw, provider, model, prompt_tokens, notes, basis, saved_at_ms)| SavedAnalysis {
-            ticker,
-            raw,
-            provider,
-            model,
-            prompt_tokens,
-            notes: serde_json::from_str(&notes).unwrap_or_default(),
-            basis: serde_json::from_str(&basis).unwrap_or_default(),
-            saved_at_ms,
+        |(raw, provider, model, prompt_tokens, notes, basis, record, saved_at_ms)| {
+            SavedAnalysis {
+                ticker,
+                raw,
+                provider,
+                model,
+                prompt_tokens,
+                notes: serde_json::from_str(&notes).unwrap_or_default(),
+                basis: serde_json::from_str(&basis).unwrap_or_default(),
+                record,
+                saved_at_ms,
+            }
         },
     ))
 }

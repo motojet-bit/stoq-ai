@@ -107,6 +107,7 @@ function saved(raw: string): SavedAnalysis {
     promptTokens: 1000,
     notes: [],
     basis: ["財務指標(YF)"],
+    record: "{}",
     savedAtMs: 1_700_000_000_000,
   };
 }

@@ -7,6 +7,10 @@ import {
   systemPromptTokens,
 } from "@/lib/prompts/analystRoleStore";
 import { mergeThresholds } from "@/lib/prompts/thresholds";
+import {
+  buildAnalysisRecord,
+  serializeAnalysisRecord,
+} from "@/lib/export/analysisRecord";
 import { parseAnalysis, type AnalysisResult } from "@/lib/prompts/parseAnalysis";
 import { readDocumentText } from "@/lib/parser/documentStore";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
@@ -262,6 +266,18 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           // アーカイブ一覧に出すため、平均スコアと対象四半期も一緒に残す
           averageScore: current?.result?.averageScore ?? null,
           periodLabel: options.quarterly?.quarters.at(-1)?.label ?? null,
+          // 構造化データも一緒に残す（エクスポートのたびに解析し直さない）
+          record: serializeAnalysisRecord(
+            buildAnalysisRecord({
+              ticker,
+              raw: finalRaw,
+              fundamentals: options.fundamentals,
+              quarterly: options.quarterly,
+              provider: current?.provider ?? null,
+              model: current?.model ?? null,
+              savedAtMs: Date.now(),
+            }),
+          ),
         });
         patch(ticker, { savedAtMs: saved.savedAtMs });
       } catch (e) {

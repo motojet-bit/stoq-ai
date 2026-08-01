@@ -222,3 +222,27 @@ export const IconWarning = (p: IconProps) => (
     <path d="M12 17h.01" />
   </Svg>
 );
+
+/** ダウンロード（書き出し） */
+export const IconDownload = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 3v12" />
+    <path d="m7.5 10.5 4.5 4.5 4.5-4.5" />
+    <path d="M4 20h16" />
+  </Svg>
+);
+
+/** クリップ（添付） */
+export const IconPaperclip = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20 11.5 11.7 19.8a4.6 4.6 0 0 1-6.5-6.5l8.6-8.6a3 3 0 0 1 4.3 4.3l-8.5 8.5a1.5 1.5 0 0 1-2.1-2.1l7.8-7.8" />
+  </Svg>
+);
+
+/** ライセンス（バッジ） */
+export const IconBadge = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="9" r="5.5" />
+    <path d="m8.5 13.5-1.5 7 5-2.5 5 2.5-1.5-7" />
+  </Svg>
+);

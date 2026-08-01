@@ -28,6 +28,7 @@ function entry(over: Partial<ArchiveEntry> & { ticker: string }): ArchiveEntry {
     model: "claude-opus-5",
     averageScore: null,
     periodLabel: null,
+    record: "{}",
     savedAtMs: 0,
     ...over,
   };

@@ -10,6 +10,8 @@ use crate::chats::{self, ChatMessage, ChatSession};
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
+use crate::exports;
+use crate::license::{self, LicenseStatus};
 use crate::llm::{self, LlmEvent, LlmRequest};
 use crate::market;
 use crate::personas::{self, StoredPrompt};
@@ -290,6 +292,8 @@ pub fn analysis_save(
     // period_label: 対象四半期などのラベル（例: FY2026 Q3）
     average_score: Option<f64>,
     period_label: Option<String>,
+    // record: 構造化した分析データ（JSON 文字列）
+    record: Option<String>,
 ) -> Result<SavedAnalysis> {
     analyses::save(
         &app,
@@ -302,6 +306,7 @@ pub fn analysis_save(
         &basis,
         average_score,
         period_label.as_deref(),
+        record.as_deref(),
     )
 }
 
@@ -320,6 +325,43 @@ pub fn analysis_history_raw(app: AppHandle, id: String) -> Result<Option<String>
 #[tauri::command]
 pub fn analysis_history_delete(app: AppHandle, id: String) -> Result<()> {
     analyses::history_delete(&app, &id)
+}
+
+// ------------------------------------------------------------ エクスポート
+
+/// 分析結果をファイルへ書き出す。保存したフルパスを返す。
+#[tauri::command]
+pub fn export_write_file(
+    app: AppHandle,
+    file_name: String,
+    contents: String,
+) -> Result<String> {
+    exports::write_file(&app, &file_name, &contents)
+}
+
+// ------------------------------------------------------------ ライセンス
+
+#[tauri::command]
+pub fn license_status(app: AppHandle) -> Result<LicenseStatus> {
+    Ok(license::status_of(&settings::load(&app)?.license_key))
+}
+
+/// ライセンスキーを検証して保存する。
+#[tauri::command]
+pub fn license_activate(app: AppHandle, key: String) -> Result<LicenseStatus> {
+    let status = license::activate(&key)?;
+    let mut current = settings::load(&app)?;
+    current.license_key = license::normalize_key(&key);
+    settings::save(&app, &current)?;
+    Ok(status)
+}
+
+#[tauri::command]
+pub fn license_clear(app: AppHandle) -> Result<LicenseStatus> {
+    let mut current = settings::load(&app)?;
+    current.license_key = String::new();
+    settings::save(&app, &current)?;
+    Ok(license::status_of(""))
 }
 
 // ------------------------------------------------------ ポートフォリオ
