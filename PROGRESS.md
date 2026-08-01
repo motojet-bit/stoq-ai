@@ -8,7 +8,7 @@
 ## 現在のステータス
 
 **フェーズ: 2 — データパイプライン ＆ AI分析エンジン**
-**Step 1（APIキー設定画面 + LLM 接続基盤）および Step 1.1（OpenAI互換の可変長リスト化）✅ 完了**
+**Step 1 / Step 1.1 / Step 2 ✅ 完了**
 
 Phase 2 の全体設計を `docs/設計.md` に記載。
 Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基盤・対話パネルからの
@@ -21,7 +21,7 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 | --- | --- | --- |
 | **Step 1** | APIキー設定画面（モーダル UI）と LLM 接続基盤 | ✅ 完了 |
 | **Step 1.1** | OpenAI互換プロバイダの可変長リスト化（追加・削除） | ✅ 完了 |
-| Step 2 | Financial Data Fetcher（Yahoo Finance / SEC EDGAR）と UI 接続 | 🔶 SEC のみ先行実装（UI 未接続） |
+| **Step 2** | Financial Data Fetcher（Yahoo Finance / SEC EDGAR）と UI 接続 | ✅ 完了 |
 | Step 3 | PDF パーサ ＋ トークンカウンター ＋ オーバーフロー警告 | ⬜ |
 | Step 4 | Prompt Engine（20項目）とパイプライン | ⬜ |
 | Step 5 | 分析結果テーブルのパースとレンダリング | ⬜ |
@@ -58,14 +58,23 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 
 ---
 
-## 次にやること（TODO）
+### Step 2 の実装内容
 
-### Step 2（次の作業）
-- [ ] Yahoo Finance クライアントを実装する（`src-tauri/src/yahoo.rs`）
-      — quoteSummary は Cookie + crumb の取得が必要
-- [ ] SEC クライアント（実装済み）を UI に接続する
-- [ ] 取得した指標を `WorkspacePanel` に表示する
-- [ ] `src/lib/api/` に Tauri コマンドのラッパを作る
+| 項目 | 状態 |
+| --- | --- |
+| Yahoo Finance クライアント（Cookie + crumb 認証） | ✅ `src-tauri/src/yahoo.rs` |
+| 主要指標 6 グループ 36 項目の取得・整形 | ✅ |
+| `quoteSummary` 失敗時も株価だけは返すフォールバック | ✅ |
+| SEC 提出状況の軽量照会（本文を落とさない） | ✅ `edgar::fetch_status` |
+| ティッカー入力 →「分析」でのデータ取得 | ✅ YF と SEC を並行実行 |
+| 指標カードへの描画 | ✅ `MetricCard.tsx` |
+| 資料準備インジケーター（🟢/🟡/🔴） | ✅ `FilingStatusBadge.tsx` |
+| ローディング表示（スケルトン / スピナー） | ✅ `MetricCardSkeleton.tsx` |
+| エラー時のトースト通知と再試行ボタン | ✅ `ToastHost.tsx` |
+
+---
+
+## 次にやること（TODO）
 
 ### Step 3 以降
 - [ ] `pdfjs-dist` を導入し `src/lib/parser/` を実装
@@ -77,6 +86,31 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 ---
 
 ## 作業履歴
+
+### 2026-08-01 — Phase 2 Step 2: Yahoo Finance ＆ SEC EDGAR のデータ取得と UI 接続 ✅
+- **Yahoo Finance クライアント**（`src-tauri/src/yahoo.rs`）を実装
+  - Cookie → crumb → quoteSummary の 3 段認証。crumb はプロセス内にキャッシュし、
+    401 のときだけ 1 回取り直す
+  - 6 グループ 36 項目（時価総額 / PER / PBR / PSR / 売上・EPS成長率 / 営業利益率 /
+    ROE / フリーCF / D/E ほか）を取得し、表示用に整形
+  - Yahoo は割合を小数で返すものと百分率で返すものが混在するため整形関数を分けた
+    （`returnOnEquity` は 0.4523、`debtToEquity` は 78.445）
+  - `quoteSummary` が失敗しても、crumb 不要の `chart` から株価・銘柄名・通貨は返す
+- **SEC 提出状況の軽量照会**（`edgar::fetch_status`）を追加。本文をダウンロードせず、
+  10-K / 10-Q の最新 1 件（提出日・対象期間・URL）だけを返す
+  - 「EDGAR に無い」「User-Agent 未設定」はエラーではなく `status` として返し、
+    非米国上場銘柄でも Yahoo の指標表示を止めない
+- フロントエンド
+  - `src/lib/api/` に `yahoo.ts` / `sec.ts` / `analysisStore.ts` を追加。
+    YF と SEC は並行実行し、片方の失敗が他方を止めない
+  - `WorkspacePanel` を実データ描画に置き換え（銘柄名・株価・前日比・取得時刻）
+  - `MetricCard` / `MetricCardSkeleton` / `FilingStatusBadge` を追加
+  - `ToastHost` + `toastStore` でエラー通知（種類ごとに自動消去時間を変える）
+  - 取得失敗時は本文中にもエラーと「再試行」ボタンを表示
+- **実 API で検証済み**
+  - Yahoo: crumb 取得成功、使用している 32 フィールドすべてが AAPL で実値を返す
+  - SEC: ticker マップ 10,432 銘柄、AAPL の 10-K (2025-10-31) / 10-Q (2026-07-31) の
+    URL 生成まで確認。7203.T が EDGAR 未登録（🔴 相当）であることも確認
 
 ### 2026-08-01 — 改良: モデル名入力欄をコンボボックス化 ✅
 - **LLM 疎通確認がユーザー側で成功**（OpenAI / gpt-5.6）。方言の自動フォールバックも機能

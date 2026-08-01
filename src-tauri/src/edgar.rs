@@ -36,6 +36,49 @@ pub struct SecFiling {
     pub truncated: bool,
 }
 
+/// 提出書類 1 件の要約（本文は含まない）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FilingRef {
+    pub form: String,
+    /// 提出日 (YYYY-MM-DD)
+    pub filed: String,
+    /// 対象期間の末日 (YYYY-MM-DD)
+    pub period: String,
+    pub url: String,
+}
+
+/// 資料の準備状況。UI のインジケーター（🟢/🟡/🔴）に対応する。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FilingStatus {
+    pub ticker: String,
+    pub company: String,
+    pub cik: String,
+    /// `ok` | `userAgentMissing` | `notInEdgar` | `noFilings`
+    pub status: String,
+    pub latest10k: Option<FilingRef>,
+    pub latest10q: Option<FilingRef>,
+    /// 取得できない場合の理由（日本語）
+    pub message: Option<String>,
+    pub fetched_at_ms: u64,
+}
+
+impl FilingStatus {
+    fn unavailable(ticker: &str, status: &str, message: &str) -> Self {
+        Self {
+            ticker: ticker.to_uppercase(),
+            company: String::new(),
+            cik: String::new(),
+            status: status.to_string(),
+            latest10k: None,
+            latest10q: None,
+            message: Some(message.to_string()),
+            fetched_at_ms: now_ms(),
+        }
+    }
+}
+
 static TICKER_MAP: OnceCell<HashMap<String, (String, String)>> = OnceCell::const_new();
 
 /// SEC のレート制限（10 req/s）を守るための最小間隔。
@@ -119,6 +162,97 @@ async fn resolve_cik(ticker: &str, user_agent: &str) -> Result<(String, String)>
             "{ticker} は SEC EDGAR に登録されていません。米国上場銘柄以外（例: 日本株）は SEC 提出書類を取得できません。"
         ))
     })
+}
+
+/// 提出状況だけを軽量に確認する（本文はダウンロードしない）。
+///
+/// 「EDGAR に無い」「User-Agent 未設定」は**エラーではなく状態として**返す。
+/// 非米国上場銘柄（例: 7203.T）でも Yahoo の指標表示を止めないため。
+pub async fn fetch_status(ticker: &str, user_agent: &str) -> Result<FilingStatus> {
+    let ua = match validate_user_agent(user_agent) {
+        Ok(ua) => ua,
+        Err(e) => {
+            return Ok(FilingStatus::unavailable(
+                ticker,
+                "userAgentMissing",
+                &e.to_string(),
+            ))
+        }
+    };
+
+    let (cik, company) = match resolve_cik(ticker, ua).await {
+        Ok(v) => v,
+        Err(_) => {
+            return Ok(FilingStatus::unavailable(
+                ticker,
+                "notInEdgar",
+                "SEC EDGAR に登録がありません。米国上場銘柄以外（例: 日本株）は提出書類を取得できません。",
+            ))
+        }
+    };
+
+    let body = get_text(&format!("https://data.sec.gov/submissions/CIK{cik}.json"), ua).await?;
+    let json: serde_json::Value = serde_json::from_str(&body)?;
+
+    let Some(recent) = json.pointer("/filings/recent") else {
+        return Ok(FilingStatus::unavailable(
+            ticker,
+            "noFilings",
+            "提出書類の一覧を取得できませんでした。",
+        ));
+    };
+
+    let latest10k = latest_of(recent, &cik, "10-K");
+    let latest10q = latest_of(recent, &cik, "10-Q");
+
+    let status = if latest10k.is_none() && latest10q.is_none() {
+        "noFilings"
+    } else {
+        "ok"
+    };
+
+    Ok(FilingStatus {
+        ticker: ticker.to_uppercase(),
+        company,
+        cik,
+        status: status.to_string(),
+        message: (status == "noFilings")
+            .then(|| "直近の提出書類に 10-K / 10-Q が見つかりませんでした。".to_string()),
+        latest10k,
+        latest10q,
+        fetched_at_ms: now_ms(),
+    })
+}
+
+/// `recent` 配列から指定フォームの最新 1 件を取り出す。
+fn latest_of(recent: &serde_json::Value, cik: &str, form: &str) -> Option<FilingRef> {
+    let forms = str_array(recent, "form");
+    let index = forms.iter().position(|f| f.eq_ignore_ascii_case(form))?;
+
+    let accessions = str_array(recent, "accessionNumber");
+    let primary_docs = str_array(recent, "primaryDocument");
+    let filing_dates = str_array(recent, "filingDate");
+    let report_dates = str_array(recent, "reportDate");
+
+    let accession_plain = accessions.get(index)?.replace('-', "");
+    let primary = primary_docs.get(index)?;
+    let cik_trimmed = cik.trim_start_matches('0');
+
+    Some(FilingRef {
+        form: forms[index].clone(),
+        filed: filing_dates.get(index).cloned().unwrap_or_default(),
+        period: report_dates.get(index).cloned().unwrap_or_default(),
+        url: format!(
+            "https://www.sec.gov/Archives/edgar/data/{cik_trimmed}/{accession_plain}/{primary}"
+        ),
+    })
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
 }
 
 /// 最新の指定フォーム（例: ["10-K", "10-Q"]）を 1 件取得する。

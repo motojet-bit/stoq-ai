@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ChatSession, DroppedDocument, WorkspaceTab } from "@/types";
 import { INITIAL_TABS, SAMPLE_SESSIONS } from "@/lib/sampleData";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
+import { loadTicker, useAnalyses } from "@/lib/api/analysisStore";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
 import CommandBar from "@/components/CommandBar";
@@ -13,6 +14,7 @@ import AnalysisPanel from "@/components/AnalysisPanel";
 import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
 import SettingsModal from "@/components/SettingsModal";
+import ToastHost from "@/components/ToastHost";
 
 const newId = () => crypto.randomUUID();
 
@@ -32,7 +34,9 @@ export default function App() {
 
   const settings = useSettings();
   const settingsError = useSettingsError();
+  const analyses = useAnalyses();
   const activeTab = tabs.find((t) => t.id === activeTabId);
+  const activeAnalysis = activeTab?.ticker ? analyses[activeTab.ticker] : undefined;
 
   // 起動時に Rust 側から設定を読み込む
   useEffect(() => {
@@ -70,25 +74,27 @@ export default function App() {
     setActiveSessionId(session.id);
   };
 
-  /** ティッカーが確定したら、その銘柄の分析タブを開く */
+  /** ティッカーが確定したら分析タブを開き、YF と SEC の取得を開始する */
   const handleTickerSubmit = (ticker: string) => {
     setCurrentTicker(ticker);
 
     const existing = tabs.find((t) => t.kind === "analysis" && t.ticker === ticker);
     if (existing) {
       setActiveTabId(existing.id);
-      return;
+    } else {
+      const tab: WorkspaceTab = {
+        id: newId(),
+        title: ticker,
+        kind: "analysis",
+        ticker,
+        closable: true,
+      };
+      setTabs((prev) => [...prev, tab]);
+      setActiveTabId(tab.id);
     }
 
-    const tab: WorkspaceTab = {
-      id: newId(),
-      title: ticker,
-      kind: "analysis",
-      ticker,
-      closable: true,
-    };
-    setTabs((prev) => [...prev, tab]);
-    setActiveTabId(tab.id);
+    // 同じ銘柄を再度送信した場合は再取得（更新）になる
+    void loadTicker(ticker);
   };
 
   const handleNewTab = () => {
@@ -165,7 +171,13 @@ export default function App() {
           />
 
           <SplitPane
-            top={<WorkspacePanel tab={activeTab} />}
+            top={
+              <WorkspacePanel
+                tab={activeTab}
+                analysis={activeAnalysis}
+                onRetry={(ticker) => void loadTicker(ticker)}
+              />
+            }
             bottom={
               <div className="flex h-full">
                 <div className="min-w-0 flex-1">
@@ -190,6 +202,8 @@ export default function App() {
         settings={settings}
         onClose={() => setSettingsOpen(false)}
       />
+
+      <ToastHost />
     </div>
   );
 }

@@ -92,6 +92,68 @@ export interface WorkspaceTab {
   closable: boolean;
 }
 
+// ---------------------------------------------------------------- 財務データ
+
+/** 指標 1 項目 */
+export interface Metric {
+  label: string;
+  /** 整形済みの表示文字列。取得できなかった場合は "—" */
+  value: string;
+  /** 生の数値 */
+  raw: number | null;
+}
+
+export interface MetricGroup {
+  title: string;
+  metrics: Metric[];
+}
+
+/** Yahoo Finance から取得した主要指標 */
+export interface Fundamentals {
+  ticker: string;
+  name: string;
+  currency: string;
+  exchange: string;
+  price: number | null;
+  priceDisplay: string;
+  changePercent: number | null;
+  groups: MetricGroup[];
+  /** 一部だけ取得できた場合の注意書き */
+  warning: string | null;
+  fetchedAtMs: number;
+}
+
+/** SEC 提出書類 1 件の要約（本文は含まない） */
+export interface FilingRef {
+  form: string;
+  filed: string;
+  period: string;
+  url: string;
+}
+
+/** SEC EDGAR の提出状況 */
+export interface FilingStatus {
+  ticker: string;
+  company: string;
+  cik: string;
+  status: "ok" | "userAgentMissing" | "notInEdgar" | "noFilings";
+  latest10k: FilingRef | null;
+  latest10q: FilingRef | null;
+  message: string | null;
+  fetchedAtMs: number;
+}
+
+/** 1 銘柄分の取得状態 */
+export interface TickerAnalysis {
+  ticker: string;
+  fundamentalsLoading: boolean;
+  fundamentals: Fundamentals | null;
+  fundamentalsError: string | null;
+  filingLoading: boolean;
+  filing: FilingStatus | null;
+  filingError: string | null;
+}
+
 /** ドロップされた一次資料（PDF 等） */
 export interface DroppedDocument {
   id: string;

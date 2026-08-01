@@ -4,10 +4,11 @@ use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 use tauri::AppHandle;
 
-use crate::edgar::{self, SecFiling};
+use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
 use crate::settings::{self, SettingsView};
+use crate::yahoo::{self, Fundamentals};
 
 #[derive(Serialize)]
 pub struct AppInfo {
@@ -163,11 +164,27 @@ pub async fn llm_send(
     llm::send(&settings, request, on_event).await
 }
 
-// ---------------------------------------------------------------- SEC（Step 2 先行実装）
+// ---------------------------------------------------------------- 財務データ
+
+/// Yahoo Finance から主要指標を取得する。
+#[tauri::command]
+pub async fn yahoo_fetch_fundamentals(ticker: String) -> Result<Fundamentals> {
+    yahoo::fetch_fundamentals(&ticker).await
+}
+
+/// SEC EDGAR の提出状況（10-K / 10-Q の有無と最終提出日）を確認する。
+///
+/// 本文はダウンロードしない。EDGAR に無い銘柄や User-Agent 未設定は
+/// エラーではなく `status` フィールドで返す。
+#[tauri::command]
+pub async fn sec_filing_status(app: AppHandle, ticker: String) -> Result<FilingStatus> {
+    let settings = settings::load(&app)?;
+    edgar::fetch_status(&ticker, &settings.sec_user_agent).await
+}
 
 /// 最新の 10-K / 10-Q 本文を取得する。
 ///
-/// Step 2 で UI に接続する予定の先行実装。現時点では UI から呼び出していない。
+/// Step 4（プロンプトへの同梱）で使う予定。現時点では UI から呼び出していない。
 #[tauri::command]
 pub async fn sec_fetch_latest_filing(
     app: AppHandle,

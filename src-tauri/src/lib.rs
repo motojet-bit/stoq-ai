@@ -10,6 +10,7 @@ mod html;
 mod http;
 mod llm;
 mod settings;
+mod yahoo;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,6 +24,8 @@ pub fn run() {
             commands::settings_update_custom_provider,
             commands::settings_remove_custom_provider,
             commands::llm_send,
+            commands::yahoo_fetch_fundamentals,
+            commands::sec_filing_status,
             commands::sec_fetch_latest_filing,
         ])
         .run(tauri::generate_context!())
