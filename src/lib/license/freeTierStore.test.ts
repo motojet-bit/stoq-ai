@@ -35,6 +35,7 @@ function settings(freeTickers: string[]): AppSettings {
     thresholds: {},
     license: { activated, masked: null, message: "" },
     freeTickers,
+    eula: { agreed: true, agreedAtMs: 1_700_000_000_000 },
     cloud: {
       connected: false,
       clientIdConfigured: false,

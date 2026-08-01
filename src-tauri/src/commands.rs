@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 use crate::analyses::{self, ArchiveEntry, SavedAnalysis};
 use crate::candidates::{self, CandidateInput, CandidateStock};
@@ -11,7 +11,9 @@ use crate::cloud;
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
+use crate::eula::{self, EulaStatus};
 use crate::exports;
+use crate::library;
 use crate::license::{self, LicenseStatus};
 use crate::llm::{self, LlmEvent, LlmRequest};
 use crate::market;
@@ -379,6 +381,56 @@ pub fn license_clear(app: AppHandle) -> Result<LicenseStatus> {
     current.license_key = String::new();
     settings::save(&app, &current)?;
     Ok(license::status_of(""))
+}
+
+// ------------------------------------------------------ 免責事項の同意
+
+#[tauri::command]
+pub fn eula_status(app: AppHandle) -> Result<EulaStatus> {
+    let current = settings::load(&app)?;
+    Ok(eula::status_of(current.eula_agreed, current.eula_agreed_at_ms))
+}
+
+/// 同意を記録する。
+#[tauri::command]
+pub fn eula_agree(app: AppHandle) -> Result<EulaStatus> {
+    let mut current = settings::load(&app)?;
+    let (agreed, at) = eula::agreed_now(library::now_ms());
+    current.eula_agreed = agreed;
+    current.eula_agreed_at_ms = at;
+    settings::save(&app, &current)?;
+    Ok(eula::status_of(agreed, at))
+}
+
+/// 同意を撤回する。
+///
+/// **ライセンスキーには触れない。** 同意はアプリを使う条件であって、
+/// 買ったライセンスを取り上げる理由にはならない。
+#[tauri::command]
+pub fn eula_revoke(app: AppHandle) -> Result<EulaStatus> {
+    let mut current = settings::load(&app)?;
+    let (agreed, at) = eula::revoked();
+    current.eula_agreed = agreed;
+    current.eula_agreed_at_ms = at;
+    settings::save(&app, &current)?;
+    Ok(eula::status_of(agreed, at))
+}
+
+// ------------------------------------------------------ ウィンドウ
+
+/// タイトルバーの文字列を差し替える（表示言語に合わせるため）。
+#[tauri::command]
+pub fn window_set_title(app: AppHandle, title: String) -> Result<()> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err(AppError::msg("ウィンドウタイトルが空です。"));
+    }
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| AppError::msg("ウィンドウが見つかりません。"))?;
+    window
+        .set_title(title)
+        .map_err(|e| AppError::msg(format!("ウィンドウタイトルを変更できません: {e}")))
 }
 
 // ------------------------------------------------------ クラウド同期

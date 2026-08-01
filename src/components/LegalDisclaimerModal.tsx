@@ -1,5 +1,5 @@
 import {
-  DISCLAIMER_SECTIONS,
+  disclaimerSections,
   DISCLAIMER_TITLE,
 } from "@/lib/legal/disclaimer";
 import { closeDisclaimer, useDisclaimerOpen } from "@/lib/legal/disclaimerStore";
@@ -48,7 +48,7 @@ export default function LegalDisclaimerModal() {
         </div>
 
         <ol className="selectable space-y-4">
-          {DISCLAIMER_SECTIONS.map((section, i) => (
+          {disclaimerSections().map((section, i) => (
             <li key={section.title}>
               <h3 className="t-body font-semibold text-slate-100">
                 {i + 1}. {section.title}

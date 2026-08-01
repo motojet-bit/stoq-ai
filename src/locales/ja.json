@@ -1,7 +1,9 @@
 {
-  "app.name": "StoQ AI Analyzer",
+  "app.name": "株究 - StoQ AI Analyzer",
+  "app.nameAccent": "株究",
+  "app.nameRest": " - StoQ AI Analyzer",
+  "app.copyright": "© 2026 株究 - StoQ AI Analyzer. All Rights Reserved.",
   "app.ready": "● 準備完了",
-
   "menu.file": "ファイル",
   "menu.view": "表示",
   "menu.analysis": "分析",
@@ -25,19 +27,16 @@
   "menu.help.usage": "使い方",
   "menu.help.shortcuts": "キーボードショートカット",
   "menu.help.disclaimer": "免責事項（Legal Disclaimer）",
-  "menu.help.about": "StoQ AI Analyzer について",
-
+  "menu.help.about": "株究 - StoQ AI Analyzer について",
   "status.ticker": "銘柄",
   "status.documents": "読み込み済み資料",
   "status.documentsUnit": "件",
   "status.help": "ヘルプ",
   "status.helpTooltip": "使い方を AI に質問する",
-
   "command.tickerPlaceholder": "ティッカー（例: NVDA, 7203.T, ASML.AS）",
   "command.analyze": "分析",
   "command.aiSettings": "AI設定",
   "command.activeProvider": "稼働中",
-
   "sidebar.newChat": "新規チャット",
   "sidebar.history": "履歴",
   "sidebar.archive": "アーカイブ",
@@ -50,7 +49,6 @@
   "sidebar.portfolios": "ポートフォリオ",
   "sidebar.emptyChats": "まだ会話がありません。",
   "sidebar.emptyArchive": "アーカイブは空です。",
-
   "panel.market": "市場データ",
   "panel.analysis": "分析結果",
   "panel.chat": "対話",
@@ -58,7 +56,6 @@
   "panel.minimize": "最小化",
   "panel.restore": "元に戻す",
   "panel.minimized": "最小化中:",
-
   "analysis.run": "AI分析を実行",
   "analysis.rerun": "再分析",
   "analysis.cancel": "中断",
@@ -71,14 +68,12 @@
   "analysis.risks": "リスク",
   "analysis.valuation": "バリュエーション所見",
   "analysis.conclusion": "総合投資判断",
-
   "chat.you": "あなた",
   "chat.ai": "AI",
   "chat.send": "送信",
   "chat.sending": "送信中…",
   "chat.attach": "一次資料を添付",
   "chat.sendHint": "{{key}} で送信 / Enter で改行",
-
   "settings.title": "設定",
   "settings.tab.providers": "APIキー・モデル",
   "settings.tab.market": "データ取得元",
@@ -91,7 +86,6 @@
   "settings.save": "保存",
   "settings.saving": "保存中…",
   "settings.autosaved": "この画面の変更は即座に保存されます。",
-
   "general.language": "表示言語（Language）",
   "general.languageHint": "画面の表示言語です。AI の分析結果や対話の応答もこの言語に合わせます。",
   "general.tooltips": "ツールチップ（ホバー案内）を表示する",
@@ -99,12 +93,30 @@
   "general.fontSize": "文字サイズ",
   "general.resetLayout": "パネル配置を初期状態に戻す",
   "general.resetLayoutButton": "配置を初期化",
-
   "common.cancel": "キャンセル",
   "common.delete": "削除する",
   "common.back": "もどる",
   "common.confirm": "OK",
   "common.close": "閉じる",
   "common.loading": "読み込み中…",
-  "common.none": "—"
+  "common.none": "—",
+  "eula.title": "ご利用の前に（免責事項への同意）",
+  "eula.lead": "本アプリをご利用いただくには、以下の 3 点へのご同意が必要です。",
+  "eula.clause.selfResponsibility.title": "投資の自己責任（投資助言ではありません）",
+  "eula.clause.selfResponsibility.body": "本アプリが示す AI の分析結果・スコア・生成テキストは、情報提供およびリサーチ支援を目的とするものであり、投資助言・投資勧誘ではありません。すべての投資判断は自己責任で行ってください。本アプリを利用した取引により生じたいかなる損失についても、開発者は一切の責任を負いません。",
+  "eula.clause.apiBilling.title": "API 課金とキー管理の自己責任",
+  "eula.clause.apiBilling.body": "本アプリはご自身で登録した API キーを使って各社の AI サービスを呼び出します。キーの管理、およびトークン消費に伴う課金はすべてユーザーご自身の責任となります。意図しない高額課金を避けるため、各サービス側での上限設定をご確認ください。",
+  "eula.clause.asIs.title": "現状有姿（AS-IS）とデータ保護",
+  "eula.clause.asIs.body": "本ソフトウェアは現状有姿（AS-IS）で提供され、無下障であることを保証しません。予期せぬ不具合、外部サービスの仕様変更、クラウド同期の失敗等によるデータの消失・破損について、開発者は一切の責任を負いません。重要なデータはご自身でも控えを保管してください。",
+  "eula.agree": "同意して利用を開始する",
+  "eula.agreeing": "保存中…",
+  "eula.note": "同意しない場合、本アプリはご利用いただけません。この内容はあとから設定の「一般」タブで確認・撤回できます。",
+  "eula.settingsTitle": "免責事項への同意",
+  "eula.agreedAt": "同意日時: {{when}}",
+  "eula.view": "同意した内容を確認",
+  "eula.hide": "閉じる",
+  "eula.revoke": "免責同意の撤回 (Revoke EULA Consent)",
+  "eula.revokeConfirmTitle": "免責同意の撤回",
+  "eula.revokeConfirmBody": "同意を撤回してもライセンスが無効化されることはありませんが、再び同意するまでアプリをご利用いただけなくなります。撤回しますか？",
+  "eula.revokeConfirm": "撤回する"
 }

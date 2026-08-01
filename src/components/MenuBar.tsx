@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import FontSizeControl from "@/components/FontSizeControl";
-import { APP_NAME_ACCENT, APP_NAME_REST } from "@/lib/ui/appMeta";
 import { useT } from "@/lib/i18n/i18n";
 
 /** メニュー項目。action が未設定のものは未実装。 */
@@ -117,8 +116,9 @@ export default function MenuBar({ onAction, right }: Props) {
     >
       <div className="mr-2 flex items-center gap-2 pl-1 pr-3">
         <span className="text-[13px] font-semibold tracking-tight">
-          <span className="text-emerald-400">{APP_NAME_ACCENT}</span>
-          <span className="ml-1 text-slate-300">{APP_NAME_REST}</span>
+          <span className="text-emerald-400">{t("app.nameAccent")}</span>
+          {/* 区切りの空白は辞書側（`app.nameRest`）が持つので、ここでは余白を足さない */}
+          <span className="whitespace-pre text-slate-300">{t("app.nameRest")}</span>
         </span>
       </div>
 

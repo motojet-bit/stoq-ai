@@ -1,7 +1,8 @@
 import { useState } from "react";
 import ModalShell from "@/components/ModalShell";
 import { IconHelp } from "@/components/Icons";
-import { APP_NAME } from "@/lib/ui/appMeta";
+import { appName } from "@/lib/ui/appMeta";
+import { useLocale } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -17,9 +18,16 @@ interface Step {
   action?: { label: string; kind: "settings" | "help" };
 }
 
-const STEPS: Step[] = [
+/**
+ * 手順を組み立てる。
+ *
+ * **定数にしない。** 読み込み時に一度だけ評価すると、
+ * 言語を切り替えても見出しのアプリ名が古いまま残る。
+ */
+function buildSteps(): Step[] {
+  return [
   {
-    title: `ようこそ、${APP_NAME} へ`,
+    title: `ようこそ、${appName()} へ`,
     body:
       "米国株・グローバル株のファンダメンタル分析を、AI と一緒に進めるためのアプリです。\n\n" +
       "取得した財務データと、あなたが読み込ませた決算資料をまとめて AI に渡し、\n" +
@@ -57,7 +65,8 @@ const STEPS: Step[] = [
       "操作で迷ったら、画面右下の「? ヘルプ」からいつでも AI に質問できます。",
     action: { label: "ヘルプを開く", kind: "help" },
   },
-];
+  ];
+}
 
 /**
  * 初回起動時のチュートリアル。
@@ -67,8 +76,11 @@ const STEPS: Step[] = [
  */
 export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp }: Props) {
   const [index, setIndex] = useState(0);
-  const step = STEPS[Math.min(index, STEPS.length - 1)];
-  const isLast = index >= STEPS.length - 1;
+  // 言語が変わったら見出しも追従させる
+  useLocale();
+  const steps = buildSteps();
+  const step = steps[Math.min(index, steps.length - 1)];
+  const isLast = index >= steps.length - 1;
 
   const close = () => {
     setIndex(0);
@@ -85,7 +97,7 @@ export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp 
       footer={
         <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
           <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-            {STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${

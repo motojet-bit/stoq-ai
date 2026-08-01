@@ -3,6 +3,7 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { providerReadiness } from "@/lib/config/providers";
 import { syncFromSettings } from "@/lib/license/freeTierStore";
 import { syncFromSettings as syncCloud } from "@/lib/cloud/cloudStore";
+import { syncFromSettings as syncEula } from "@/lib/legal/eulaStore";
 import type {
   AppSettings,
   CustomProviderPatch,
@@ -60,6 +61,7 @@ export async function loadSettings(): Promise<AppSettings | null> {
     snapshot = await invoke<AppSettings>("settings_load");
     syncFromSettings(snapshot);
     syncCloud(snapshot.cloud);
+    syncEula(snapshot.eula);
     loadError = null;
   } catch (e) {
     loadError = String(e);
@@ -74,6 +76,7 @@ function commit(next: AppSettings): AppSettings {
   // 無料版の使用状況とクラウド同期の状態もここで揃える（保存先が同じ設定ファイルのため）
   syncFromSettings(next);
   syncCloud(next.cloud);
+  syncEula(next.eula);
   emit();
   return next;
 }

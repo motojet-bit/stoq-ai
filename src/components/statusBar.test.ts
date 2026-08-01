@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  APP_NAME,
+  appCopyright,
+  appName,
   APP_VERSION,
-  COPYRIGHT,
   COPYRIGHT_YEAR,
 } from "@/lib/ui/appMeta";
 import { setLocale, t } from "@/lib/i18n/i18n";
@@ -24,13 +24,13 @@ const SOURCE = readFileSync(
 describe("権利表記の文面", () => {
   it("指定どおりの形になっている", () => {
     // 名称を変えても形は変わらない。文面の突き合わせは appMeta.test.ts 側
-    expect(COPYRIGHT).toBe(`© ${COPYRIGHT_YEAR} ${APP_NAME}. All Rights Reserved.`);
-    expect(COPYRIGHT).toMatch(/^© \d{4} .+\. All Rights Reserved\.$/);
+    expect(appCopyright()).toBe(`© ${COPYRIGHT_YEAR} ${appName()}. All Rights Reserved.`);
+    expect(appCopyright()).toMatch(/^© \d{4} .+\. All Rights Reserved\.$/);
   });
 
   it("アプリ名と年から組み立てている（直書きしていない）", () => {
-    expect(COPYRIGHT).toContain(APP_NAME);
-    expect(COPYRIGHT).toContain(String(COPYRIGHT_YEAR));
+    expect(appCopyright()).toContain(appName());
+    expect(appCopyright()).toContain(String(COPYRIGHT_YEAR));
   });
 
   it("版はアプリ設定と揃っている", () => {
@@ -48,7 +48,7 @@ describe("権利表記の文面", () => {
 
 describe("ステータスバーの組み方", () => {
   it("権利表記を定数から出している（文面が 2 か所に散らない）", () => {
-    expect(SOURCE).toContain("COPYRIGHT");
+    expect(SOURCE).toContain('t("app.copyright")');
     expect(SOURCE).not.toContain("All Rights Reserved");
   });
 

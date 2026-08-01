@@ -59,10 +59,23 @@ export interface AppSettings {
   license: LicenseStatus;
   /** 無料版で分析した銘柄（大文字） */
   freeTickers: string[];
+  /** 免責事項への同意状態 */
+  eula: EulaStatus;
   /** クラウド同期の状態 */
   cloud: CloudStatus;
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
+}
+
+/**
+ * 免責事項（EULA）への同意状態。
+ * **ライセンスとは別**で、撤回してもキーは失効しない。
+ */
+export interface EulaStatus {
+  /** 同意済みか。false ならアプリを使わせない */
+  agreed: boolean;
+  /** 同意した時刻（ミリ秒）。未同意なら 0 */
+  agreedAtMs: number;
 }
 
 /** クラウド同期（Google Drive アプリ専用領域）の状態。生のトークンは含まない。 */

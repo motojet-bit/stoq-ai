@@ -20,6 +20,7 @@ const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   thresholds: {},
   license: { activated: false, masked: null, message: "未登録" },
   freeTickers: [],
+  eula: { agreed: true, agreedAtMs: 1_700_000_000_000 },
   cloud: {
     connected: false,
     clientIdConfigured: false,

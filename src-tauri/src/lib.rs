@@ -11,6 +11,7 @@ mod commands;
 mod documents;
 mod edgar;
 mod error;
+mod eula;
 mod exports;
 mod html;
 mod http;
@@ -28,8 +29,6 @@ mod yahoo;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    use tauri::Manager;
-
     tauri::Builder::default()
         .setup(|app| {
             // 起動時の自動バックアップ。**失敗しても起動は止めない**
@@ -63,6 +62,10 @@ pub fn run() {
             commands::license_activate,
             commands::license_clear,
             commands::free_tier_set,
+            commands::eula_status,
+            commands::eula_agree,
+            commands::eula_revoke,
+            commands::window_set_title,
             commands::cloud_status,
             commands::cloud_set_client_id,
             commands::cloud_set_auto_backup,

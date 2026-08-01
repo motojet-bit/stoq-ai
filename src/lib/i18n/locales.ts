@@ -51,6 +51,22 @@ export function localeDefinition(code: string): LocaleDefinition | undefined {
   return LOCALES.find((l) => l.code === code);
 }
 
+/**
+ * まだ一度も選ばれていないときの言語を、OS（WebView）の設定から決める。
+ *
+ * **`normalizeLocale` とは falls back の向きが逆。** 保存値の正規化では
+ * 未知の値を既定（日本語）へ寄せるが、初回の判定では
+ * **日本語環境だけを `ja` にし、それ以外は `en`** にする。
+ * ドイツ語環境の利用者に日本語の画面を出しても読めないため。
+ */
+export function detectLocale(value: unknown): string {
+  if (typeof value !== "string") return "en";
+
+  const base = value.trim().split("-")[0].toLowerCase();
+  if (base === "ja") return "ja";
+  return localeDefinition(base) ? base : "en";
+}
+
 /** 保存値やブラウザの設定が何であっても、必ず対応済みの言語コードを返す。 */
 export function normalizeLocale(value: unknown): string {
   if (typeof value !== "string") return DEFAULT_LOCALE;

@@ -6,7 +6,7 @@ import { buildHelpSystemPrompt, HELP_EXAMPLES } from "@/lib/prompts/helpKnowledg
 import { useBindings } from "@/lib/ui/shortcutStore";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { IconClose, IconHelp } from "@/components/Icons";
-import { FEATURE_REQUEST_URL } from "@/lib/ui/tooltipText";
+import { featureRequestUrl } from "@/lib/ui/tooltipText";
 
 interface Props {
   open: boolean;
@@ -216,7 +216,7 @@ export default function HelpAssistant({
           はじめかたを見る
         </button>
         <a
-          href={FEATURE_REQUEST_URL}
+          href={featureRequestUrl()}
           target="_blank"
           rel="noreferrer"
           className="t-label text-slate-400 underline underline-offset-2 transition-colors hover:text-emerald-300"

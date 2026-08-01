@@ -1,7 +1,9 @@
 {
   "app.name": "StoQ AI Analyzer",
+  "app.nameAccent": "StoQ",
+  "app.nameRest": " AI Analyzer",
+  "app.copyright": "© 2026 StoQ AI Analyzer. All Rights Reserved.",
   "app.ready": "● Ready",
-
   "menu.file": "File",
   "menu.view": "View",
   "menu.analysis": "Analysis",
@@ -26,18 +28,15 @@
   "menu.help.shortcuts": "Keyboard shortcuts",
   "menu.help.disclaimer": "Legal Disclaimer",
   "menu.help.about": "About StoQ AI Analyzer",
-
   "status.ticker": "Ticker",
   "status.documents": "Documents loaded",
   "status.documentsUnit": "",
   "status.help": "Help",
   "status.helpTooltip": "Ask the AI how to use this app",
-
   "command.tickerPlaceholder": "Ticker (e.g. NVDA, 7203.T, ASML.AS)",
   "command.analyze": "Analyze",
   "command.aiSettings": "AI settings",
   "command.activeProvider": "Active",
-
   "sidebar.newChat": "New chat",
   "sidebar.history": "History",
   "sidebar.archive": "Archive",
@@ -50,7 +49,6 @@
   "sidebar.portfolios": "Portfolios",
   "sidebar.emptyChats": "No conversations yet.",
   "sidebar.emptyArchive": "The archive is empty.",
-
   "panel.market": "Market data",
   "panel.analysis": "Analysis",
   "panel.chat": "Chat",
@@ -58,7 +56,6 @@
   "panel.minimize": "Minimize",
   "panel.restore": "Restore",
   "panel.minimized": "Minimized:",
-
   "analysis.run": "Run AI analysis",
   "analysis.rerun": "Re-analyze",
   "analysis.cancel": "Stop",
@@ -71,14 +68,12 @@
   "analysis.risks": "Risks",
   "analysis.valuation": "Valuation",
   "analysis.conclusion": "Conclusion",
-
   "chat.you": "You",
   "chat.ai": "AI",
   "chat.send": "Send",
   "chat.sending": "Sending…",
   "chat.attach": "Attach source document",
   "chat.sendHint": "{{key}} to send / Enter for a new line",
-
   "settings.title": "Settings",
   "settings.tab.providers": "API keys & models",
   "settings.tab.market": "Data provider",
@@ -91,7 +86,6 @@
   "settings.save": "Save",
   "settings.saving": "Saving…",
   "settings.autosaved": "Changes on this tab are saved immediately.",
-
   "general.language": "Display language",
   "general.languageHint": "Language of the interface. AI analysis and chat replies follow this setting as well.",
   "general.tooltips": "Show tooltips on hover",
@@ -99,12 +93,30 @@
   "general.fontSize": "Font size",
   "general.resetLayout": "Reset panel layout",
   "general.resetLayoutButton": "Reset layout",
-
   "common.cancel": "Cancel",
   "common.delete": "Delete",
   "common.back": "Back",
   "common.confirm": "OK",
   "common.close": "Close",
   "common.loading": "Loading…",
-  "common.none": "—"
+  "common.none": "—",
+  "eula.title": "Before you start (Legal Disclaimer)",
+  "eula.lead": "You must agree to the following three points to use this app.",
+  "eula.clause.selfResponsibility.title": "Investment decisions are your own (No financial advice)",
+  "eula.clause.selfResponsibility.body": "The AI analysis, scores and generated text shown by this app are for information and research support only. They are not investment advice or a solicitation to trade. All investment decisions are yours alone, and the developer accepts no liability for any loss arising from trades made using this app.",
+  "eula.clause.apiBilling.title": "API billing and key management are your responsibility",
+  "eula.clause.apiBilling.body": "This app calls third-party AI services using the API keys you register. Managing those keys, and any charges resulting from token usage, are entirely your responsibility. Please set spending limits on each provider's console to avoid unexpected bills.",
+  "eula.clause.asIs.title": "Provided AS-IS, and data protection",
+  "eula.clause.asIs.body": "This software is provided AS-IS with no warranty of any kind. The developer accepts no liability for loss or corruption of data caused by unexpected bugs, changes to external services, or cloud sync failures. Please keep your own copies of anything important.",
+  "eula.agree": "Agree and start using",
+  "eula.agreeing": "Saving…",
+  "eula.note": "If you do not agree, you cannot use this app. You can review or withdraw your consent later from the General tab in Settings.",
+  "eula.settingsTitle": "Legal disclaimer consent",
+  "eula.agreedAt": "Agreed on {{when}}",
+  "eula.view": "Review what you agreed to",
+  "eula.hide": "Close",
+  "eula.revoke": "Revoke EULA consent",
+  "eula.revokeConfirmTitle": "Revoke EULA consent",
+  "eula.revokeConfirmBody": "Revoking your consent will NOT deactivate your license, but you will not be able to use the app until you agree again. Revoke?",
+  "eula.revokeConfirm": "Revoke"
 }

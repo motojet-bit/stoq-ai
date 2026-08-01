@@ -1,7 +1,7 @@
 import type { AppSettings, MarketProviderId } from "@/types";
 import { displayBinding, isMac } from "@/lib/ui/shortcutKeys";
 import { SHORTCUTS, type BindingMap } from "@/lib/ui/shortcutStore";
-import { APP_NAME } from "@/lib/ui/appMeta";
+import { appName } from "@/lib/ui/appMeta";
 
 /**
  * ヘルプ AI に渡すナレッジベース。
@@ -11,7 +11,7 @@ import { APP_NAME } from "@/lib/ui/appMeta";
  * 「Ctrl+N です」と実際と違う案内をしてしまう。
  */
 
-const OVERVIEW = `# ${APP_NAME} とは
+const overview = () => `# ${appName()} とは
 米国株・グローバル株のファンダメンタル分析デスクトップアプリ（Tauri + React）。
 Yahoo Finance / SEC EDGAR から取得したデータと、ユーザーが読み込ませた一次資料
 （決算短信・10-K/10-Q・決算説明会資料の PDF / DOCX / PPTX）をまとめて
@@ -112,10 +112,10 @@ export function buildHelpSystemPrompt(
   mac = isMac(),
 ): string {
   return [
-    `あなたは ${APP_NAME} の操作案内AIアシスタントです。` +
+    `あなたは ${appName()} の操作案内AIアシスタントです。` +
       "アプリの機能、ショートカットキー一覧、APIキーの設定方法、" +
       "データプロバイダーの違いなどを丁寧に解説してください。",
-    OVERVIEW,
+    overview(),
     PROVIDERS,
     `# ショートカットキー（現在の割り当て）\n${shortcutTable(bindings, mac)}\n` +
       "変更は設定画面の「ショートカット」タブから行う。" +

@@ -1,11 +1,13 @@
 import { useSyncExternalStore } from "react";
 import {
   DEFAULT_LOCALE,
+  detectLocale,
   localeDefinition,
   LOCALES,
   normalizeLocale,
   type Dictionary,
 } from "@/lib/i18n/locales";
+import { invoke, isTauri } from "@/lib/tauri";
 
 /**
  * 画面表示の言語。
@@ -47,8 +49,8 @@ function read(): string {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored !== null) return normalizeLocale(stored);
-    // 初回はブラウザ（WebView）の設定に寄せる
-    return normalizeLocale(navigator.language);
+    // 初回は OS（WebView）の設定で決める。日本語環境なら ja、それ以外は en
+    return detectLocale(navigator.language);
   } catch {
     return DEFAULT_LOCALE;
   }
@@ -92,16 +94,33 @@ export function setLocale(next: string): void {
   } catch {
     // 何もしない
   }
+  syncWindowTitle();
   emit();
 }
 
-/** 起動時に `<html lang>` を合わせる。 */
+/**
+ * ウィンドウのタイトルバーを、いまの言語の表示名に合わせる。
+ *
+ * **Rust 側へ委ねる。** Window API を WebView から直接叩くには
+ * capability の設定が要るうえ、このアプリは「OS に触る操作は Rust 側」で
+ * 統一している。失敗しても画面は動くので握りつぶす。
+ */
+export function syncWindowTitle(): void {
+  if (!isTauri()) return;
+  const title = t("app.name");
+  void invoke("window_set_title", { title }).catch(() => {
+    // タイトルが変わらないだけなので、利用は続けられる
+  });
+}
+
+/** 起動時に `<html lang>` とウィンドウタイトルを合わせる。 */
 export function initLocale(): void {
   try {
     document.documentElement.lang = locale;
   } catch {
     // 何もしない
   }
+  syncWindowTitle();
 }
 
 function dictionaryOf(code: string): Dictionary {

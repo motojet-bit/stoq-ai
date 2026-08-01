@@ -60,6 +60,7 @@ import PanelRestoreBar from "@/components/PanelRestoreBar";
 import HelpAssistant from "@/components/HelpAssistant";
 import WelcomeTour from "@/components/WelcomeTour";
 import LegalDisclaimerModal from "@/components/LegalDisclaimerModal";
+import EulaModal from "@/components/EulaModal";
 import DisclaimerTicker from "@/components/DisclaimerTicker";
 import ComparePanel from "@/components/ComparePanel";
 import PortfolioHistoryPanel from "@/components/PortfolioHistoryPanel";
@@ -659,6 +660,9 @@ export default function App() {
       />
 
       <LegalDisclaimerModal />
+
+      {/* 同意するまで操作を塞ぐ。すべての上に出すため最後に置く */}
+      <EulaModal />
 
       <ToastHost />
     </div>

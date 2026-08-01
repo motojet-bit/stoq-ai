@@ -59,6 +59,12 @@ pub struct Settings {
     /// 無料版で分析した銘柄（大文字）。上限に達したら増えない
     #[serde(default)]
     pub free_tickers: Vec<String>,
+    /// 免責事項（EULA）に同意済みか。**ライセンスとは別**
+    #[serde(default)]
+    pub eula_agreed: bool,
+    /// 同意した時刻（ミリ秒）
+    #[serde(default)]
+    pub eula_agreed_at_ms: i64,
     /// クラウド同期（Google Drive アプリ専用領域）の設定。
     /// 更新用トークンを含むため、フロントへはマスク済みの状態しか返さない
     #[serde(default)]
@@ -88,6 +94,8 @@ impl Default for Settings {
             thresholds: BTreeMap::new(),
             license_key: String::new(),
             free_tickers: Vec::new(),
+            eula_agreed: false,
+            eula_agreed_at_ms: 0,
             cloud: crate::cloud::CloudConfig::default(),
             custom_base_url: String::new(),
         }
@@ -116,6 +124,8 @@ pub struct SettingsView {
     pub license: crate::license::LicenseStatus,
     /// 無料版で分析した銘柄
     pub free_tickers: Vec<String>,
+    /// 免責事項への同意状態
+    pub eula: crate::eula::EulaStatus,
     /// クラウド同期の状態（生のトークンは含まない）
     pub cloud: crate::cloud::CloudStatus,
     /// 組み込み + カスタムの全プロバイダのキー状態
@@ -189,6 +199,7 @@ impl Settings {
             thresholds: self.thresholds.clone(),
             license: crate::license::status_of(&self.license_key),
             free_tickers: self.free_tickers.clone(),
+            eula: crate::eula::status_of(self.eula_agreed, self.eula_agreed_at_ms),
             cloud: crate::cloud::status_of(&self.cloud),
             keys: self
                 .provider_ids()

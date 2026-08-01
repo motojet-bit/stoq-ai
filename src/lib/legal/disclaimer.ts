@@ -1,4 +1,4 @@
-import { APP_NAME } from "@/lib/ui/appMeta";
+import { appName } from "@/lib/ui/appMeta";
 
 /**
  * 免責事項の文面。
@@ -15,11 +15,18 @@ export interface DisclaimerSection {
 
 export const DISCLAIMER_TITLE = "免責事項・利用上の注意 (Legal Disclaimer)";
 
-export const DISCLAIMER_SECTIONS: DisclaimerSection[] = [
+/**
+ * 免責の本文。
+ *
+ * **定数にしない。** アプリ名を含むので、読み込み時に一度だけ組み立てると
+ * 言語を切り替えても古い名前を名乗り続ける。
+ */
+export function disclaimerSections(): DisclaimerSection[] {
+  return [
   {
     title: "投資助言の否定（非勧誘）",
     body:
-      `本ツール「${APP_NAME}」（以下、本ツール）が提供・表示するすべての情報` +
+      `本ツール「${appName()}」（以下、本ツール）が提供・表示するすべての情報` +
       "（数値データ、AIによる分析結果、スコアリング、生成テキスト等）は、" +
       "一般的な情報提供およびリサーチ支援のみを目的としており、" +
       "金融商品取引法に基づく投資助言、投資勧誘、" +
@@ -52,7 +59,8 @@ export const DISCLAIMER_SECTIONS: DisclaimerSection[] = [
       "データの欠落等により生じた情報の遅延や誤りについても、" +
       "本ツールおよび開発者は一切の責任を負いません。",
   },
-];
+  ];
+}
 
 /** 画面下部を流し続けるテロップの文面。 */
 export const DISCLAIMER_TICKER_TEXT =
@@ -63,7 +71,7 @@ export const DISCLAIMER_TICKER_TEXT =
 
 /** 全文をプレーンテキストで組み立てる（コピー用・テスト用）。 */
 export function disclaimerPlainText(): string {
-  const body = DISCLAIMER_SECTIONS.map(
+  const body = disclaimerSections().map(
     (section, i) => `${i + 1}. ${section.title}\n${section.body}`,
   ).join("\n\n");
   return `【${DISCLAIMER_TITLE}】\n\n${body}`;

@@ -1,4 +1,4 @@
-import { APP_NAME } from "@/lib/ui/appMeta";
+import { appName } from "@/lib/ui/appMeta";
 
 /**
  * 初心者向けの案内文。
@@ -41,6 +41,10 @@ export const TOOLTIPS = {
  * `mailto:` なので、押すと利用者の既定メーラーが件名つきで立ち上がる。
  */
 export const FEATURE_REQUEST_EMAIL = "xxxx@xxx.com";
-export const FEATURE_REQUEST_URL =
-  `mailto:${FEATURE_REQUEST_EMAIL}` +
-  `?subject=${encodeURIComponent(`【${APP_NAME}】機能リクエスト`)}`;
+/** 件名には**そのときの表示名**を入れるので、定数ではなく関数にする。 */
+export function featureRequestUrl(): string {
+  return (
+    `mailto:${FEATURE_REQUEST_EMAIL}` +
+    `?subject=${encodeURIComponent(`【${appName()}】機能リクエスト`)}`
+  );
+}

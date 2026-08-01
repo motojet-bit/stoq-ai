@@ -2,7 +2,7 @@ import { FREE_TICKER_LIMIT } from "@/lib/license/freeTier";
 import { useUsedTickers } from "@/lib/license/freeTierStore";
 import ModalShell from "@/components/ModalShell";
 import { IconBadge, IconKey } from "@/components/Icons";
-import { APP_NAME } from "@/lib/ui/appMeta";
+import { appName } from "@/lib/ui/appMeta";
 
 interface Props {
   open: boolean;
@@ -56,7 +56,7 @@ export default function FreeTierLimitModal({
     >
       <div className="px-6 py-5">
         <p className="selectable t-body leading-relaxed text-slate-300">
-          {APP_NAME} をご利用いただきありがとうございます。
+          {appName()} をご利用いただきありがとうございます。
           {FREE_TICKER_LIMIT + 1}銘柄目以降の無制限分析を行うには、
           ライセンスキーを有効化してください。
         </p>

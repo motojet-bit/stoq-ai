@@ -24,6 +24,11 @@ interface Props {
   children: ReactNode;
   /** 下部に固定するボタン行など */
   footer?: ReactNode;
+  /**
+   * 閉じる手段をすべて取り上げる（Esc も ✕ も無し）。
+   * 免責事項の同意のように、**応えないと先へ進めてはいけない**ものに使う。
+   */
+  blocking?: boolean;
   onClose: () => void;
 }
 
@@ -42,6 +47,7 @@ export default function ModalShell({
   maxWidthClass = "max-w-3xl",
   children,
   footer,
+  blocking = false,
   onClose,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -99,13 +105,13 @@ export default function ModalShell({
   }, [open, fit]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || blocking) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open, blocking, onClose]);
 
   if (!open) return null;
 
@@ -156,15 +162,17 @@ export default function ModalShell({
                 中央に戻す
               </button>
             )}
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={onClose}
-              aria-label={`${title}を閉じる`}
-              className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
-            >
-              <IconClose className="h-4 w-4" />
-            </button>
+            {!blocking && (
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onClose}
+                aria-label={`${title}を閉じる`}
+                className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
+              >
+                <IconClose className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </header>
 

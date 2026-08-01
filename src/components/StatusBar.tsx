@@ -1,4 +1,4 @@
-import { APP_VERSION, COPYRIGHT } from "@/lib/ui/appMeta";
+import { APP_VERSION } from "@/lib/ui/appMeta";
 import { IconHelp } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
@@ -42,7 +42,7 @@ export default function StatusBar({
 
       {/* 中央: 権利表記 */}
       <div className="justify-self-center whitespace-nowrap text-center text-slate-600">
-        {COPYRIGHT}
+        {t("app.copyright")}
       </div>
 
       {/* 右: ヘルプとバージョン */}

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  DISCLAIMER_SECTIONS,
+  disclaimerSections,
   DISCLAIMER_TICKER_TEXT,
   DISCLAIMER_TITLE,
   disclaimerPlainText,
@@ -21,8 +21,8 @@ import { setLocale, t } from "@/lib/i18n/i18n";
  */
 describe("免責事項の文面", () => {
   it("4 つの条項がそろっている", () => {
-    expect(DISCLAIMER_SECTIONS).toHaveLength(4);
-    const titles = DISCLAIMER_SECTIONS.map((s) => s.title);
+    expect(disclaimerSections()).toHaveLength(4);
+    const titles = disclaimerSections().map((s: { title: string }) => s.title);
     expect(titles[0]).toContain("投資助言の否定");
     expect(titles[1]).toContain("ハルシネーション");
     expect(titles[2]).toContain("自己責任");
@@ -30,33 +30,33 @@ describe("免責事項の文面", () => {
   });
 
   it("金融商品取引法への言及がある（非勧誘の明示）", () => {
-    expect(DISCLAIMER_SECTIONS[0].body).toContain("金融商品取引法");
-    expect(DISCLAIMER_SECTIONS[0].body).toContain("投資助言");
-    expect(DISCLAIMER_SECTIONS[0].body).toContain("推奨するものではありません");
+    expect(disclaimerSections()[0].body).toContain("金融商品取引法");
+    expect(disclaimerSections()[0].body).toContain("投資助言");
+    expect(disclaimerSections()[0].body).toContain("推奨するものではありません");
   });
 
   it("AI の出力が変動しうることを明記している", () => {
-    const body = DISCLAIMER_SECTIONS[1].body;
+    const body = disclaimerSections()[1].body;
     expect(body).toContain("ハルシネーション");
     expect(body).toContain("毎回変動");
     expect(body).toContain("一切保証いたしません");
   });
 
   it("損害賠償責任を負わないことを明記している", () => {
-    const body = DISCLAIMER_SECTIONS[2].body;
+    const body = disclaimerSections()[2].body;
     expect(body).toContain("一切の法的責任を負いません");
     expect(body).toContain("自己責任");
   });
 
   it("外部データソースを名指しで挙げている", () => {
-    const body = DISCLAIMER_SECTIONS[3].body;
+    const body = disclaimerSections()[3].body;
     for (const source of ["Yahoo Finance", "FMP", "Alpha Vantage", "SEC EDGAR"]) {
       expect(body).toContain(source);
     }
   });
 
   it("本文が空の条項が無い", () => {
-    for (const section of DISCLAIMER_SECTIONS) {
+    for (const section of disclaimerSections()) {
       expect(section.title.trim().length).toBeGreaterThan(0);
       expect(section.body.trim().length).toBeGreaterThan(30);
     }
@@ -65,8 +65,8 @@ describe("免責事項の文面", () => {
   it("プレーンテキストは番号付きで全条項を含む", () => {
     const text = disclaimerPlainText();
     expect(text).toContain(DISCLAIMER_TITLE);
-    for (let i = 0; i < DISCLAIMER_SECTIONS.length; i++) {
-      expect(text).toContain(`${i + 1}. ${DISCLAIMER_SECTIONS[i].title}`);
+    for (let i = 0; i < disclaimerSections().length; i++) {
+      expect(text).toContain(`${i + 1}. ${disclaimerSections()[i].title}`);
     }
   });
 });
