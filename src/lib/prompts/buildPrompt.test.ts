@@ -3,6 +3,9 @@ import { buildAnalysisPrompt } from "@/lib/prompts/buildPrompt";
 import { condenseDocument } from "@/lib/prompts/condense";
 import { estimateTokens } from "@/lib/parser/tokenCount";
 
+/** システムプロンプトは Rust 側にあるので、テストでは長さだけを与える */
+const SYSTEM_TOKENS = 2_500;
+
 const DECK = [
   "【将来見通しに関する注意事項】",
   "本資料に含まれる将来に関する記述は見通しであり、いかなる保証をするものではありません。",
@@ -83,7 +86,8 @@ describe("buildAnalysisPrompt（トークン予算）", () => {
         { name: "巨大資料.txt", text: "詳細な説明。".repeat(15_000) },
       ],
       tokenLimit,
-      reserveForOutput: 8_000,
+      systemTokens: SYSTEM_TOKENS,
+    reserveForOutput: 8_000,
     });
 
   it("上限を超えない", () => {
@@ -105,8 +109,15 @@ describe("buildAnalysisPrompt（トークン予算）", () => {
 
   it("上限が極端に小さくても例外を投げない", () => {
     const built = build(9_000);
-    expect(built.system.length).toBeGreaterThan(0);
+    expect(built.user.length).toBeGreaterThan(0);
     expect(built.notes.length).toBeGreaterThan(0);
+  });
+
+  it("システムプロンプトの長さも予算に含める（本文は持たない）", () => {
+    const built = build(30_000);
+    expect(built.tokens).toBeGreaterThan(SYSTEM_TOKENS);
+    // フロント側にプロンプト本文は存在しない
+    expect(Object.keys(built)).not.toContain("system");
   });
 
   it("資料が何も無くてもプロンプトは組める", () => {
@@ -117,7 +128,8 @@ describe("buildAnalysisPrompt（トークン予算）", () => {
       filing: null,
       documents: [],
       tokenLimit: 180_000,
-      reserveForOutput: 8_000,
+      systemTokens: SYSTEM_TOKENS,
+    reserveForOutput: 8_000,
     });
     expect(built.user).toContain("NVDA");
     expect(built.tokens).toBeGreaterThan(0);

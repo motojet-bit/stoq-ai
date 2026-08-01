@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildThresholdSection,
   clampThreshold,
   customizedIds,
   definitionOf,
@@ -8,7 +7,6 @@ import {
   mergeThresholds,
   THRESHOLDS,
 } from "@/lib/prompts/thresholds";
-import { buildSystemPrompt } from "@/lib/prompts/systemPrompt";
 
 describe("閾値の定義", () => {
   it("ID が重複していない", () => {
@@ -112,61 +110,30 @@ describe("formatRule", () => {
   });
 });
 
-describe("buildThresholdSection（プロンプトへの埋め込み）", () => {
-  it("設定した数値がそのまま文字列に入る", () => {
-    const text = buildThresholdSection(mergeThresholds({ revenueGrowth: 25, per: 18 }));
-    expect(text).toContain("売上高成長率（YoY） >= 25%");
-    expect(text).toContain("PER（株価収益率） <= 18倍");
+/**
+ * Rust 側（`src-tauri/src/prompts/mod.rs`）の `THRESHOLD_META` と同じ並び。
+ * どちらかを変えたらもう一方のテストが落ちるようにしてある。
+ */
+const RUST_THRESHOLD_IDS = [
+  "revenueGrowth",
+  "operatingMargin",
+  "roe",
+  "cashRunwayMonths",
+  "fcfMargin",
+  "per",
+  "pbr",
+  "debtToEquity",
+  "dividendYield",
+  "payoutRatio",
+];
+
+describe("Rust 側との整合", () => {
+  it("項目 ID が Rust の一覧と一致する（ずれると設定が反映されない）", () => {
+    expect(THRESHOLDS.map((t) => t.id)).toEqual(RUST_THRESHOLD_IDS);
   });
 
-  it("全項目が 1 行ずつ並ぶ", () => {
-    const text = buildThresholdSection(mergeThresholds(null));
-    for (const def of THRESHOLDS) {
-      expect(text).toContain(def.label);
-    }
-  });
-
-  it("合格/不合格を判定させる指示を含む", () => {
-    const text = buildThresholdSection(mergeThresholds(null));
-    expect(text).toContain("厳密に適用して合格/不合格を判定せよ");
-    expect(text).toContain("根拠欄");
-  });
-
-  it("**データが無いことを不合格にしない**よう明記する", () => {
-    const text = buildThresholdSection(mergeThresholds(null));
-    expect(text).toContain("基準未判定");
-    expect(text).toContain("不合格として扱わない");
-  });
-
-  it("例示の数値も設定値に追従する（説明と基準がずれない）", () => {
-    const text = buildThresholdSection(mergeThresholds({ revenueGrowth: 25 }));
-    expect(text).toContain("基準 25% 以上");
-    expect(text).not.toContain("基準 15% 以上");
-  });
-
-  it("壊れた保存値でも組み立てられる", () => {
-    expect(() => buildThresholdSection({ per: Number.NaN })).not.toThrow();
-    expect(buildThresholdSection({})).toContain("PER");
-  });
-});
-
-describe("システムプロンプトへの反映", () => {
-  it("閾値を渡すとプロンプト本体に差し込まれる", () => {
-    const prompt = buildSystemPrompt(mergeThresholds({ per: 18 }));
-    expect(prompt).toContain("# 閾値基準");
-    expect(prompt).toContain("PER（株価収益率） <= 18倍");
-  });
-
-  it("閾値を渡さなくても既定値で差し込まれる", () => {
-    const prompt = buildSystemPrompt();
-    expect(prompt).toContain("# 閾値基準");
-    expect(prompt).toContain(`PER（株価収益率） <= ${definitionOf("per")!.defaultValue}倍`);
-  });
-
-  it("既存の厳守事項や出力フォーマットは残っている", () => {
-    const prompt = buildSystemPrompt(mergeThresholds({ per: 18 }));
-    expect(prompt).toContain("# 厳守事項");
-    expect(prompt).toContain("## 評価テーブル");
-    expect(prompt).toContain("# モメンタム評価");
+  it("プロンプト文字列化の関数はフロントに存在しない（Rust 側に秘匿）", async () => {
+    const mod = await import("@/lib/prompts/thresholds");
+    expect("buildThresholdSection" in mod).toBe(false);
   });
 });

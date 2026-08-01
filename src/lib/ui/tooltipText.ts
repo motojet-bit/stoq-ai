@@ -29,5 +29,11 @@ export const TOOLTIPS = {
     "設定した数値はそのままプロンプトに埋め込まれます",
 } as const;
 
-/** 機能リクエストの宛先。ヘルプ画面から案内する。 */
-export const FEATURE_REQUEST_URL = "https://github.com/Mitsu2/StoQ-AI-Analyzer/issues/new";
+/**
+ * 機能リクエストの宛先。ヘルプ画面から案内する。
+ * `mailto:` なので、押すと利用者の既定メーラーが件名つきで立ち上がる。
+ */
+export const FEATURE_REQUEST_EMAIL = "xxxx@xxx.com";
+export const FEATURE_REQUEST_URL =
+  `mailto:${FEATURE_REQUEST_EMAIL}` +
+  `?subject=${encodeURIComponent("【StoQ AI】機能リクエスト")}`;

@@ -1,5 +1,5 @@
 import { CRITERIA, criterionById } from "@/lib/prompts/criteria";
-import { SECTION_HEADINGS } from "@/lib/prompts/systemPrompt";
+import { SECTION_HEADINGS } from "@/lib/prompts/sections";
 
 /** 20項目の評価 1 行 */
 export interface CriterionResult {

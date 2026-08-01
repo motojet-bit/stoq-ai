@@ -12,7 +12,8 @@ use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
 use crate::market;
-use crate::prompts::{self, StoredPrompt};
+use crate::personas::{self, StoredPrompt};
+use crate::prompts::{self, AnalystRole};
 use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
 use crate::shortcuts::{self, ShortcutOverride};
@@ -367,7 +368,7 @@ pub fn candidates_clear(app: AppHandle) -> Result<Vec<CandidateStock>> {
 
 #[tauri::command]
 pub fn prompts_list(app: AppHandle) -> Result<Vec<StoredPrompt>> {
-    prompts::list(&app)
+    personas::list(&app)
 }
 
 /// `id` を渡すと更新、渡さなければ新規作成。
@@ -378,17 +379,40 @@ pub fn prompts_save(
     title: String,
     body: String,
 ) -> Result<Vec<StoredPrompt>> {
-    prompts::save(&app, id, &title, &body)
+    personas::save(&app, id, &title, &body)
 }
 
 #[tauri::command]
 pub fn prompts_remove(app: AppHandle, id: String) -> Result<Vec<StoredPrompt>> {
-    prompts::remove(&app, &id)
+    personas::remove(&app, &id)
 }
 
 // ------------------------------------------------------ ショートカットキー
 
 /// ユーザーが変更した割り当てだけを返す（既定はフロント側が持つ）。
+// ------------------------------------------------------ 分析プロンプト
+
+/// 分析の役割一覧。**プロンプト本文は含まれない**（概要だけ返す）。
+#[tauri::command]
+pub fn analysis_roles() -> Vec<AnalystRole> {
+    prompts::roles()
+}
+
+/// 組み立てたシステムプロンプトの概算トークン数だけを返す。
+/// フロントは本文を受け取れないが、資料の予算計算には長さが要るため。
+#[tauri::command]
+pub fn analysis_prompt_tokens(preset: prompts::AnalysisPreset) -> usize {
+    prompts::system_prompt_tokens(&preset)
+}
+
+/// 設定画面のプレビュー用。**ユーザー自身が設定した閾値の部分だけ**を返す。
+#[tauri::command]
+pub fn analysis_threshold_preview(
+    thresholds: std::collections::BTreeMap<String, f64>,
+) -> String {
+    prompts::threshold_section(&thresholds)
+}
+
 #[tauri::command]
 pub fn shortcuts_list(app: AppHandle) -> Result<Vec<ShortcutOverride>> {
     shortcuts::list(&app)

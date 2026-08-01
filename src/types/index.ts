@@ -77,6 +77,16 @@ export interface CustomProviderPatch {
   model?: string;
 }
 
+/** 20項目分析の役割（概要のみ。プロンプト本文は Rust 側にある） */
+export interface AnalystRole {
+  id: string;
+  label: string;
+  /** ドロップダウンに出す一行説明 */
+  summary: string;
+  /** 重点的に見る観点 */
+  focus: string[];
+}
+
 /** LLM に渡す会話 1 メッセージ */
 export interface ChatMessage {
   role: "user" | "assistant";

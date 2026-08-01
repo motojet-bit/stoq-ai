@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useShowTooltips } from "@/lib/ui/displayPrefs";
 
 type Placement = "top" | "bottom" | "left" | "right";
 
@@ -17,6 +18,8 @@ interface Props {
  * `title` 属性だと表示まで 1〜2 秒待たされ、改行も装飾もできない。
  * 初心者向けの案内は**すぐ出て読みやすい**必要があるので自前で持つ。
  * 文字サイズは `.ui-fixed` で固定する（本文を拡大しても吹き出しは崩さない）。
+ *
+ * 設定で OFF にすると、子要素だけを素通しして吹き出しを出さない。
  */
 export default function Tooltip({
   content,
@@ -24,6 +27,7 @@ export default function Tooltip({
   widthClass = "w-64",
   children,
 }: Props) {
+  const enabled = useShowTooltips();
   const [open, setOpen] = useState(false);
   const [flipped, setFlipped] = useState<Placement>(placement);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -39,6 +43,9 @@ export default function Tooltip({
     else if (placement === "right" && rect.right > window.innerWidth - 8) setFlipped("left");
     else setFlipped(placement);
   }, [open, placement]);
+
+  // OFF のときは余計な要素を挟まず、子要素をそのまま返す
+  if (!enabled) return <>{children}</>;
 
   const position: Record<Placement, string> = {
     top: "bottom-full left-1/2 mb-1.5 -translate-x-1/2",

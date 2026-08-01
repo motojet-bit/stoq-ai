@@ -6,7 +6,13 @@ export interface LlmRequest {
   requestId?: string;
   /** 未指定なら設定の既定プロバイダ */
   provider?: ProviderId;
+  /** 自由入力のシステムプロンプト（対話・ヘルプ用） */
   system?: string;
+  /**
+   * 20項目分析のプリセット。**役割 ID と閾値だけ**を渡す。
+   * 秘匿プロンプトとの結合は Rust 側で行われ、本文は戻ってこない。
+   */
+  analysisPreset?: { roleId: string; thresholds: Record<string, number> };
   messages: ChatMessage[];
   maxTokens?: number;
 }

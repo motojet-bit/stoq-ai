@@ -55,8 +55,14 @@ pub struct LlmRequest {
     /// 未指定なら設定の既定プロバイダを使う
     #[serde(default)]
     pub provider: Option<String>,
+    /// 自由入力のシステムプロンプト（対話・ヘルプ用）。
+    /// `analysis_preset` が指定されている場合は無視される。
     #[serde(default)]
     pub system: Option<String>,
+    /// 20項目分析のプリセット。**役割 ID と閾値だけ**を受け取り、
+    /// 秘匿プロンプトとの結合は Rust 側で行う（`crate::prompts` を参照）。
+    #[serde(default)]
+    pub analysis_preset: Option<crate::prompts::AnalysisPreset>,
     pub messages: Vec<ChatMessage>,
     #[serde(default)]
     pub max_tokens: Option<u32>,
@@ -77,7 +83,19 @@ pub enum LlmEvent {
 pub const TEMPERATURE: f32 = 0.0;
 pub const DEFAULT_MAX_TOKENS: u32 = 8192;
 
-pub async fn send(settings: &Settings, request: LlmRequest, channel: Channel<LlmEvent>) -> Result<()> {
+pub async fn send(
+    settings: &Settings,
+    mut request: LlmRequest,
+    channel: Channel<LlmEvent>,
+) -> Result<()> {
+    /*
+     * 分析プリセットが来たら、ここで秘匿プロンプトと結合する。
+     * **組み立てた文字列はフロントへ返さない**（返した時点で秘匿の意味が無くなる）。
+     */
+    if let Some(preset) = request.analysis_preset.take() {
+        request.system = Some(crate::prompts::build_system_prompt(&preset));
+    }
+
     let provider = request
         .provider
         .clone()

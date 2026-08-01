@@ -3,7 +3,6 @@ import type { AppSettings } from "@/types";
 import { saveSettings } from "@/lib/config/settingsStore";
 import { toastError } from "@/lib/ui/toastStore";
 import {
-  buildThresholdSection,
   clampThreshold,
   customizedIds,
   formatRule,
@@ -11,6 +10,7 @@ import {
   THRESHOLDS,
   type ThresholdValues,
 } from "@/lib/prompts/thresholds";
+import { thresholdPreview } from "@/lib/prompts/analystRoleStore";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
 import Tooltip from "@/components/Tooltip";
 import { IconHelp } from "@/components/Icons";
@@ -29,7 +29,7 @@ export default function ThresholdSettings({ settings }: Props) {
   const [values, setValues] = useState<ThresholdValues>(() =>
     mergeThresholds(settings?.thresholds),
   );
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   // 設定が読み込み直されたら追従する
@@ -61,6 +61,18 @@ export default function ThresholdSettings({ settings }: Props) {
     void persist(next);
   };
 
+  /*
+   * 表示できるのは**ユーザー自身が設定した閾値の部分だけ**。
+   * 20項目の分析指示そのものは Rust 側の秘匿定数にあり、ここには出てこない。
+   */
+  const togglePreview = async () => {
+    if (preview !== null) {
+      setPreview(null);
+      return;
+    }
+    setPreview(await thresholdPreview(values));
+  };
+
   const resetAll = () => {
     const next = mergeThresholds(null);
     setValues(next);
@@ -69,17 +81,33 @@ export default function ThresholdSettings({ settings }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <p className="t-label leading-relaxed text-slate-500">
+      {/* 迷った人がそのまま閉じられるよう、最初に「触らなくてよい」と伝える */}
+      <div className="flex items-start justify-between gap-3 rounded-lg border border-emerald-900/60 bg-emerald-950/25 px-3 py-2.5">
+        <p className="t-body leading-relaxed text-emerald-200/90">
+          💡 使い方がわからない場合や迷った場合は、デフォルト（既定値）のままで問題ありません。
+          プロの基準値が自動適用されます
+        </p>
+        <Tooltip content={TOOLTIPS.thresholds} placement="left">
+          <span className="shrink-0 text-emerald-600">
+            <IconHelp className="h-4 w-4" />
+          </span>
+        </Tooltip>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 t-label leading-relaxed text-slate-500">
           AI が合格/不合格を判定する基準です。設定した数値は
           <strong className="text-slate-300">そのままシステムプロンプトに埋め込まれ</strong>、
           各項目の根拠欄に「基準に対して合格か」が明記されます。
         </p>
-        <Tooltip content={TOOLTIPS.thresholds} placement="left">
-          <span className="shrink-0 text-slate-600">
-            <IconHelp className="h-4 w-4" />
-          </span>
-        </Tooltip>
+        <button
+          type="button"
+          onClick={resetAll}
+          disabled={changed.length === 0 || busy}
+          className="min-h-8 shrink-0 whitespace-nowrap rounded-md border border-slate-600 px-3 t-body text-slate-200 transition-colors hover:border-emerald-700 hover:bg-slate-800 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          既定値に戻す（デフォルト復元）
+        </button>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-800">
@@ -146,28 +174,18 @@ export default function ThresholdSettings({ settings }: Props) {
             ? "すべて既定値です"
             : `${changed.length} 項目を既定から変更しています`}
         </span>
-        <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={() => setShowPrompt((v) => !v)}
-            className="min-h-7 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
-          >
-            {showPrompt ? "送信文を隠す" : "AI に送る文面を見る"}
-          </button>
-          <button
-            type="button"
-            onClick={resetAll}
-            disabled={changed.length === 0 || busy}
-            className="min-h-7 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            すべて既定に戻す
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void togglePreview()}
+          className="min-h-7 shrink-0 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+        >
+          {preview === null ? "AI に送る文面を見る" : "送信文を隠す"}
+        </button>
       </div>
 
-      {showPrompt && (
+      {preview !== null && (
         <pre className="selectable max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-slate-800 bg-slate-950 px-3 py-2.5 font-mono t-label leading-relaxed text-slate-300">
-          {buildThresholdSection(values)}
+          {preview}
         </pre>
       )}
 

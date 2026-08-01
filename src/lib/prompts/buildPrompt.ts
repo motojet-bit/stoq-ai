@@ -1,6 +1,4 @@
 import { estimateTokens } from "@/lib/parser/tokenCount";
-import { buildSystemPrompt } from "@/lib/prompts/systemPrompt";
-import type { ThresholdValues } from "@/lib/prompts/thresholds";
 import { condenseDocument } from "@/lib/prompts/condense";
 import type { Fundamentals, QuarterlySeries } from "@/types";
 
@@ -29,12 +27,14 @@ export interface PromptSources {
   tokenLimit: number;
   /** 応答のために空けておくトークン数 */
   reserveForOutput: number;
-  /** ユーザーが設定した合否ライン。省略すると既定値 */
-  thresholds?: ThresholdValues;
+  /**
+   * システムプロンプトの概算トークン数。
+   * **本文は Rust 側にあるので受け取らない。** 予算計算に長さだけ使う。
+   */
+  systemTokens: number;
 }
 
 export interface BuiltPrompt {
-  system: string;
   user: string;
   /** 全体の概算トークン数 */
   tokens: number;
@@ -70,14 +70,13 @@ const KEY_SECTIONS = [
  */
 export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   const notes: string[] = [];
-  const system = buildSystemPrompt(sources.thresholds);
 
   const header = buildHeader(sources.ticker);
   const metrics = buildMetricsSection(sources.fundamentals);
   const quarterly = buildQuarterlySection(sources.quarterly);
 
   const fixedTokens =
-    estimateTokens(system) +
+    sources.systemTokens +
     estimateTokens(header) +
     estimateTokens(metrics) +
     estimateTokens(quarterly) +
@@ -90,7 +89,7 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
     notes.push(
       "トークン上限が小さすぎるため、財務指標のみで分析します。設定で上限を引き上げてください。",
     );
-    return finish(system, [header, metrics, quarterly], notes);
+    return finish(sources.systemTokens, [header, metrics, quarterly], notes);
   }
 
   // 資料と SEC で予算を分ける。片方が使い切らなければ他方へ回す。
@@ -112,29 +111,37 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   const filingSection = buildFilingSection(sources.filing, filingBudget, notes);
 
   const built = finish(
-    system,
+    sources.systemTokens,
     [header, metrics, quarterly, filingSection, documentsSection],
     notes,
   );
 
   // 節ごとの切り詰めは概算なので、最後に全体で上限を検算する
-  return enforceLimit(built, sources.tokenLimit - sources.reserveForOutput);
+  return enforceLimit(
+    built,
+    sources.tokenLimit - sources.reserveForOutput,
+    sources.systemTokens,
+  );
 }
 
-function finish(system: string, parts: string[], notes: string[]): BuiltPrompt {
+function finish(systemTokens: number, parts: string[], notes: string[]): BuiltPrompt {
   const user = parts.filter((p) => p.length > 0).join("\n\n");
-  return { system, user, tokens: estimateTokens(system) + estimateTokens(user), notes };
+  return { user, tokens: systemTokens + estimateTokens(user), notes };
 }
 
 /**
  * 上限をまだ超えている場合の最後の砦。
  *
- * user 部分だけを段階的に切り詰める（system は評価基準そのものなので削らない）。
+ * user 部分だけを段階的に切り詰める
+ * （system は評価基準そのものなので削らない。そもそも Rust 側にあり触れない）。
  */
-function enforceLimit(built: BuiltPrompt, limit: number): BuiltPrompt {
+function enforceLimit(
+  built: BuiltPrompt,
+  limit: number,
+  systemTokens: number,
+): BuiltPrompt {
   if (built.tokens <= limit) return built;
 
-  const systemTokens = estimateTokens(built.system);
   const userBudget = Math.max(limit - systemTokens, 500);
 
   // ここでもスマート圧縮を使う（中間の一括カットはしない）
@@ -148,7 +155,6 @@ function enforceLimit(built: BuiltPrompt, limit: number): BuiltPrompt {
   }
 
   return {
-    system: built.system,
     user,
     tokens: systemTokens + estimateTokens(user),
     notes: [

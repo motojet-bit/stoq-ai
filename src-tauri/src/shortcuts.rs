@@ -176,11 +176,11 @@ mod tests {
 
     #[test]
     fn 他のテーブルと同居しても互いを壊さない() {
-        use crate::{candidates, prompts};
+        use crate::{candidates, personas};
 
         let conn = Connection::open_in_memory().unwrap();
         candidates::migrate(&conn).unwrap();
-        prompts::migrate(&conn).unwrap();
+        personas::migrate(&conn).unwrap();
         candidates::add_many_in(
             &conn,
             vec![candidates::CandidateInput {
@@ -195,7 +195,7 @@ mod tests {
         set_in(&conn, "chat.new", Some("F2".into())).unwrap();
 
         assert_eq!(candidates::list_in(&conn).unwrap().len(), 1);
-        assert_eq!(prompts::list_in(&conn).unwrap().len(), 3);
+        assert_eq!(personas::list_in(&conn).unwrap().len(), 3);
         assert_eq!(list_in(&conn).unwrap().len(), 1);
     }
 }

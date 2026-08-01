@@ -2,6 +2,11 @@ import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { cancelChat, streamChat } from "@/lib/llm/client";
 import { buildAnalysisPrompt, type PromptDocument } from "@/lib/prompts/buildPrompt";
+import {
+  getActiveRoleId,
+  systemPromptTokens,
+} from "@/lib/prompts/analystRoleStore";
+import { mergeThresholds } from "@/lib/prompts/thresholds";
 import { parseAnalysis, type AnalysisResult } from "@/lib/prompts/parseAnalysis";
 import { readDocumentText } from "@/lib/parser/documentStore";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
@@ -169,6 +174,15 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     }
 
     // --- プロンプト構築 -------------------------------------------
+    /*
+     * システムプロンプトは Rust 側の秘匿定数から組み立てられる。
+     * フロントは**役割 ID と閾値だけ**を渡し、本文は受け取らない。
+     * 長さ（トークン数）だけを取得して資料の予算計算に使う。
+     */
+    const roleId = getActiveRoleId();
+    const thresholds = mergeThresholds(settings?.thresholds);
+    const systemTokens = await systemPromptTokens(roleId, thresholds);
+
     const prompt = buildAnalysisPrompt({
       ticker,
       fundamentals: options.fundamentals,
@@ -177,8 +191,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       documents,
       tokenLimit: settings?.maxPromptTokens ?? 180_000,
       reserveForOutput: RESERVE_FOR_OUTPUT,
-      // ユーザーが設定した合否ラインをプロンプトに反映する
-      thresholds: settings?.thresholds,
+      systemTokens,
     });
 
     // 何をもとに分析したかを記録し、UI に出す
@@ -210,7 +223,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     const { cancelled } = await streamChat(
       {
         requestId,
-        system: prompt.system,
+        // 役割 ID と閾値だけを渡す。秘匿プロンプトとの結合は Rust 側で行う
+        analysisPreset: { roleId, thresholds },
         messages: [{ role: "user", content: prompt.user }],
         maxTokens: RESERVE_FOR_OUTPUT,
       },

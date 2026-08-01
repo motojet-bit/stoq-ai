@@ -1,12 +1,15 @@
 /**
- * AI の合否判定に使う可変閾値。
+ * AI の合否判定に使う可変閾値の **UI 用メタ情報**。
  *
  * 「成長株を探したい人」と「割安・高配当を探したい人」では合格ラインが違う。
  * 固定値をプロンプトに埋め込むと、どちらかにしか使えないアプリになる。
  *
- * 定義（項目・既定値・範囲）は**ここが唯一の出所**で、
- * Rust 側には「ユーザーが変えた値」だけを保存する。
- * 既定値を両方に置くと、既定を変えたときに古い値が残ってしまう。
+ * **プロンプトへの文字列化は Rust 側（`src-tauri/src/prompts/mod.rs`）が行う。**
+ * ここにあるのは入力欄を描くための情報（表示名・単位・範囲・刻み）だけで、
+ * AI への指示文は含まない。
+ *
+ * 項目 ID と既定値は Rust 側と一致させること
+ * （ずれると設定した値が反映されない。両側にテストを置いてある）。
  */
 
 /** 判定の向き。`min` は「以上で合格」、`max` は「以下で合格」。 */
@@ -61,6 +64,28 @@ export const THRESHOLDS: ThresholdDefinition[] = [
     hint: "株主資本をどれだけ効率よく利益に変えているか",
   },
   {
+    id: "cashRunwayMonths",
+    label: "キャッシュランウェイ",
+    unit: "か月",
+    direction: "min",
+    defaultValue: 24,
+    min: 0,
+    max: 60,
+    step: 1,
+    hint: "手元現金でバーンレートを何か月まかなえるか。赤字先行の中小型株で重要",
+  },
+  {
+    id: "fcfMargin",
+    label: "FCF マージン",
+    unit: "%",
+    direction: "min",
+    defaultValue: 10,
+    min: -30,
+    max: 60,
+    step: 1,
+    hint: "フリーCF ÷ 売上高。会計上の利益より現金の創出力を見る",
+  },
+  {
     id: "per",
     label: "PER（株価収益率）",
     unit: "倍",
@@ -103,6 +128,17 @@ export const THRESHOLDS: ThresholdDefinition[] = [
     max: 15,
     step: 0.1,
     hint: "インカム重視なら引き上げる。0 のままなら判定に使わない",
+  },
+  {
+    id: "payoutRatio",
+    label: "配当性向",
+    unit: "%",
+    direction: "max",
+    defaultValue: 70,
+    min: 0,
+    max: 150,
+    step: 5,
+    hint: "利益に対する配当の割合。高いほど減配余地が小さい",
   },
 ];
 
@@ -151,29 +187,4 @@ export function customizedIds(values: ThresholdValues): string[] {
 export function formatRule(def: ThresholdDefinition, value: number): string {
   const comparator = def.direction === "min" ? ">=" : "<=";
   return `${def.label} ${comparator} ${value}${def.unit}`;
-}
-
-/**
- * システムプロンプトに差し込む閾値ルールを組み立てる。
- *
- * **合否だけでなく「判定できない場合」の扱いまで書く。**
- * 指標が取れないときに勝手に不合格にされると、資料不足と実力不足の
- * 区別がつかなくなるため。
- */
-export function buildThresholdSection(values: ThresholdValues): string {
-  const merged = mergeThresholds(values);
-  const lines = THRESHOLDS.map((def) => `- ${formatRule(def, merged[def.id])}`).join("\n");
-
-  return `# 閾値基準（ユーザー設定・厳密に適用すること）
-
-以下の閾値基準を厳密に適用して合格/不合格を判定せよ。
-
-${lines}
-
-- 各項目の根拠欄には、**該当する閾値に対して合格か不合格かを必ず明記する**
-  （例: 「売上成長率 +16.4%（基準 ${merged.revenueGrowth}% 以上 → 合格）」）。
-- 数値が取得できず判定できない場合は「基準未判定（データなし）」と書く。
-  **取得できないことを不合格として扱わない。**
-- 閾値はユーザーの投資方針であり、絶対的な優劣ではない。
-  基準を外れていても、それを補う材料があれば根拠欄でその旨を述べる。`;
 }

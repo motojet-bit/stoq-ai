@@ -13,6 +13,7 @@ import {
 } from "@/lib/chat/chatStore";
 import { loadCandidates } from "@/lib/candidates/candidateStore";
 import { loadPrompts } from "@/lib/prompts/promptLibrary";
+import { loadAnalystRoles } from "@/lib/prompts/analystRoleStore";
 import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
 import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
@@ -151,6 +152,7 @@ export default function App() {
     void loadCandidates();
     void loadPrompts();
     void loadShortcuts();
+    void loadAnalystRoles();
 
     try {
       if (localStorage.getItem(TOUR_SEEN_KEY) !== "1") setTourOpen(true);

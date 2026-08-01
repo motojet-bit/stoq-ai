@@ -4,6 +4,7 @@ import { CRITERIA } from "@/lib/prompts/criteria";
 import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
+import AnalystRoleMenu from "@/components/AnalystRoleMenu";
 import { IconChart, IconPlay, IconStop, IconTrash } from "@/components/Icons";
 
 interface Props {
@@ -80,6 +81,8 @@ export default function AnalysisPanel({
         collapseDisabledReason={collapseDisabledReason}
         actions={
           <>
+            <AnalystRoleMenu />
+
             {result && result.averageScore !== null && (
               <span className="t-label shrink-0 font-mono text-emerald-400">
                 平均 {result.averageScore.toFixed(1)} / 5

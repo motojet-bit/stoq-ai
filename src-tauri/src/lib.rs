@@ -15,6 +15,7 @@ mod http;
 mod library;
 mod llm;
 mod market;
+mod personas;
 mod prompts;
 mod quarterly;
 mod settings;
@@ -52,6 +53,9 @@ pub fn run() {
             commands::prompts_list,
             commands::prompts_save,
             commands::prompts_remove,
+            commands::analysis_roles,
+            commands::analysis_prompt_tokens,
+            commands::analysis_threshold_preview,
             commands::shortcuts_list,
             commands::shortcuts_set,
             commands::shortcuts_reset,
