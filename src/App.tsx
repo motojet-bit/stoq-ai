@@ -23,7 +23,8 @@ import Sidebar from "@/components/Sidebar";
 import TabBar from "@/components/TabBar";
 import WorkspacePanel from "@/components/WorkspacePanel";
 import ResizableSplit from "@/components/ResizableSplit";
-import BottomDock from "@/components/BottomDock";
+import AnalysisPanel from "@/components/AnalysisPanel";
+import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
 import SettingsModal from "@/components/SettingsModal";
 import ToastHost from "@/components/ToastHost";
@@ -43,6 +44,11 @@ export default function App() {
 
   const [currentTicker, setCurrentTicker] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // 3 ペインの折りたたみ状態。左右は同時に畳めない（片方は必ず表示する）
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
 
   const settings = useSettings();
   const settingsError = useSettingsError();
@@ -198,30 +204,68 @@ export default function App() {
             onNewTab={handleNewTab}
           />
 
+          {/*
+            3 ペイン構成。
+              上段: 左＝市場データ / 右＝20項目の分析結果（縦長）
+              下段: 対話ウィンドウ（左右いっぱいに横長）
+          */}
           <ResizableSplit
             direction="vertical"
-            initialSecondSize={340}
-            minFirstSize={140}
+            initialSecondSize={Math.round(window.innerHeight / 3)}
+            minFirstSize={160}
             minSecondSize={120}
+            collapsed={chatCollapsed ? "second" : null}
             first={
-              <WorkspacePanel
-                tab={activeTab}
-                analysis={activeAnalysis}
-                onRetry={(ticker) => void loadTicker(ticker)}
+              <ResizableSplit
+                direction="horizontal"
+                initialSecondSize={Math.round(window.innerWidth / 2)}
+                minFirstSize={260}
+                minSecondSize={300}
+                collapsed={
+                  leftCollapsed ? "first" : rightCollapsed ? "second" : null
+                }
+                first={
+                  <WorkspacePanel
+                    tab={activeTab}
+                    analysis={activeAnalysis}
+                    collapsed={leftCollapsed}
+                    onToggleCollapse={() => {
+                      setLeftCollapsed((v) => !v);
+                      if (!leftCollapsed) setRightCollapsed(false);
+                    }}
+                    onRetry={(ticker) => void loadTicker(ticker)}
+                  />
+                }
+                second={
+                  <div className="h-full border-l border-slate-800">
+                    <AnalysisPanel
+                      ticker={activeTicker}
+                      run={activeRun}
+                      ready={llm.ready}
+                      readyReason={llm.reason}
+                      collapsed={rightCollapsed}
+                      onToggleCollapse={() => {
+                        setRightCollapsed((v) => !v);
+                        if (!rightCollapsed) setLeftCollapsed(false);
+                      }}
+                      onRun={handleRunAnalysis}
+                      onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
+                      onClear={() => activeTicker && void clearAnalysis(activeTicker)}
+                      onOpenSettings={() => setSettingsOpen(true)}
+                    />
+                  </div>
+                }
               />
             }
             second={
-              <BottomDock
-                ticker={activeTicker}
-                run={activeRun}
-                settings={settings}
-                ready={llm.ready}
-                readyReason={llm.reason}
-                onRun={handleRunAnalysis}
-                onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
-                onClear={() => activeTicker && void clearAnalysis(activeTicker)}
-                onOpenSettings={() => setSettingsOpen(true)}
-              />
+              <div className="h-full border-t border-slate-800">
+                <ChatPanel
+                  settings={settings}
+                  collapsed={chatCollapsed}
+                  onToggleCollapse={() => setChatCollapsed((v) => !v)}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                />
+              </div>
             }
           />
         </main>

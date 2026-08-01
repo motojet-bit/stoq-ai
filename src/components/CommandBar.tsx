@@ -1,7 +1,7 @@
 import type { AppSettings } from "@/types";
 import TickerInput from "@/components/TickerInput";
-import ApiKeyIndicator from "@/components/ApiKeyIndicator";
 import PdfDropZone from "@/components/PdfDropZone";
+import ProviderMenu from "@/components/ProviderMenu";
 
 interface Props {
   settings: AppSettings | null;
@@ -30,7 +30,7 @@ export default function CommandBar({
 
       <div className="h-6 w-px bg-slate-800" />
 
-      <ApiKeyIndicator settings={settings} onOpenSettings={onOpenSettings} />
+      <ProviderMenu settings={settings} onOpenSettings={onOpenSettings} />
     </div>
   );
 }

@@ -3,19 +3,48 @@ import MetricCard from "@/components/MetricCard";
 import MetricCardSkeleton from "@/components/MetricCardSkeleton";
 import FilingStatusBadge from "@/components/FilingStatusBadge";
 import QuarterlyTrend from "@/components/QuarterlyTrend";
+import PanelHeader from "@/components/PanelHeader";
+import { IconChart } from "@/components/Icons";
 
 interface Props {
   tab: WorkspaceTab | undefined;
   /** アクティブなタブの銘柄の取得状態。銘柄タブ以外では undefined */
   analysis: TickerAnalysis | undefined;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   onRetry: (ticker: string) => void;
 }
 
-/** アクティブなタブの内容（メインエリア上部） */
-export default function WorkspacePanel({ tab, analysis, onRetry }: Props) {
+/** 左ペイン: 財務指標・四半期モメンタム・SEC 情報 */
+export default function WorkspacePanel({
+  tab,
+  analysis,
+  collapsed,
+  onToggleCollapse,
+  onRetry,
+}: Props) {
+  return (
+    <section className="flex h-full min-w-0 flex-col bg-slate-950">
+      <PanelHeader
+        icon={<IconChart className="h-3.5 w-3.5" />}
+        title="市場データ"
+        subtitle={tab?.ticker ?? undefined}
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+      />
+      {!collapsed && <PanelBody tab={tab} analysis={analysis} onRetry={onRetry} />}
+    </section>
+  );
+}
+
+function PanelBody({
+  tab,
+  analysis,
+  onRetry,
+}: Pick<Props, "tab" | "analysis" | "onRetry">) {
   if (!tab) {
     return (
-      <div className="flex h-full items-center justify-center text-[13px] text-slate-600">
+      <div className="flex flex-1 items-center justify-center text-[13px] text-slate-600">
         タブがありません
       </div>
     );
@@ -24,7 +53,7 @@ export default function WorkspacePanel({ tab, analysis, onRetry }: Props) {
   // 銘柄が紐づかないタブ（既定のワークスペース）
   if (!tab.ticker) {
     return (
-      <div className="flex h-full items-center justify-center px-6">
+      <div className="flex flex-1 items-center justify-center px-6">
         <div className="max-w-md text-center">
           <h1 className="mb-2 text-[15px] font-semibold text-slate-300">{tab.title}</h1>
           <p className="selectable text-[13px] leading-relaxed text-slate-500">
@@ -46,7 +75,7 @@ export default function WorkspacePanel({ tab, analysis, onRetry }: Props) {
   const change = fundamentals?.changePercent ?? null;
 
   return (
-    <div className="h-full overflow-y-auto p-5">
+    <div className="min-h-0 flex-1 overflow-y-auto p-4">
       <header className="mb-4">
         <div className="mb-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold text-slate-100">
@@ -121,7 +150,8 @@ export default function WorkspacePanel({ tab, analysis, onRetry }: Props) {
         loading={analysis?.quarterlyLoading ?? false}
       />
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
+      {/* 左ペインは半分幅なので、カードは 240px から折り返す */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
         {loading && !fundamentals
           ? [0, 1, 2, 3, 4, 5].map((i) => <MetricCardSkeleton key={i} />)
           : fundamentals?.groups.map((g) => <MetricCard key={g.title} group={g} />)}

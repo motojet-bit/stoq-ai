@@ -11,6 +11,7 @@ import {
 import StagedFileChip from "@/components/StagedFileChip";
 import TokenMeter from "@/components/TokenMeter";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Props {
   /** LLM 入力上限（設定の maxPromptTokens） */
@@ -25,6 +26,7 @@ export default function DocumentTray({ tokenLimit }: Props) {
   const documents = useStagedDocuments();
   const ingesting = useIngestingFiles();
   const [preview, setPreview] = useState<StagedDocument | null>(null);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   if (documents.length === 0 && ingesting.length === 0) return null;
 
@@ -70,7 +72,7 @@ export default function DocumentTray({ tokenLimit }: Props) {
         {documents.length > 0 && (
           <button
             type="button"
-            onClick={() => void clearDocuments()}
+            onClick={() => setConfirmingClear(true)}
             className="h-7 shrink-0 rounded-md border border-slate-700 px-2.5 text-[12px] text-slate-400 transition-colors hover:border-red-800 hover:text-red-300"
           >
             一括クリア
@@ -79,6 +81,25 @@ export default function DocumentTray({ tokenLimit }: Props) {
       </div>
 
       <DocumentPreviewModal doc={preview} onClose={() => setPreview(null)} />
+
+      {/* 一時保存資料は AI に渡すコンテキストそのものなので、消す前に必ず確認する */}
+      <ConfirmDialog
+        open={confirmingClear}
+        title="一時保存中の資料をすべて削除しますか？"
+        message={
+          "⚠️ コンテキスト（一時保存資料）がリセットされます。\n" +
+          "必要な場合は、事前に対話ウィンドウで AI に「引き継ぎ書」を書かせてから操作してください。\n\n" +
+          `削除される資料: ${documents.length} 件（概算 ${totalTokens(documents).toLocaleString()} トークン）`
+        }
+        confirmLabel="このままリセット"
+        cancelLabel="もどる"
+        destructive
+        onConfirm={() => {
+          setConfirmingClear(false);
+          void clearDocuments();
+        }}
+        onCancel={() => setConfirmingClear(false)}
+      />
     </>
   );
 }
