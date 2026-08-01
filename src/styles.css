@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    "Inter", "Segoe UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Meiryo",
+    system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", "Consolas", monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--color-slate-950);
+  color: var(--color-slate-200);
+  /* デスクトップアプリらしく、既定ではテキスト選択を抑止する */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 本文として読ませたい領域だけ選択を許可する */
+.selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* スプリッターのドラッグ中に選択が走らないようにする */
+body.is-resizing {
+  cursor: row-resize;
+  user-select: none !important;
+}
+
+/* 細身のスクロールバー */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-700) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-700);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
