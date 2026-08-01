@@ -40,6 +40,14 @@ data/*.sqlite3
 logs/
 *.log
 
+# === API 検証用の一時ファイル（プロジェクト直下に置かない） ===
+/jar.txt
+/out.json
+/sub.json
+/chart.json
+/tickers.json
+/cookies.txt
+
 # === OS / エディタ ===
 .DS_Store
 Thumbs.db
