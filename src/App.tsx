@@ -15,6 +15,10 @@ import { loadCandidates } from "@/lib/candidates/candidateStore";
 import { loadPrompts } from "@/lib/prompts/promptLibrary";
 import { loadAnalystRoles } from "@/lib/prompts/analystRoleStore";
 import { openDisclaimer } from "@/lib/legal/disclaimerStore";
+import {
+  loadArchive,
+  loadPortfolios,
+} from "@/lib/portfolio/portfolioStore";
 import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
 import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
@@ -157,6 +161,8 @@ export default function App() {
     void loadPrompts();
     void loadShortcuts();
     void loadAnalystRoles();
+    void loadPortfolios();
+    void loadArchive();
 
     try {
       if (localStorage.getItem(TOUR_SEEN_KEY) !== "1") setTourOpen(true);

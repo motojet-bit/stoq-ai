@@ -3,6 +3,12 @@ import type { ChatSession } from "@/types";
 import ChatHistoryItem from "@/components/ChatHistoryItem";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CandidateStocksPanel from "@/components/CandidateStocksPanel";
+import PortfolioPanel from "@/components/PortfolioPanel";
+import {
+  setSidebarMode,
+  SIDEBAR_MODES,
+  useSidebarMode,
+} from "@/lib/ui/sidebarMode";
 import { clampFirstSize } from "@/lib/ui/splitMath";
 import { IconArchive, IconPanelLeft, IconPlus } from "@/components/Icons";
 
@@ -63,6 +69,7 @@ export default function Sidebar({
   onCandidateImportOpenChange,
   onCompareTickers,
 }: Props) {
+  const mode = useSidebarMode();
   const [deleting, setDeleting] = useState<ChatSession | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
@@ -154,6 +161,25 @@ export default function Sidebar({
       ref={asideRef}
       className="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900"
     >
+      {/* 対話とポートフォリオの切替。見たいものが違うので同居させない */}
+      <div className="flex shrink-0 items-stretch gap-1 border-b border-slate-800 px-2 py-1.5">
+        {SIDEBAR_MODES.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setSidebarMode(item.id)}
+            aria-pressed={mode === item.id}
+            className={`min-w-0 flex-1 truncate rounded-md px-2 py-1 t-label transition-colors ${
+              mode === item.id
+                ? "bg-slate-700 font-medium text-emerald-300"
+                : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex min-h-11 shrink-0 items-center justify-between gap-2 px-2">
         <button
           type="button"
@@ -173,6 +199,10 @@ export default function Sidebar({
         </button>
       </div>
 
+      {mode === "portfolio" ? (
+        <PortfolioPanel onSelectTicker={onSelectTicker} onCompare={onCompareTickers} />
+      ) : (
+        <>
       <div className="flex shrink-0 items-center justify-between gap-1 px-3 pb-1 pt-2">
         <span className="t-label font-medium uppercase tracking-wider text-slate-500">
           {showArchived ? "アーカイブ" : "履歴"}
@@ -236,6 +266,8 @@ export default function Sidebar({
           </ul>
         )}
       </nav>
+        </>
+      )}
 
       <CandidateStocksPanel
         onSelectTicker={onSelectTicker}

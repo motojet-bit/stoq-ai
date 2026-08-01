@@ -42,7 +42,12 @@ fn db_path(app: &AppHandle) -> Result<PathBuf> {
 fn open(app: &AppHandle) -> Result<Connection> {
     let conn = Connection::open(db_path(app)?)
         .map_err(|e| AppError::msg(format!("分析結果データベースを開けません: {e}")))?;
+    migrate(&conn)?;
+    Ok(conn)
+}
 
+/// スキーマを最新にする。既存 DB に対しても安全に呼べる。
+pub fn migrate(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS analyses (
             ticker        TEXT PRIMARY KEY,
@@ -62,7 +67,125 @@ fn open(app: &AppHandle) -> Result<Connection> {
         [],
     );
 
-    Ok(conn)
+    /*
+     * 実行のたびに積む履歴。`analyses` は「銘柄ごとの最新 1 件」なので、
+     * **決算期をまたいだ推移を追うには上書きされない置き場が要る。**
+     * 既存の `analyses` はそのまま残すので、復元機能は影響を受けない。
+     */
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS analysis_history (
+            id            TEXT PRIMARY KEY,
+            ticker        TEXT NOT NULL,
+            raw           TEXT NOT NULL,
+            provider      TEXT,
+            model         TEXT,
+            average_score REAL,
+            period_label  TEXT,
+            saved_at_ms   INTEGER NOT NULL
+         );
+         CREATE INDEX IF NOT EXISTS idx_history_ticker
+            ON analysis_history(ticker, saved_at_ms DESC);",
+    )
+    .map_err(|e| AppError::msg(format!("分析履歴テーブルを作成できません: {e}")))?;
+
+    Ok(())
+}
+
+/// 分析アーカイブ 1 件（本文は含まない。一覧を軽くするため）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArchiveEntry {
+    pub id: String,
+    pub ticker: String,
+    pub provider: Option<String>,
+    pub model: Option<String>,
+    /// 20項目の平均スコア。取れなかった場合は None
+    pub average_score: Option<f64>,
+    /// 対象四半期などのラベル（例: `FY2026 Q3`）
+    pub period_label: Option<String>,
+    pub saved_at_ms: i64,
+}
+
+fn append_history(
+    conn: &Connection,
+    ticker: &str,
+    raw: &str,
+    provider: Option<&str>,
+    model: Option<&str>,
+    average_score: Option<f64>,
+    period_label: Option<&str>,
+    saved_at_ms: i64,
+) -> Result<()> {
+    conn.execute(
+        "INSERT INTO analysis_history
+            (id, ticker, raw, provider, model, average_score, period_label, saved_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![
+            format!("hist-{saved_at_ms}-{ticker}"),
+            ticker,
+            raw,
+            provider,
+            model,
+            average_score,
+            period_label,
+            saved_at_ms
+        ],
+    )
+    .map_err(|e| AppError::msg(format!("分析履歴を保存できません: {e}")))?;
+    Ok(())
+}
+
+/// 銘柄の分析アーカイブを新しい順に返す。
+pub fn history(app: &AppHandle, ticker: Option<String>) -> Result<Vec<ArchiveEntry>> {
+    history_in(&open(app)?, ticker.as_deref())
+}
+
+pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<ArchiveEntry>> {
+    let upper = ticker.map(|t| t.trim().to_uppercase());
+    let sql = "SELECT id, ticker, provider, model, average_score, period_label, saved_at_ms
+               FROM analysis_history
+               WHERE (?1 IS NULL OR ticker = ?1)
+               ORDER BY saved_at_ms DESC";
+
+    let mut stmt = conn
+        .prepare(sql)
+        .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))?;
+
+    let rows = stmt
+        .query_map(params![upper], |row| {
+            Ok(ArchiveEntry {
+                id: row.get(0)?,
+                ticker: row.get(1)?,
+                provider: row.get(2)?,
+                model: row.get(3)?,
+                average_score: row.get(4)?,
+                period_label: row.get(5)?,
+                saved_at_ms: row.get(6)?,
+            })
+        })
+        .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))?;
+
+    Ok(rows.filter_map(std::result::Result::ok).collect())
+}
+
+/// アーカイブ 1 件の本文を読む。
+pub fn history_raw(app: &AppHandle, id: &str) -> Result<Option<String>> {
+    open(app)?
+        .query_row(
+            "SELECT raw FROM analysis_history WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))
+}
+
+/// アーカイブ 1 件を削除する。
+pub fn history_delete(app: &AppHandle, id: &str) -> Result<()> {
+    open(app)?
+        .execute("DELETE FROM analysis_history WHERE id = ?1", params![id])
+        .map_err(|e| AppError::msg(format!("分析履歴を削除できません: {e}")))?;
+    Ok(())
 }
 
 /// 分析結果を保存する。同じ銘柄の既存レコードは置き換える。
@@ -75,6 +198,8 @@ pub fn save(
     prompt_tokens: i64,
     notes: &[String],
     basis: &[String],
+    average_score: Option<f64>,
+    period_label: Option<&str>,
 ) -> Result<SavedAnalysis> {
     let ticker = ticker.trim().to_uppercase();
     if raw.trim().is_empty() {
@@ -85,7 +210,8 @@ pub fn save(
     let notes_json = serde_json::to_string(notes)?;
     let basis_json = serde_json::to_string(basis)?;
 
-    open(app)?
+    let conn = open(app)?;
+    conn
         .execute(
             "INSERT INTO analyses (ticker, raw, provider, model, prompt_tokens, notes, basis, saved_at_ms)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
@@ -100,6 +226,18 @@ pub fn save(
             params![ticker, raw, provider, model, prompt_tokens, notes_json, basis_json, saved_at_ms],
         )
         .map_err(|e| AppError::msg(format!("分析結果を保存できません: {e}")))?;
+
+    // 最新版とは別に、上書きされない履歴も積む
+    append_history(
+        &conn,
+        &ticker,
+        raw,
+        provider,
+        model,
+        average_score,
+        period_label,
+        saved_at_ms,
+    )?;
 
     Ok(SavedAnalysis {
         ticker,

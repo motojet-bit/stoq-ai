@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 use tauri::AppHandle;
 
-use crate::analyses::{self, SavedAnalysis};
+use crate::analyses::{self, ArchiveEntry, SavedAnalysis};
 use crate::candidates::{self, CandidateInput, CandidateStock};
 use crate::chats::{self, ChatMessage, ChatSession};
 use crate::documents::{self, StagedDocument};
@@ -13,6 +13,7 @@ use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
 use crate::market;
 use crate::personas::{self, StoredPrompt};
+use crate::portfolios::{self, Portfolio};
 use crate::prompts::{self, AnalystRole};
 use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
@@ -285,6 +286,10 @@ pub fn analysis_save(
     prompt_tokens: i64,
     notes: Vec<String>,
     basis: Vec<String>,
+    // average_score: 20項目の平均。アーカイブ一覧に出すためフロントで算出して渡す
+    // period_label: 対象四半期などのラベル（例: FY2026 Q3）
+    average_score: Option<f64>,
+    period_label: Option<String>,
 ) -> Result<SavedAnalysis> {
     analyses::save(
         &app,
@@ -295,7 +300,66 @@ pub fn analysis_save(
         prompt_tokens,
         &notes,
         &basis,
+        average_score,
+        period_label.as_deref(),
     )
+}
+
+/// 分析アーカイブ（実行履歴）を新しい順に返す。本文は含まない。
+#[tauri::command]
+pub fn analysis_history(app: AppHandle, ticker: Option<String>) -> Result<Vec<ArchiveEntry>> {
+    analyses::history(&app, ticker)
+}
+
+/// アーカイブ 1 件の本文を読む。
+#[tauri::command]
+pub fn analysis_history_raw(app: AppHandle, id: String) -> Result<Option<String>> {
+    analyses::history_raw(&app, &id)
+}
+
+#[tauri::command]
+pub fn analysis_history_delete(app: AppHandle, id: String) -> Result<()> {
+    analyses::history_delete(&app, &id)
+}
+
+// ------------------------------------------------------ ポートフォリオ
+
+#[tauri::command]
+pub fn portfolios_list(app: AppHandle) -> Result<Vec<Portfolio>> {
+    portfolios::list(&app)
+}
+
+#[tauri::command]
+pub fn portfolios_create(app: AppHandle, name: Option<String>) -> Result<Vec<Portfolio>> {
+    portfolios::create(&app, name)
+}
+
+#[tauri::command]
+pub fn portfolios_rename(app: AppHandle, id: String, name: String) -> Result<Vec<Portfolio>> {
+    portfolios::rename(&app, &id, &name)
+}
+
+#[tauri::command]
+pub fn portfolios_remove(app: AppHandle, id: String) -> Result<Vec<Portfolio>> {
+    portfolios::remove(&app, &id)
+}
+
+#[tauri::command]
+pub fn portfolios_add_ticker(
+    app: AppHandle,
+    id: String,
+    ticker: String,
+) -> Result<Vec<Portfolio>> {
+    portfolios::add_ticker(&app, &id, &ticker)
+}
+
+#[tauri::command]
+pub fn portfolios_remove_ticker(
+    app: AppHandle,
+    id: String,
+    ticker: String,
+) -> Result<Vec<Portfolio>> {
+    portfolios::remove_ticker(&app, &id, &ticker)
 }
 
 // ---------------------------------------------------------------- チャット履歴

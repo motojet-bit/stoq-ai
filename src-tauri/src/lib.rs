@@ -16,6 +16,7 @@ mod library;
 mod llm;
 mod market;
 mod personas;
+mod portfolios;
 mod prompts;
 mod quarterly;
 mod settings;
@@ -41,6 +42,15 @@ pub fn run() {
             commands::analysis_load,
             commands::analysis_list,
             commands::analysis_delete,
+            commands::analysis_history,
+            commands::analysis_history_raw,
+            commands::analysis_history_delete,
+            commands::portfolios_list,
+            commands::portfolios_create,
+            commands::portfolios_rename,
+            commands::portfolios_remove,
+            commands::portfolios_add_ticker,
+            commands::portfolios_remove_ticker,
             commands::chat_list_sessions,
             commands::chat_create_session,
             commands::chat_rename_session,

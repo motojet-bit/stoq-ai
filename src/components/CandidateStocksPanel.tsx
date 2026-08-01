@@ -3,6 +3,11 @@ import type { CandidateStock } from "@/types";
 import { removeCandidate, useCandidates } from "@/lib/candidates/candidateStore";
 import ContextMenu, { type ContextMenuItem } from "@/components/ContextMenu";
 import { MAX_COMPARE } from "@/lib/compare/compareData";
+import {
+  addTickerToPortfolio,
+  usePortfolios,
+} from "@/lib/portfolio/portfolioStore";
+import { toastSuccess } from "@/lib/ui/toastStore";
 import CandidateImportModal from "@/components/CandidateImportModal";
 import {
   IconBookmark,
@@ -54,6 +59,7 @@ export default function CandidateStocksPanel({
   onCompare,
 }: Props) {
   const candidates = useCandidates();
+  const portfolios = usePortfolios();
   const [menu, setMenu] = useState<MenuState | null>(null);
   // 比較用の複数選択。ティッカーで持つ（削除されても壊れないように）
   const [selected, setSelected] = useState<string[]>([]);
@@ -82,6 +88,16 @@ export default function CandidateStocksPanel({
       icon: <IconSearch className="h-3.5 w-3.5" />,
       onSelect: () => onSelectTicker(candidate.ticker),
     },
+    // ポートフォリオへの振り分け。リストが 1 つも無いときは出さない
+    ...portfolios.map((portfolio) => ({
+      label: `「${portfolio.name}」に追加`,
+      icon: <IconBookmark className="h-3.5 w-3.5" />,
+      onSelect: () => {
+        void addTickerToPortfolio(portfolio.id, candidate.ticker).then(() =>
+          toastSuccess(`${candidate.ticker} を「${portfolio.name}」に追加しました`),
+        );
+      },
+    })),
     {
       label: "削除",
       icon: <IconTrash className="h-3.5 w-3.5" />,

@@ -121,6 +121,29 @@ export interface SavedAnalysis {
   savedAtMs: number;
 }
 
+/** 分析アーカイブ 1 件（本文は含まない） */
+export interface ArchiveEntry {
+  id: string;
+  ticker: string;
+  provider: string | null;
+  model: string | null;
+  /** 20項目の平均スコア */
+  averageScore: number | null;
+  /** 対象四半期などのラベル（例: FY2026 Q3） */
+  periodLabel: string | null;
+  savedAtMs: number;
+}
+
+/** ポートフォリオ（銘柄リスト／フォルダ）1 件 */
+export interface Portfolio {
+  id: string;
+  name: string;
+  /** 所属銘柄（追加順） */
+  tickers: string[];
+  createdAtMs: number;
+  updatedAtMs: number;
+}
+
 /** SEC 提出書類の本文（プロンプトに載せる用） */
 export interface SecFilingText {
   ticker: string;

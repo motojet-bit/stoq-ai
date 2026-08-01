@@ -259,6 +259,9 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           promptTokens: current?.promptTokens ?? 0,
           notes: current?.notes ?? [],
           basis: current?.basis ?? [],
+          // アーカイブ一覧に出すため、平均スコアと対象四半期も一緒に残す
+          averageScore: current?.result?.averageScore ?? null,
+          periodLabel: options.quarterly?.quarters.at(-1)?.label ?? null,
         });
         patch(ticker, { savedAtMs: saved.savedAtMs });
       } catch (e) {
