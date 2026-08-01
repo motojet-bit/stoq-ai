@@ -14,7 +14,9 @@ import {
   useBindings,
   type ShortcutAction,
 } from "@/lib/ui/shortcutStore";
-import { IconClose } from "@/components/Icons";
+import { IconClose, IconHelp } from "@/components/Icons";
+import Tooltip from "@/components/Tooltip";
+import { TOOLTIPS } from "@/lib/ui/tooltipText";
 
 /**
  * ショートカットキーの一覧と変更。
@@ -62,13 +64,20 @@ export default function ShortcutSettings() {
           「変更」を押してから、割り当てたいキーを押してください（Esc で中止）。
           入力欄にカーソルがあるときは、文字入力を優先するため発火しません。
         </p>
-        <button
-          type="button"
-          onClick={() => void resetShortcuts()}
-          className="min-h-7 shrink-0 whitespace-nowrap rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
-        >
-          すべて既定に戻す
-        </button>
+        <span className="flex shrink-0 items-center gap-2">
+          <Tooltip content={TOOLTIPS.shortcuts} placement="left" widthClass="w-72">
+            <span className="text-slate-600">
+              <IconHelp className="h-4 w-4" />
+            </span>
+          </Tooltip>
+          <button
+            type="button"
+            onClick={() => void resetShortcuts()}
+            className="min-h-7 whitespace-nowrap rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
+          >
+            すべて既定に戻す
+          </button>
+        </span>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-800">

@@ -1,5 +1,6 @@
 import { estimateTokens } from "@/lib/parser/tokenCount";
 import { buildSystemPrompt } from "@/lib/prompts/systemPrompt";
+import type { ThresholdValues } from "@/lib/prompts/thresholds";
 import { condenseDocument } from "@/lib/prompts/condense";
 import type { Fundamentals, QuarterlySeries } from "@/types";
 
@@ -28,6 +29,8 @@ export interface PromptSources {
   tokenLimit: number;
   /** 応答のために空けておくトークン数 */
   reserveForOutput: number;
+  /** ユーザーが設定した合否ライン。省略すると既定値 */
+  thresholds?: ThresholdValues;
 }
 
 export interface BuiltPrompt {
@@ -67,7 +70,7 @@ const KEY_SECTIONS = [
  */
 export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   const notes: string[] = [];
-  const system = buildSystemPrompt();
+  const system = buildSystemPrompt(sources.thresholds);
 
   const header = buildHeader(sources.ticker);
   const metrics = buildMetricsSection(sources.fundamentals);

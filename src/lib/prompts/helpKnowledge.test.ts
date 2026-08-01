@@ -16,6 +16,7 @@ const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   secUserAgent: "StoQ test@example.com",
   maxPromptTokens: 180_000,
   marketProvider: "yahoo",
+  thresholds: {},
   marketProviders: [
     { id: "yahoo", label: "Yahoo Finance", requiresKey: false, ready: true, reason: null },
     {

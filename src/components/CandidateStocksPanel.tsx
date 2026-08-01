@@ -12,6 +12,8 @@ import {
   IconSearch,
   IconTrash,
 } from "@/components/Icons";
+import Tooltip from "@/components/Tooltip";
+import { TOOLTIPS } from "@/lib/ui/tooltipText";
 
 interface Props {
   /** 銘柄をクリックしたとき。上部のティッカー入力欄にセットして分析へつなぐ */
@@ -84,21 +86,22 @@ export default function CandidateStocksPanel({
 
       <header className="flex min-h-8 shrink-0 items-center justify-between gap-2 px-3 pt-1.5">
         {/* ヘッダーのクリックでも折りたためる */}
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          title={collapsed ? "検討中銘柄を開く" : "検討中銘柄を折りたたむ"}
-          aria-expanded={!collapsed}
-          className="flex min-w-0 flex-1 items-center gap-1.5 t-label font-medium uppercase tracking-wider text-slate-500 hover:text-slate-300"
-        >
-          <IconBookmark className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">検討中銘柄</span>
-          {candidates.length > 0 && (
-            <span className="shrink-0 font-mono normal-case text-slate-600">
-              {candidates.length}
-            </span>
-          )}
-        </button>
+        <Tooltip content={TOOLTIPS.candidates} placement="right" widthClass="w-72">
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            aria-expanded={!collapsed}
+            className="flex min-w-0 flex-1 items-center gap-1.5 t-label font-medium uppercase tracking-wider text-slate-500 hover:text-slate-300"
+          >
+            <IconBookmark className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">検討中銘柄</span>
+            {candidates.length > 0 && (
+              <span className="shrink-0 font-mono normal-case text-slate-600">
+                {candidates.length}
+              </span>
+            )}
+          </button>
+        </Tooltip>
 
         <div className="flex shrink-0 items-center gap-1">
           <button

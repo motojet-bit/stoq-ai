@@ -50,6 +50,9 @@ pub struct Settings {
     /// 市場データの取得元（`yahoo` / `fmp` / `alphavantage`）。
     /// 取得元の APIキーは `keys` に `market:<id>` として入る。
     pub market_provider: String,
+    /// AI の合否判定に使う閾値。**ユーザーが変えた項目だけ**入る。
+    /// 項目の定義と既定値はフロント側（`src/lib/prompts/thresholds.ts`）が持つ。
+    pub thresholds: BTreeMap<String, f64>,
 
     /// 旧形式（カスタム枠が 1 つ固定だった頃）の Base URL。
     /// 読み込み時に `custom_providers` へ移行し、以降は空になる。
@@ -72,6 +75,7 @@ impl Default for Settings {
             sec_user_agent: String::new(),
             max_prompt_tokens: 180_000,
             market_provider: crate::market::DEFAULT_PROVIDER.to_string(),
+            thresholds: BTreeMap::new(),
             custom_base_url: String::new(),
         }
     }
@@ -93,6 +97,8 @@ pub struct SettingsView {
     pub market_provider: String,
     /// 取得元ごとの状態（キーが要るか / いま使えるか）
     pub market_providers: Vec<crate::market::ProviderStatus>,
+    /// ユーザーが変更した閾値だけ
+    pub thresholds: BTreeMap<String, f64>,
     /// 組み込み + カスタムの全プロバイダのキー状態
     pub keys: Vec<KeyStatus>,
 }
@@ -161,6 +167,7 @@ impl Settings {
             max_prompt_tokens: self.max_prompt_tokens,
             market_provider: crate::market::normalize_id(&self.market_provider),
             market_providers: crate::market::all_statuses(self),
+            thresholds: self.thresholds.clone(),
             keys: self
                 .provider_ids()
                 .into_iter()
@@ -322,6 +329,43 @@ pub fn save(app: &AppHandle, settings: &Settings) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ------------------------------------------------ 閾値の保存
+
+    #[test]
+    fn 閾値は既定では空_変更した項目だけ保存する() {
+        let mut settings = Settings::default();
+        assert!(settings.thresholds.is_empty(), "既定値はフロント側が持つので保存しない");
+
+        settings.thresholds.insert("per".into(), 18.0);
+        let view = settings.to_view();
+        assert_eq!(view.thresholds.get("per"), Some(&18.0));
+        assert_eq!(view.thresholds.len(), 1);
+    }
+
+    #[test]
+    fn 閾値は保存と読み込みで往復する() {
+        let mut settings = Settings::default();
+        settings.thresholds.insert("revenueGrowth".into(), 25.0);
+        settings.thresholds.insert("debtToEquity".into(), 1.3);
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let restored: Settings = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(restored.thresholds.get("revenueGrowth"), Some(&25.0));
+        assert_eq!(restored.thresholds.get("debtToEquity"), Some(&1.3));
+    }
+
+    #[test]
+    fn 閾値を持たない旧設定ファイルも読める() {
+        // thresholds フィールドが無い、以前のバージョンの設定
+        let legacy = r#"{"provider":"openai","secUserAgent":"StoQ a@b.c"}"#;
+        let settings: Settings = serde_json::from_str(legacy).unwrap();
+
+        assert_eq!(settings.provider, "openai");
+        assert!(settings.thresholds.is_empty(), "既定値で埋まる");
+        assert_eq!(settings.market_provider, crate::market::DEFAULT_PROVIDER);
+    }
 
     #[test]
     fn 秘密情報をマスクする() {

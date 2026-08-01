@@ -7,6 +7,8 @@ import {
 } from "@/lib/prompts/promptLibrary";
 import PromptLibraryModal from "@/components/PromptLibraryModal";
 import { IconChevronDown, IconPersona, IconSettings } from "@/components/Icons";
+import Tooltip from "@/components/Tooltip";
+import { TOOLTIPS } from "@/lib/ui/tooltipText";
 
 /**
  * 対話パネルのヘッダーに置く役割（システムプロンプト）の切り替え。
@@ -46,18 +48,19 @@ export default function PromptLibraryMenu() {
 
   return (
     <div ref={rootRef} className="ui-fixed relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title={active ? active.body : "役割（システムプロンプト）を選ぶ"}
-        className="flex min-h-6 max-w-52 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 text-slate-300 hover:border-emerald-700 hover:text-emerald-300"
-      >
-        <IconPersona className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-        <span className="min-w-0 truncate">{active ? active.title : "役割: 既定"}</span>
-        <IconChevronDown className="h-3 w-3 shrink-0 text-slate-500" />
-      </button>
+      <Tooltip content={TOOLTIPS.promptRole} placement="bottom" widthClass="w-80">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="flex min-h-6 max-w-52 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 text-slate-300 hover:border-emerald-700 hover:text-emerald-300"
+        >
+          <IconPersona className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+          <span className="min-w-0 truncate">{active ? active.title : "役割: 既定"}</span>
+          <IconChevronDown className="h-3 w-3 shrink-0 text-slate-500" />
+        </button>
+      </Tooltip>
 
       {open && (
         <div

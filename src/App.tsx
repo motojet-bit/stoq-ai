@@ -48,8 +48,12 @@ import DocumentTray from "@/components/DocumentTray";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PanelRestoreBar from "@/components/PanelRestoreBar";
 import HelpAssistant from "@/components/HelpAssistant";
+import WelcomeTour from "@/components/WelcomeTour";
 
 const newId = () => crypto.randomUUID();
+
+/** 初回チュートリアルを見たかどうかの印 */
+const TOUR_SEEN_KEY = "stockanalyzer.tourSeen";
 
 export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -70,6 +74,8 @@ export default function App() {
   const [candidateImportOpen, setCandidateImportOpen] = useState(false);
   // 使い方を案内するヘルプ AI（最下部バーの「ヘルプ」から開く）
   const [helpOpen, setHelpOpen] = useState(false);
+  // 初回だけ自動で開くチュートリアル。閉じたら印を残して二度と自動表示しない
+  const [tourOpen, setTourOpen] = useState(false);
 
   // 枠ごとの折りたたみ状態。畳んだ枠は描画せず、最上部バーの復元ボタンに退避する
   const slots = useSlots();
@@ -145,7 +151,22 @@ export default function App() {
     void loadCandidates();
     void loadPrompts();
     void loadShortcuts();
+
+    try {
+      if (localStorage.getItem(TOUR_SEEN_KEY) !== "1") setTourOpen(true);
+    } catch {
+      // 読めなくてもアプリは動かす
+    }
   }, []);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    try {
+      localStorage.setItem(TOUR_SEEN_KEY, "1");
+    } catch {
+      // 保存できなくても動作は続ける
+    }
+  };
 
   /** 枠に入っているパネルを描画する。ドラッグで入れ替えられる。 */
   const renderPanel = (slot: SlotId) => {
@@ -440,6 +461,23 @@ export default function App() {
         onOpenSettings={() => {
           setHelpOpen(false);
           setSettingsOpen(true);
+        }}
+        onOpenTour={() => {
+          setHelpOpen(false);
+          setTourOpen(true);
+        }}
+      />
+
+      <WelcomeTour
+        open={tourOpen}
+        onClose={closeTour}
+        onOpenSettings={() => {
+          closeTour();
+          setSettingsOpen(true);
+        }}
+        onOpenHelp={() => {
+          closeTour();
+          setHelpOpen(true);
         }}
       />
 

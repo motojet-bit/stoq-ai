@@ -1,4 +1,9 @@
 import { CRITERIA, SCORE_SCALE } from "@/lib/prompts/criteria";
+import {
+  buildThresholdSection,
+  mergeThresholds,
+  type ThresholdValues,
+} from "@/lib/prompts/thresholds";
 
 /** 分析結果の見出し。プロンプトとパーサで共有する。 */
 export const SECTION_HEADINGS = {
@@ -14,8 +19,11 @@ export const SECTION_HEADINGS = {
  *
  * 出力フォーマットを厳密に指定することで、`parseAnalysis.ts` が
  * 安定して構造化データに戻せるようにしている。
+ *
+ * `thresholds` にはユーザーが設定した合否ラインを渡す。
+ * 省略した場合は既定値が使われる（`thresholds.ts` を参照）。
  */
-export function buildSystemPrompt(): string {
+export function buildSystemPrompt(thresholds?: ThresholdValues): string {
   const criteriaList = CRITERIA.map(
     (c) => `${c.id}. 【${c.category}】${c.label} — ${c.hint}`,
   ).join("\n");
@@ -48,6 +56,8 @@ export function buildSystemPrompt(): string {
 - EPS が予想を下回った四半期がある場合は、項目13（ガイダンスの信頼性）で必ず言及する。
 - 前年同期比が提供されていない場合は、その旨を根拠欄に書き、
   QoQ だけで「加速している」と結論づけない。
+
+${buildThresholdSection(mergeThresholds(thresholds))}
 
 # 評価項目（全20項目・この順序と番号を厳守）
 

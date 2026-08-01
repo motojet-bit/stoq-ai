@@ -177,6 +177,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       documents,
       tokenLimit: settings?.maxPromptTokens ?? 180_000,
       reserveForOutput: RESERVE_FOR_OUTPUT,
+      // ユーザーが設定した合否ラインをプロンプトに反映する
+      thresholds: settings?.thresholds,
     });
 
     // 何をもとに分析したかを記録し、UI に出す

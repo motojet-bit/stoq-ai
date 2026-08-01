@@ -6,12 +6,15 @@ import { buildHelpSystemPrompt, HELP_EXAMPLES } from "@/lib/prompts/helpKnowledg
 import { useBindings } from "@/lib/ui/shortcutStore";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { IconClose, IconHelp } from "@/components/Icons";
+import { FEATURE_REQUEST_URL } from "@/lib/ui/tooltipText";
 
 interface Props {
   open: boolean;
   settings: AppSettings | null;
   onClose: () => void;
   onOpenSettings: () => void;
+  /** 初回チュートリアルを開き直す */
+  onOpenTour: () => void;
 }
 
 const newId = () => crypto.randomUUID();
@@ -22,7 +25,13 @@ const newId = () => crypto.randomUUID();
  * 銘柄分析の対話とは**履歴を分ける**（保存もしない）。
  * 操作の質問が投資分析の会話に混ざると、あとで読み返しづらくなるため。
  */
-export default function HelpAssistant({ open, settings, onClose, onOpenSettings }: Props) {
+export default function HelpAssistant({
+  open,
+  settings,
+  onClose,
+  onOpenSettings,
+  onOpenTour,
+}: Props) {
   const bindings = useBindings();
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState("");
@@ -195,6 +204,25 @@ export default function HelpAssistant({ open, settings, onClose, onOpenSettings 
             ))}
           </ul>
         )}
+      </div>
+
+      {/* 欲しい機能があれば開発者へ伝えられるようにする */}
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800 bg-slate-900/60 px-3 py-1.5">
+        <button
+          type="button"
+          onClick={onOpenTour}
+          className="t-label text-slate-400 underline underline-offset-2 transition-colors hover:text-emerald-300"
+        >
+          はじめかたを見る
+        </button>
+        <a
+          href={FEATURE_REQUEST_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="t-label text-slate-400 underline underline-offset-2 transition-colors hover:text-emerald-300"
+        >
+          欲しい機能がありませんか？開発者へリクエストを送る
+        </a>
       </div>
 
       <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2">

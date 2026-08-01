@@ -54,6 +54,9 @@ pub struct SettingsPatch {
     pub max_prompt_tokens: Option<usize>,
     /// 市場データの取得元（`yahoo` / `fmp` / `alphavantage`）
     pub market_provider: Option<String>,
+    /// AI の合否判定に使う閾値。**渡した内容で丸ごと置き換える**
+    /// （項目を消したいときに残ってしまわないように）
+    pub thresholds: Option<std::collections::BTreeMap<String, f64>>,
 }
 
 #[tauri::command]
@@ -85,6 +88,13 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
             return Err(AppError::msg(format!("未知のデータ取得元です: {provider}")));
         }
         current.market_provider = provider;
+    }
+    if let Some(thresholds) = patch.thresholds {
+        // 有限の数値だけ通す。範囲の丸めはフロント側の定義に任せる
+        current.thresholds = thresholds
+            .into_iter()
+            .filter(|(_, v)| v.is_finite())
+            .collect();
     }
 
     settings::save(&app, &current)?;

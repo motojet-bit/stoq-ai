@@ -53,6 +53,8 @@ export interface AppSettings {
   marketProvider: MarketProviderId;
   /** 取得元ごとの状態 */
   marketProviders: MarketProviderStatus[];
+  /** AI の合否判定に使う閾値。既定から変更した項目だけ入る */
+  thresholds: Record<string, number>;
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
 }
@@ -64,6 +66,8 @@ export interface SettingsPatch {
   secUserAgent?: string;
   maxPromptTokens?: number;
   marketProvider?: MarketProviderId;
+  /** 渡した内容で丸ごと置き換える */
+  thresholds?: Record<string, number>;
 }
 
 /** settings_update_custom_provider に渡す差分 */
