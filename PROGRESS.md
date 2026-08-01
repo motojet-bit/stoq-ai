@@ -8,7 +8,7 @@
 ## 現在のステータス
 
 **フェーズ: 2 — データパイプライン ＆ AI分析エンジン**
-**Step 1 / Step 1.1 / Step 2 ✅ 完了**
+**Step 1 / Step 1.1 / Step 2 / Step 3 ✅ 完了**
 
 Phase 2 の全体設計を `docs/設計.md` に記載。
 Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基盤・対話パネルからの
@@ -22,7 +22,7 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 | **Step 1** | APIキー設定画面（モーダル UI）と LLM 接続基盤 | ✅ 完了 |
 | **Step 1.1** | OpenAI互換プロバイダの可変長リスト化（追加・削除） | ✅ 完了 |
 | **Step 2** | Financial Data Fetcher（Yahoo Finance / SEC EDGAR）と UI 接続 | ✅ 完了 |
-| Step 3 | PDF パーサ ＋ トークンカウンター ＋ オーバーフロー警告 | ⬜ |
+| **Step 3** | PDF パーサ ＋ ステージング ＋ トークンカウンター | ✅ 完了 |
 | Step 4 | Prompt Engine（20項目）とパイプライン | ⬜ |
 | Step 5 | 分析結果テーブルのパースとレンダリング | ⬜ |
 
@@ -72,20 +72,60 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 | ローディング表示（スケルトン / スピナー） | ✅ `MetricCardSkeleton.tsx` |
 | エラー時のトースト通知と再試行ボタン | ✅ `ToastHost.tsx` |
 
+### Step 3 の実装内容
+
+| 項目 | 状態 |
+| --- | --- |
+| PDF テキスト抽出（`pdfjs-dist`、動的 import） | ✅ `src/lib/parser/pdf.ts` |
+| DOCX テキスト抽出（`fflate` で ZIP 展開） | ✅ `src/lib/parser/docx.ts` |
+| HTML / TXT / MD / CSV / JSON の取り込み | ✅ `src/lib/parser/extractText.ts` |
+| D&D とファイル選択ダイアログの両対応 | ✅ `PdfDropZone.tsx` |
+| `temp_documents/` への永続化（再起動後も保持） | ✅ `src-tauri/src/documents.rs` |
+| 一時保存中の資料一覧（🟢 バッジ付き） | ✅ `DocumentTray.tsx` |
+| プレビュー（抽出テキスト全文をモーダル表示） | ✅ `DocumentPreviewModal.tsx` |
+| リネーム（ダブルクリックでその場編集） | ✅ `StagedFileChip.tsx` |
+| 個別削除（✕）と一括クリア | ✅ |
+| トークン概算とメーター（🟢/🟡/🔴） | ✅ `TokenMeter.tsx` / `tokenCount.ts` |
+| 取り込み中のローディング表示 | ✅ 抽出中 / 保存中 の 2 段階 |
+
 ---
 
 ## 次にやること（TODO）
 
-### Step 3 以降
-- [ ] `pdfjs-dist` を導入し `src/lib/parser/` を実装
-- [ ] トークン数の概算カウンターとオーバーフロー警告インジケーター
+### Step 4（次の作業）— Prompt Engine
 - [ ] 20項目の評価基準を `src/lib/prompts/criteria.ts` に確定させる（**ユーザーの確認待ち**）
-- [ ] 統合プロンプトのパッキングと Markdown テーブルのパース
+- [ ] 統合プロンプトのパッキング（SECテキスト + YF数値 + 一時保存資料 + システムプロンプト）
+      — 上限超過時はどれを削るかの優先順位を決める必要がある
+- [ ] `sec_fetch_latest_filing`（実装済み・UI 未接続）をパイプラインに組み込む
+
+### Step 5 以降
+- [ ] Markdown テーブルのパースと分析結果テーブルのレンダリング
 - [ ] 会話履歴の永続化（現在 `sampleData.ts` のダミー）
+- [ ] メニューバー各項目に実際の動作を割り当てる
+- [ ] 画像のみの PDF（スキャン資料）への対応方針を決める（OCR を入れるか否か）
 
 ---
 
 ## 作業履歴
+
+### 2026-08-01 — Phase 2 Step 3: 一次資料の解析 ＆ ステージングキャッシュ管理 ✅
+- **テキスト抽出**（すべてフロント側・ローカル完結）
+  - PDF: `pdfjs-dist`。1MB 超あるため**動的 import** にし、メインバンドルを 258KB に維持
+    （静的 import だと 690KB まで膨らんだ）
+  - DOCX: `fflate` で ZIP を展開し `word/document.xml` からタグ除去。専用ライブラリ不要
+  - HTML / TXT / MD / CSV / JSON にも対応
+  - PDF は `--- p.N ---` のページ区切りを入れ、出典を追えるようにした
+- **ステージング**（`src-tauri/src/documents.rs`）
+  - `<app_data_dir>/temp_documents/` に抽出テキストと `index.json` を保存。再起動後も保持
+  - **元のバイナリは複製しない**（理由は `docs/設計.md` 6.6 に記載）
+- **UI**（ドロップゾーンの直下に常設トレイ）
+  - 🟢 バッジ付きチップ / クリックでプレビュー / ダブルクリックでリネーム / ✕ で削除 / 一括クリア
+  - 取り込み中は「抽出中 → 保存中」の 2 段階を表示
+  - トークンメーター（🟢 <75% / 🟡 75-100% / 🔴 ≧100%）
+- **トークン概算**は `CJK文字数 + ceil(その他/4)`。Rust と TS の両方に同じ規則を置いた
+- **Node 上で実データ検証**
+  - PDF: 生成した検証用 PDF から 3 行を正しく抽出、概算 25 トークンを算出
+  - DOCX: 段落・タブ・改行・実体参照・日本語すべて正しく抽出
 
 ### 2026-08-01 — Phase 2 Step 2: Yahoo Finance ＆ SEC EDGAR のデータ取得と UI 接続 ✅
 - **Yahoo Finance クライアント**（`src-tauri/src/yahoo.rs`）を実装

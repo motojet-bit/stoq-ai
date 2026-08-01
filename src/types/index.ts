@@ -154,9 +154,25 @@ export interface TickerAnalysis {
   filingError: string | null;
 }
 
-/** ドロップされた一次資料（PDF 等） */
-export interface DroppedDocument {
+// ---------------------------------------------------------------- 一次資料
+
+/** 一時保存（ステージング）中の資料 */
+export interface StagedDocument {
+  id: string;
+  /** ユーザーが変更できる表示名 */
+  displayName: string;
+  /** ドロップ時のファイル名（変更不可） */
+  originalName: string;
+  sizeBytes: number;
+  charCount: number;
+  /** 概算トークン数 */
+  tokenEstimate: number;
+  savedAtMs: number;
+}
+
+/** 取り込み処理中のファイル（抽出 → 保存の途中経過） */
+export interface IngestingFile {
   id: string;
   name: string;
-  size: number | null;
+  phase: "extracting" | "saving";
 }

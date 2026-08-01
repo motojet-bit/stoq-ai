@@ -4,6 +4,7 @@
 //! 「4.1 なぜ HTTP を Rust 側に置くのか」を参照。
 
 mod commands;
+mod documents;
 mod edgar;
 mod error;
 mod html;
@@ -24,6 +25,12 @@ pub fn run() {
             commands::settings_update_custom_provider,
             commands::settings_remove_custom_provider,
             commands::llm_send,
+            commands::documents_list,
+            commands::documents_stage,
+            commands::documents_read_text,
+            commands::documents_rename,
+            commands::documents_delete,
+            commands::documents_clear,
             commands::yahoo_fetch_fundamentals,
             commands::sec_filing_status,
             commands::sec_fetch_latest_filing,

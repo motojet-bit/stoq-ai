@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 use tauri::AppHandle;
 
+use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
@@ -162,6 +163,51 @@ pub async fn llm_send(
 ) -> Result<()> {
     let settings = settings::load(&app)?;
     llm::send(&settings, request, on_event).await
+}
+
+// ---------------------------------------------------------------- 一次資料のステージング
+
+/// 一時保存中の資料一覧。
+#[tauri::command]
+pub fn documents_list(app: AppHandle) -> Result<Vec<StagedDocument>> {
+    documents::list(&app)
+}
+
+/// 抽出済みテキストを一時保存フォルダに書き出す。
+#[tauri::command]
+pub fn documents_stage(
+    app: AppHandle,
+    original_name: String,
+    size_bytes: u64,
+    text: String,
+) -> Result<StagedDocument> {
+    documents::stage(&app, &original_name, size_bytes, &text)
+}
+
+/// プレビュー用に本文を読み出す。
+#[tauri::command]
+pub fn documents_read_text(app: AppHandle, id: String) -> Result<String> {
+    documents::read_text(&app, &id)
+}
+
+#[tauri::command]
+pub fn documents_rename(
+    app: AppHandle,
+    id: String,
+    display_name: String,
+) -> Result<Vec<StagedDocument>> {
+    documents::rename(&app, &id, &display_name)
+}
+
+#[tauri::command]
+pub fn documents_delete(app: AppHandle, id: String) -> Result<Vec<StagedDocument>> {
+    documents::delete(&app, &id)
+}
+
+/// 一時保存中の資料をすべて破棄する。
+#[tauri::command]
+pub fn documents_clear(app: AppHandle) -> Result<Vec<StagedDocument>> {
+    documents::clear(&app)
 }
 
 // ---------------------------------------------------------------- 財務データ

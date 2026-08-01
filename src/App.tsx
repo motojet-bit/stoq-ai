@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
-import type { ChatSession, DroppedDocument, WorkspaceTab } from "@/types";
+import type { ChatSession, WorkspaceTab } from "@/types";
 import { INITIAL_TABS, SAMPLE_SESSIONS } from "@/lib/sampleData";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
 import { loadTicker, useAnalyses } from "@/lib/api/analysisStore";
+import {
+  ingestFiles,
+  loadStagedDocuments,
+  useStagedDocuments,
+} from "@/lib/parser/documentStore";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
 import CommandBar from "@/components/CommandBar";
@@ -15,6 +20,7 @@ import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
 import SettingsModal from "@/components/SettingsModal";
 import ToastHost from "@/components/ToastHost";
+import DocumentTray from "@/components/DocumentTray";
 
 const newId = () => crypto.randomUUID();
 
@@ -28,19 +34,20 @@ export default function App() {
   const [tabs, setTabs] = useState<WorkspaceTab[]>(INITIAL_TABS);
   const [activeTabId, setActiveTabId] = useState<string>(INITIAL_TABS[0].id);
 
-  const [documents, setDocuments] = useState<DroppedDocument[]>([]);
   const [currentTicker, setCurrentTicker] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const settings = useSettings();
   const settingsError = useSettingsError();
   const analyses = useAnalyses();
+  const documents = useStagedDocuments();
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeAnalysis = activeTab?.ticker ? analyses[activeTab.ticker] : undefined;
 
-  // 起動時に Rust 側から設定を読み込む
+  // 起動時に Rust 側から設定と一時保存中の資料を読み込む
   useEffect(() => {
     void loadSettings();
+    void loadStagedDocuments();
   }, []);
 
   // Ctrl+B でサイドバー開閉 / Ctrl+, で設定
@@ -120,30 +127,18 @@ export default function App() {
     });
   };
 
-  const handleAddDocuments = (files: File[]) => {
-    if (files.length === 0) return;
-    setDocuments((prev) => [
-      ...prev,
-      ...files.map((f) => ({ id: newId(), name: f.name, size: f.size })),
-    ]);
-  };
-
-  const handleRemoveDocument = (id: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
-  };
-
   return (
     <div className="flex h-full flex-col overflow-hidden bg-slate-950 text-slate-200">
       <MenuBar onAction={handleMenuAction} />
 
       <CommandBar
         settings={settings}
-        documents={documents}
         onTickerSubmit={handleTickerSubmit}
-        onAddDocuments={handleAddDocuments}
-        onRemoveDocument={handleRemoveDocument}
+        onFiles={(files) => void ingestFiles(files)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
+
+      <DocumentTray tokenLimit={settings?.maxPromptTokens ?? 180_000} />
 
       {settingsError && (
         <div className="selectable shrink-0 border-b border-amber-900/60 bg-amber-950/40 px-3 py-1.5 text-[12px] text-amber-300">
