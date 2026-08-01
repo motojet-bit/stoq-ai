@@ -50,7 +50,7 @@ pub async fn stream(
 
     let res = ensure_success(res, "Gemini").await?;
 
-    pump_sse(res, channel, |payload| {
+    pump_sse(res, request.request_id.as_deref().unwrap_or_default(), channel, |payload| {
         let value: serde_json::Value = match serde_json::from_str(payload) {
             Ok(v) => v,
             Err(_) => return Ok(None),

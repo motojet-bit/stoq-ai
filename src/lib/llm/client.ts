@@ -2,6 +2,8 @@ import { Channel, invoke, isTauri } from "@/lib/tauri";
 import type { ChatMessage, LlmEvent, ProviderId } from "@/types";
 
 export interface LlmRequest {
+  /** 中断に使う ID。未指定なら自動採番される */
+  requestId?: string;
   /** 未指定なら設定の既定プロバイダ */
   provider?: ProviderId;
   system?: string;
@@ -16,6 +18,18 @@ export interface StreamHandlers {
   onDelta?: (text: string) => void;
 }
 
+export interface StreamResult {
+  text: string;
+  /** 中断によって途中で終わったか */
+  cancelled: boolean;
+}
+
+/** 生成中の呼び出しを中断する。それまでのテキストは破棄されない。 */
+export async function cancelChat(requestId: string): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("llm_cancel", { requestId });
+}
+
 /**
  * LLM へ送信し、応答をストリーミングで受け取る。
  *
@@ -25,7 +39,7 @@ export interface StreamHandlers {
 export async function streamChat(
   request: LlmRequest,
   handlers: StreamHandlers = {},
-): Promise<string> {
+): Promise<StreamResult> {
   if (!isTauri()) {
     throw new Error(
       "ブラウザで実行中のため LLM を呼び出せません。`npm run tauri:dev` で起動してください。",
@@ -33,10 +47,10 @@ export async function streamChat(
   }
 
   let settled = false;
-  let resolveResult!: (text: string) => void;
+  let resolveResult!: (result: StreamResult) => void;
   let rejectResult!: (error: Error) => void;
 
-  const result = new Promise<string>((resolve, reject) => {
+  const result = new Promise<StreamResult>((resolve, reject) => {
     resolveResult = resolve;
     rejectResult = reject;
   });
@@ -52,7 +66,7 @@ export async function streamChat(
         break;
       case "done":
         settled = true;
-        resolveResult(event.text);
+        resolveResult({ text: event.text, cancelled: event.cancelled });
         break;
       case "error":
         settled = true;

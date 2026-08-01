@@ -8,6 +8,12 @@ import {
   loadStagedDocuments,
   useStagedDocuments,
 } from "@/lib/parser/documentStore";
+import {
+  cancelAnalysis,
+  runAnalysis,
+  useAnalysisRuns,
+} from "@/lib/prompts/analysisRunner";
+import { providerReadiness } from "@/lib/config/providers";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
 import CommandBar from "@/components/CommandBar";
@@ -41,8 +47,27 @@ export default function App() {
   const settingsError = useSettingsError();
   const analyses = useAnalyses();
   const documents = useStagedDocuments();
+  const analysisRuns = useAnalysisRuns();
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  const activeAnalysis = activeTab?.ticker ? analyses[activeTab.ticker] : undefined;
+  const activeTicker = activeTab?.ticker ?? null;
+  const activeAnalysis = activeTicker ? analyses[activeTicker] : undefined;
+  const activeRun = activeTicker ? analysisRuns[activeTicker] : undefined;
+
+  const llm = settings
+    ? providerReadiness(settings, settings.provider)
+    : { ready: false, reason: "設定を読み込めていません。" };
+
+  const handleRunAnalysis = () => {
+    if (!activeTicker) return;
+    void runAnalysis({
+      ticker: activeTicker,
+      settings,
+      fundamentals: activeAnalysis?.fundamentals ?? null,
+      // EDGAR に登録がある銘柄のときだけ本文を取りに行く
+      fetchFiling: activeAnalysis?.filing?.status === "ok",
+      documents,
+    });
+  };
 
   // 起動時に Rust 側から設定と一時保存中の資料を読み込む
   useEffect(() => {
@@ -176,7 +201,15 @@ export default function App() {
             bottom={
               <div className="flex h-full">
                 <div className="min-w-0 flex-1">
-                  <AnalysisPanel />
+                  <AnalysisPanel
+                    ticker={activeTicker}
+                    run={activeRun}
+                    ready={llm.ready}
+                    readyReason={llm.reason}
+                    onRun={handleRunAnalysis}
+                    onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
+                    onOpenSettings={() => setSettingsOpen(true)}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <ChatPanel

@@ -87,7 +87,8 @@ pub async fn stream(
             .await?;
 
         if res.status().is_success() {
-            return pump_sse(res, channel, |payload| {
+            let request_id = request.request_id.as_deref().unwrap_or_default();
+            return pump_sse(res, request_id, channel, |payload| {
                 let value: Value = match serde_json::from_str(payload) {
                     Ok(v) => v,
                     // ハートビートなど JSON でない行は無視する

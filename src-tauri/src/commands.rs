@@ -165,6 +165,12 @@ pub async fn llm_send(
     llm::send(&settings, request, on_event).await
 }
 
+/// 生成中の LLM 呼び出しを中断する。それまでのテキストは破棄されない。
+#[tauri::command]
+pub fn llm_cancel(request_id: String) {
+    llm::request_cancel(&request_id);
+}
+
 // ---------------------------------------------------------------- 一次資料のステージング
 
 /// 一時保存中の資料一覧。

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { StagedDocument } from "@/types";
 import { formatTokens } from "@/lib/parser/tokenCount";
-import { IconClose, IconFile } from "@/components/Icons";
+import { IconClose, IconFile, IconPencil } from "@/components/Icons";
 
 interface Props {
   doc: StagedDocument;
@@ -40,7 +40,7 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
 
   return (
     <div
-      title={`${doc.originalName}\n${doc.charCount.toLocaleString()} 文字 / 概算 ${doc.tokenEstimate.toLocaleString()} トークン\nクリックでプレビュー・ダブルクリックで名前変更`}
+      title={`${doc.originalName}\n${doc.charCount.toLocaleString()} 文字 / 概算 ${doc.tokenEstimate.toLocaleString()} トークン\nクリックでプレビュー`}
       className="flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-emerald-900/70 bg-emerald-950/30 pl-1.5 pr-1 text-[12px]"
     >
       <span aria-hidden="true" className="text-[10px]" title="一時保存中">
@@ -62,7 +62,6 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
         <button
           type="button"
           onClick={onPreview}
-          onDoubleClick={() => setEditing(true)}
           className="max-w-52 truncate text-slate-200 hover:text-emerald-300"
         >
           {doc.displayName}
@@ -72,6 +71,18 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
       <span className="shrink-0 font-mono text-[10px] text-slate-500">
         {formatTokens(doc.tokenEstimate)}
       </span>
+
+      {!editing && (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label={`${doc.displayName} の名前を変更`}
+          title="名前を変更"
+          className="rounded p-0.5 text-slate-500 hover:bg-slate-700 hover:text-emerald-300"
+        >
+          <IconPencil className="h-3 w-3" />
+        </button>
+      )}
 
       <button
         type="button"

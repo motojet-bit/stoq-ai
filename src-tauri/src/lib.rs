@@ -25,6 +25,7 @@ pub fn run() {
             commands::settings_update_custom_provider,
             commands::settings_remove_custom_provider,
             commands::llm_send,
+            commands::llm_cancel,
             commands::documents_list,
             commands::documents_stage,
             commands::documents_read_text,

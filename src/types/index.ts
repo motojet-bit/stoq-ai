@@ -70,8 +70,21 @@ export interface DisplayMessage extends ChatMessage {
 export type LlmEvent =
   | { type: "start"; provider: string; model: string }
   | { type: "delta"; text: string }
-  | { type: "done"; text: string }
+  | { type: "done"; text: string; cancelled: boolean }
   | { type: "error"; message: string };
+
+/** SEC 提出書類の本文（プロンプトに載せる用） */
+export interface SecFilingText {
+  ticker: string;
+  company: string;
+  form: string;
+  filed: string;
+  period: string;
+  url: string;
+  text: string;
+  charCount: number;
+  truncated: boolean;
+}
 
 /** 左サイドバーに並ぶ会話履歴の 1 件 */
 export interface ChatSession {

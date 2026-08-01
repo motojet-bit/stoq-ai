@@ -1,9 +1,11 @@
 import { extractDocxText } from "@/lib/parser/docx";
+import { extractPptxText } from "@/lib/parser/pptx";
 
 /** 取り込めるファイルの拡張子。ファイル選択ダイアログの accept にも使う。 */
 export const SUPPORTED_EXTENSIONS = [
   ".pdf",
   ".docx",
+  ".pptx",
   ".txt",
   ".md",
   ".csv",
@@ -40,6 +42,8 @@ export async function extractText(file: File): Promise<string> {
       }
       case ".docx":
         return extractDocxText(await file.arrayBuffer());
+      case ".pptx":
+        return extractPptxText(await file.arrayBuffer());
       case ".htm":
       case ".html":
         return htmlToText(await file.text());

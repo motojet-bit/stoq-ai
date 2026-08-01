@@ -7,12 +7,35 @@ pub mod anthropic;
 pub mod gemini;
 pub mod openai;
 
+use std::sync::Mutex;
+
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 
 use crate::error::{AppError, Result};
 use crate::settings::Settings;
+
+/// 中断が要求されたリクエスト ID。
+///
+/// 生成中に `llm_cancel` が呼ばれるとここに積まれ、SSE の読み取りループが
+/// 次のチャンクで抜ける。それまでに受け取ったテキストは破棄せず返す。
+static CANCELLED: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+pub fn request_cancel(request_id: &str) {
+    let mut guard = CANCELLED.lock().unwrap();
+    if !guard.iter().any(|id| id == request_id) {
+        guard.push(request_id.to_string());
+    }
+}
+
+fn is_cancelled(request_id: &str) -> bool {
+    CANCELLED.lock().unwrap().iter().any(|id| id == request_id)
+}
+
+fn forget_cancel(request_id: &str) {
+    CANCELLED.lock().unwrap().retain(|id| id != request_id);
+}
 
 /// 会話 1 メッセージ。
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -26,6 +49,9 @@ pub struct ChatMessage {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LlmRequest {
+    /// 中断（`llm_cancel`）で指定するための ID。フロント側で採番する。
+    #[serde(default)]
+    pub request_id: Option<String>,
     /// 未指定なら設定の既定プロバイダを使う
     #[serde(default)]
     pub provider: Option<String>,
@@ -42,7 +68,8 @@ pub struct LlmRequest {
 pub enum LlmEvent {
     Start { provider: String, model: String },
     Delta { text: String },
-    Done { text: String },
+    /// 完了。`cancelled` が true なら中断による途中終了。
+    Done { text: String, cancelled: bool },
     Error { message: String },
 }
 
@@ -63,6 +90,7 @@ pub async fn send(settings: &Settings, request: LlmRequest, channel: Channel<Llm
     let model = settings.model_for(&provider);
     let api_key = settings.key_for(&provider)?;
     let max_tokens = request.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS);
+    let request_id = request.request_id.clone().unwrap_or_default();
 
     let _ = channel.send(LlmEvent::Start {
         provider: provider.clone(),
@@ -105,9 +133,20 @@ pub async fn send(settings: &Settings, request: LlmRequest, channel: Channel<Llm
         },
     };
 
+    let cancelled = !request_id.is_empty() && is_cancelled(&request_id);
+    forget_cancel(&request_id);
+
     match result {
         Ok(text) => {
-            let _ = channel.send(LlmEvent::Done { text });
+            let _ = channel.send(LlmEvent::Done { text, cancelled });
+            Ok(())
+        }
+        // 中断で通信が切れた場合はエラー扱いにしない
+        Err(_) if cancelled => {
+            let _ = channel.send(LlmEvent::Done {
+                text: String::new(),
+                cancelled: true,
+            });
             Ok(())
         }
         Err(err) => {
@@ -157,6 +196,7 @@ pub fn extract_error_message(body: &str) -> Option<String> {
 /// 追記すべきテキスト（なければ None）を返す。Err を返すとストリームを中断する。
 pub async fn pump_sse<F>(
     res: reqwest::Response,
+    request_id: &str,
     channel: &Channel<LlmEvent>,
     mut extract: F,
 ) -> Result<String>
@@ -168,6 +208,11 @@ where
     let mut accumulated = String::new();
 
     while let Some(chunk) = stream.next().await {
+        // 中断が要求されていたら、ここまでのテキストを返して抜ける
+        if !request_id.is_empty() && is_cancelled(request_id) {
+            break;
+        }
+
         let bytes = chunk?;
         buffer.push_str(&String::from_utf8_lossy(&bytes));
 
