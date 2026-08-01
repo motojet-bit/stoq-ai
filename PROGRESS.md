@@ -35,10 +35,11 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 | 設定モーダル UI | ✅ `src/components/SettingsModal.tsx` |
 | プロバイダ選択（組み込み 3 種 + カスタム任意個） | ✅ |
 | **OpenAI互換プロバイダの追加・削除（可変長リスト）** | ✅ ラベル / Base URL / キー / モデル名 |
-| モデル名・SEC User-Agent の設定 | ✅ |
+| モデル名のコンボボックス入力（候補選択 + 手入力） | ✅ `src/components/ModelCombo.tsx` |
+| SEC User-Agent の設定 | ✅ |
 | LLM 共通インターフェース | ✅ `src-tauri/src/llm/` |
 | SSE ストリーミング → Tauri Channel | ✅ |
-| 対話パネルからの疎通確認 | ✅ `src/components/ChatPanel.tsx` |
+| 対話パネルからの疎通確認 | ✅ **実機で往復成功（OpenAI / gpt-5.6）** |
 | メニュー「ファイル > 設定…」/「ヘルプ > APIキーの設定…」から起動 | ✅ |
 | APIキーインジケーターのクリックで起動 | ✅ |
 | `Ctrl+,` ショートカット | ✅ |
@@ -76,6 +77,16 @@ Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基
 ---
 
 ## 作業履歴
+
+### 2026-08-01 — 改良: モデル名入力欄をコンボボックス化 ✅
+- **LLM 疎通確認がユーザー側で成功**（OpenAI / gpt-5.6）。方言の自動フォールバックも機能
+- モデル名の入力欄を `<datalist>` によるコンボボックスに変更（`ModelCombo.tsx`）
+  - ドロップダウンから代表的なモデルを選択でき、任意の文字列の手入力も可能
+  - 新しいモデルが出てもアプリを更新せずに使える
+- `modelCatalog.ts` に候補を集約。OpenAI互換プロバイダは **Base URL から提供元を推測**して
+  候補を切り替える（deepseek / moonshot / openrouter / groq / localhost）
+- ユーザー例示の `claude-3-5-sonnet-latest` / `claude-3-opus-latest` は提供終了済みのため、
+  現行の `claude-opus-5` / `claude-sonnet-5` / `claude-opus-4-8` / `claude-haiku-4-5` を候補にした
 
 ### 2026-08-01 — 修正: GPT-5 系で送信が 400 になる問題 ✅
 - OpenAI のキー投入後、`Unsupported parameter: 'max_tokens' ... Use 'max_completion_tokens' instead`

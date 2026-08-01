@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AppSettings, CustomProvider, ProviderId } from "@/types";
 import { BUILTIN_PROVIDERS, providerReadiness } from "@/lib/config/providers";
+import { modelSuggestions } from "@/lib/config/modelCatalog";
 import {
   addCustomProvider,
   removeCustomProvider,
@@ -9,6 +10,7 @@ import {
   updateCustomProvider,
 } from "@/lib/config/settingsStore";
 import { IconClose, IconKey, IconPlus } from "@/components/Icons";
+import ModelCombo from "@/components/ModelCombo";
 
 interface Props {
   open: boolean;
@@ -224,21 +226,20 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                     <div className="grid gap-2 sm:grid-cols-2">
                       {renderKeyRow(p.id, p.keyPlaceholder, p.keySource)}
 
-                      <label className="block">
+                      <div>
                         <span className="mb-1 block text-[11px] text-slate-500">
-                          モデル名（{p.modelHint}）
+                          モデル名（候補から選択、または手入力）
                         </span>
-                        <input
-                          type="text"
-                          autoComplete="off"
-                          spellCheck={false}
+                        <ModelCombo
+                          ariaLabel={`${p.label} のモデル名`}
                           value={modelDrafts[p.id] ?? ""}
-                          onChange={(e) =>
-                            setModelDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))
+                          onChange={(v) =>
+                            setModelDrafts((prev) => ({ ...prev, [p.id]: v }))
                           }
-                          className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 focus:border-emerald-500 focus:outline-none"
+                          suggestions={modelSuggestions(p.id)}
+                          placeholder={p.modelHint}
                         />
-                      </label>
+                      </div>
                     </div>
 
                     {p.id === "anthropic" && (
@@ -312,21 +313,19 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                           <div className="grid gap-2 sm:grid-cols-2">
                             {renderKeyRow(c.id, "sk-…")}
 
-                            <label className="block">
+                            <div>
                               <span className="mb-1 block text-[11px] text-slate-500">
-                                モデル名（例: deepseek-chat）
+                                モデル名（候補から選択、または手入力）
                               </span>
-                              <input
-                                type="text"
-                                autoComplete="off"
-                                spellCheck={false}
+                              <ModelCombo
+                                ariaLabel={`${draft.label} のモデル名`}
                                 value={draft.model}
-                                onChange={(e) =>
-                                  patchCustomDraft(c.id, { model: e.target.value })
-                                }
-                                className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 focus:border-emerald-500 focus:outline-none"
+                                onChange={(v) => patchCustomDraft(c.id, { model: v })}
+                                // Base URL から提供元を推測して候補を切り替える
+                                suggestions={modelSuggestions(c.id, draft.baseUrl)}
+                                placeholder="例: deepseek-chat"
                               />
-                            </label>
+                            </div>
                           </div>
 
                           <label className="mt-2 block">
