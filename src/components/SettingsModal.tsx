@@ -20,9 +20,19 @@ import LicenseSettings from "@/components/LicenseSettings";
 import ModalShell from "@/components/ModalShell";
 import { useT } from "@/lib/i18n/i18n";
 
+export type SettingsTab =
+  | "providers"
+  | "market"
+  | "thresholds"
+  | "display"
+  | "shortcuts"
+  | "license";
+
 interface Props {
   open: boolean;
   settings: AppSettings | null;
+  /** 開いたときに選ぶタブ。省略すると「APIキー・モデル」 */
+  initialTab?: SettingsTab;
   onClose: () => void;
 }
 
@@ -39,7 +49,12 @@ interface CustomDraft {
  * 入力された APIキーは Rust 側へ渡してディスクに保存し、
  * 画面にはマスク済み文字列だけが戻ってくる。
  */
-export default function SettingsModal({ open, settings, onClose }: Props) {
+export default function SettingsModal({
+  open,
+  settings,
+  initialTab = "providers",
+  onClose,
+}: Props) {
   // 未保存の入力値。プロバイダ ID をキーにする。
   const [keyDrafts, setKeyDrafts] = useState<Record<string, string>>({});
   const [modelDrafts, setModelDrafts] = useState<Record<string, string>>({});
@@ -51,9 +66,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   // 誤操作防止。削除対象のプロバイダ ID を持つ
   const [deletingKeyOf, setDeletingKeyOf] = useState<ProviderId | null>(null);
   const t = useT();
-  const [tab, setTab] = useState<
-    "providers" | "market" | "thresholds" | "display" | "shortcuts" | "license"
-  >("providers");
+  const [tab, setTab] = useState<SettingsTab>(initialTab);
 
   // モーダルを開いた時点の設定値を入力欄の初期値にする
   useEffect(() => {
@@ -65,7 +78,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     setError(null);
     setSavedAt(null);
     setDeletingKeyOf(null);
-    setTab("providers");
+    setTab(initialTab);
     // open の切り替わり時のみ初期化する（入力中に settings が更新されても上書きしない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

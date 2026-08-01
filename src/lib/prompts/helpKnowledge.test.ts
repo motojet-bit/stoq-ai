@@ -19,6 +19,7 @@ const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   marketProvider: "yahoo",
   thresholds: {},
   license: { activated: false, masked: null, message: "未登録" },
+  freeTickers: [],
   marketProviders: [
     { id: "yahoo", label: "Yahoo Finance", requiresKey: false, ready: true, reason: null },
     {

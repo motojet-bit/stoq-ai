@@ -57,6 +57,8 @@ export interface AppSettings {
   thresholds: Record<string, number>;
   /** ライセンスの状態 */
   license: LicenseStatus;
+  /** 無料版で分析した銘柄（大文字） */
+  freeTickers: string[];
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
 }

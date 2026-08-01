@@ -20,6 +20,8 @@ import {
   loadPortfolios,
 } from "@/lib/portfolio/portfolioStore";
 import { loadLicense } from "@/lib/license/licenseStore";
+import { checkAccess, useTicker } from "@/lib/license/freeTierStore";
+import FreeTierLimitModal from "@/components/FreeTierLimitModal";
 import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
 import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
@@ -50,7 +52,7 @@ import ResizableSplit from "@/components/ResizableSplit";
 import AnalysisPanel from "@/components/AnalysisPanel";
 import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
-import SettingsModal from "@/components/SettingsModal";
+import SettingsModal, { type SettingsTab } from "@/components/SettingsModal";
 import ToastHost from "@/components/ToastHost";
 import DocumentTray from "@/components/DocumentTray";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -80,6 +82,7 @@ export default function App() {
 
   const [currentTicker, setCurrentTicker] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("providers");
   // 検討中銘柄をクリックしたときに入力欄へ流し込む値。
   // 同じ銘柄を続けて選べるよう連番を添える
   const [tickerPreset, setTickerPreset] = useState<{ ticker: string; seq: number } | null>(
@@ -91,6 +94,8 @@ export default function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   // 分析結果をどのリストに残すか選ぶダイアログ
   const [savingTicker, setSavingTicker] = useState<string | null>(null);
+  // 無料版の上限に達したときに出す案内
+  const [limitedTicker, setLimitedTicker] = useState<string | null>(null);
   const sidebarMode = useSidebarMode();
   const portfolioSplit = usePortfolioSplit();
   // 初回だけ自動で開くチュートリアル。閉じたら印を残して二度と自動表示しない
@@ -136,11 +141,28 @@ export default function App() {
     : { ready: false, reason: "設定を読み込めていません。" };
 
   /**
+   * 無料版の枠を確認する。使えるなら使用済みに登録して true を返す。
+   *
+   * **すでに分析した銘柄は何度でも通す。** 決算のたびに見直す使い方を
+   * 妨げないため、数えるのは「銘柄数」であって実行回数ではない。
+   */
+  const ensureAccess = (ticker: string): boolean => {
+    const access = checkAccess(ticker);
+    if (!access.allowed) {
+      setLimitedTicker(ticker.toUpperCase());
+      return false;
+    }
+    void useTicker(ticker);
+    return true;
+  };
+
+  /**
    * 分析を開始する。
    * 一次資料が 1 件も無いときは、より良い結果が得られる旨を伝えて確認する。
    */
   const handleRunAnalysis = () => {
     if (!activeTicker) return;
+    if (!ensureAccess(activeTicker)) return;
     if (documents.length === 0) {
       setConfirmingNoDocs(true);
       return;
@@ -408,6 +430,9 @@ export default function App() {
 
   /** ティッカーが確定したら分析タブを開き、YF と SEC の取得を開始する */
   const handleTickerSubmit = (ticker: string) => {
+    // データ取得の時点で枠を確認する（4 銘柄目は取得も止める）
+    if (!ensureAccess(ticker)) return;
+
     setCurrentTicker(ticker);
 
     const existing = tabs.find((t) => t.kind === "analysis" && t.ticker === ticker);
@@ -593,6 +618,7 @@ export default function App() {
 
       <SettingsModal
         open={settingsOpen}
+        initialTab={settingsTab}
         settings={settings}
         onClose={() => setSettingsOpen(false)}
       />
@@ -613,6 +639,21 @@ export default function App() {
           startAnalysis();
         }}
         onCancel={() => setConfirmingNoDocs(false)}
+      />
+
+      <FreeTierLimitModal
+        open={limitedTicker !== null}
+        ticker={limitedTicker}
+        onClose={() => setLimitedTicker(null)}
+        onOpenLicense={() => {
+          setLimitedTicker(null);
+          setSettingsOpen(true);
+          setSettingsTab("license");
+        }}
+        onOpenGuide={() => {
+          setLimitedTicker(null);
+          setHelpOpen(true);
+        }}
       />
 
       <SaveToPortfolioModal

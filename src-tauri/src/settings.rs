@@ -56,6 +56,9 @@ pub struct Settings {
     /// ライセンスキー（生の値）。フロントへはマスク済みしか返さない
     #[serde(default)]
     pub license_key: String,
+    /// 無料版で分析した銘柄（大文字）。上限に達したら増えない
+    #[serde(default)]
+    pub free_tickers: Vec<String>,
 
     /// 旧形式（カスタム枠が 1 つ固定だった頃）の Base URL。
     /// 読み込み時に `custom_providers` へ移行し、以降は空になる。
@@ -80,6 +83,7 @@ impl Default for Settings {
             market_provider: crate::market::DEFAULT_PROVIDER.to_string(),
             thresholds: BTreeMap::new(),
             license_key: String::new(),
+            free_tickers: Vec::new(),
             custom_base_url: String::new(),
         }
     }
@@ -105,6 +109,8 @@ pub struct SettingsView {
     pub thresholds: BTreeMap<String, f64>,
     /// ライセンスの状態（生のキーは含まない）
     pub license: crate::license::LicenseStatus,
+    /// 無料版で分析した銘柄
+    pub free_tickers: Vec<String>,
     /// 組み込み + カスタムの全プロバイダのキー状態
     pub keys: Vec<KeyStatus>,
 }
@@ -175,6 +181,7 @@ impl Settings {
             market_providers: crate::market::all_statuses(self),
             thresholds: self.thresholds.clone(),
             license: crate::license::status_of(&self.license_key),
+            free_tickers: self.free_tickers.clone(),
             keys: self
                 .provider_ids()
                 .into_iter()

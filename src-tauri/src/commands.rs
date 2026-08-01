@@ -356,6 +356,22 @@ pub fn license_activate(app: AppHandle, key: String) -> Result<LicenseStatus> {
     Ok(status)
 }
 
+/// 無料版の使用済み銘柄に登録する。上限を超えては積まない。
+///
+/// **判定と上限はフロント側（`freeTier.ts`）が持つ**ので、
+/// ここは受け取った一覧をそのまま保存するだけにする。
+#[tauri::command]
+pub fn free_tier_set(app: AppHandle, tickers: Vec<String>) -> Result<SettingsView> {
+    let mut current = settings::load(&app)?;
+    current.free_tickers = tickers
+        .into_iter()
+        .map(|t| t.trim().to_uppercase())
+        .filter(|t| !t.is_empty())
+        .collect();
+    settings::save(&app, &current)?;
+    Ok(current.to_view())
+}
+
 #[tauri::command]
 pub fn license_clear(app: AppHandle) -> Result<LicenseStatus> {
     let mut current = settings::load(&app)?;

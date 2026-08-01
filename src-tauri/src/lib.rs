@@ -51,6 +51,7 @@ pub fn run() {
             commands::license_status,
             commands::license_activate,
             commands::license_clear,
+            commands::free_tier_set,
             commands::portfolios_list,
             commands::portfolios_create,
             commands::portfolios_rename,

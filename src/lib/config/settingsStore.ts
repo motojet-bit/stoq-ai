@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { providerReadiness } from "@/lib/config/providers";
+import { syncFromSettings } from "@/lib/license/freeTierStore";
 import type {
   AppSettings,
   CustomProviderPatch,
@@ -67,6 +68,8 @@ export async function loadSettings(): Promise<AppSettings | null> {
 /** Rust から返った最新の設定でストアを差し替える。 */
 function commit(next: AppSettings): AppSettings {
   snapshot = next;
+  // 無料版の使用状況もここで同期する（保存先が同じ設定ファイルのため）
+  syncFromSettings(next);
   emit();
   return next;
 }
