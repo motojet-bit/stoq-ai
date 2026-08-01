@@ -220,6 +220,25 @@ pub struct AnalysisPreset {
     pub role_id: Option<String>,
     #[serde(default)]
     pub thresholds: BTreeMap<String, f64>,
+    /// 出力言語（`ja` / `en` …）。未指定なら日本語
+    #[serde(default)]
+    pub locale: Option<String>,
+}
+
+/// 出力言語の指示。
+///
+/// **日本語のときは何も足さない**（プロンプト本文がもともと日本語なので、
+/// 「日本語で答えよ」と重ねて書く意味がない）。
+pub fn language_directive(locale: Option<&str>) -> Option<&'static str> {
+    match locale.unwrap_or("ja").trim() {
+        "en" => Some(
+            "# Output language\n\n\
+             Respond all analysis, block scores evaluation, and dialogue outputs in English.\n\
+             Keep the section headings exactly as specified above — \
+             they are parsed by the application and must not be translated.",
+        ),
+        _ => None,
+    }
 }
 
 /// 役割・共通部・閾値・出力フォーマットを結合してシステムプロンプトにする。
@@ -231,13 +250,21 @@ pub struct AnalysisPreset {
 /// 4. 出力フォーマット（**最後に置くほど守られやすい**）
 pub fn build_system_prompt(preset: &AnalysisPreset) -> String {
     let role = role_def(preset.role_id.as_deref().unwrap_or(DEFAULT_ROLE));
-    [
+    let thresholds = threshold_section(&preset.thresholds);
+
+    let mut parts: Vec<&str> = vec![
         role.body.trim(),
         CORE.trim(),
-        threshold_section(&preset.thresholds).trim(),
+        thresholds.trim(),
         OUTPUT.trim(),
-    ]
-    .join("\n\n")
+    ];
+
+    // 言語指示は最後に置く。**後ろにあるほど守られやすい**
+    if let Some(directive) = language_directive(preset.locale.as_deref()) {
+        parts.push(directive);
+    }
+
+    parts.join("\n\n")
 }
 
 /// 組み立てたプロンプトの概算トークン数。
@@ -261,6 +288,7 @@ mod tests {
                 .iter()
                 .map(|(k, v)| ((*k).to_string(), *v))
                 .collect(),
+            locale: None,
         }
     }
 
@@ -449,6 +477,73 @@ mod tests {
         let ids: Vec<&str> = THRESHOLD_META.iter().map(|m| m.id).collect();
         let default_ids: Vec<&str> = THRESHOLD_DEFAULTS.iter().map(|(id, _)| *id).collect();
         assert_eq!(ids, default_ids, "表示情報と既定値の項目がずれている");
+    }
+
+    // ------------------------------------------------ 出力言語
+
+    #[test]
+    fn 日本語のときは言語指示を足さない() {
+        // 本文がもともと日本語なので重ねて書く意味がない
+        assert_eq!(language_directive(None), None);
+        assert_eq!(language_directive(Some("ja")), None);
+        assert_eq!(language_directive(Some("")), None);
+        assert_eq!(language_directive(Some("unknown")), None);
+    }
+
+    #[test]
+    fn 英語のときは指定どおりの指示を足す() {
+        let directive = language_directive(Some("en")).unwrap();
+        assert!(directive.contains(
+            "Respond all analysis, block scores evaluation, and dialogue outputs in English."
+        ));
+    }
+
+    #[test]
+    fn 前後の空白があっても英語と判定する() {
+        assert!(language_directive(Some("  en  ")).is_some());
+    }
+
+    #[test]
+    fn 見出しを訳さないよう釘を刺す() {
+        // 見出しが訳されるとパーサが結果を読めなくなる
+        let directive = language_directive(Some("en")).unwrap();
+        assert!(directive.contains("must not be translated"));
+    }
+
+    #[test]
+    fn 英語のプロンプトは言語指示が末尾に入る() {
+        let preset = AnalysisPreset {
+            role_id: Some("growth".into()),
+            thresholds: BTreeMap::new(),
+            locale: Some("en".into()),
+        };
+        let prompt = build_system_prompt(&preset);
+
+        assert!(prompt.contains("Respond all analysis"));
+        let output = prompt.find("# 出力フォーマット").unwrap();
+        let language = prompt.find("# Output language").unwrap();
+        assert!(output < language, "言語指示は最後に置く（守られやすいため）");
+    }
+
+    #[test]
+    fn 日本語のプロンプトには英語の指示が入らない() {
+        let prompt = build_system_prompt(&preset("growth", &[]));
+        assert!(!prompt.contains("Output language"));
+    }
+
+    #[test]
+    fn 言語を変えても評価項目と出力フォーマットは変わらない() {
+        let ja = build_system_prompt(&preset("general", &[]));
+        let en = build_system_prompt(&AnalysisPreset {
+            role_id: Some("general".into()),
+            thresholds: BTreeMap::new(),
+            locale: Some("en".into()),
+        });
+
+        for heading in ["# 厳守事項", "## 評価テーブル", "## 総合投資判断"] {
+            assert!(ja.contains(heading), "{heading}");
+            assert!(en.contains(heading), "{heading}");
+        }
     }
 
     // ------------------------------------------------ トークン数

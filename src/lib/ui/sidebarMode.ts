@@ -9,9 +9,10 @@ import { useSyncExternalStore } from "react";
  */
 export type SidebarMode = "chat" | "portfolio";
 
-export const SIDEBAR_MODES: { id: SidebarMode; label: string }[] = [
-  { id: "chat", label: "💬 対話履歴" },
-  { id: "portfolio", label: "💼 マイポートフォリオ" },
+/** 表示名は辞書から引く（`labelKey` を `t()` に渡す） */
+export const SIDEBAR_MODES: { id: SidebarMode; labelKey: string }[] = [
+  { id: "chat", labelKey: "sidebar.modeChat" },
+  { id: "portfolio", labelKey: "sidebar.modePortfolio" },
 ];
 
 /**
@@ -21,7 +22,9 @@ export const SIDEBAR_MODES: { id: SidebarMode; label: string }[] = [
  * 幅が足りないと右側のタブが「マイポートフ…」と切れるが、
  * いま見ているモードの名前が読めないのがいちばん困るため。
  */
-export function orderedModes(active: SidebarMode): { id: SidebarMode; label: string }[] {
+export function orderedModes(
+  active: SidebarMode,
+): { id: SidebarMode; labelKey: string }[] {
   const current = SIDEBAR_MODES.filter((m) => m.id === active);
   const rest = SIDEBAR_MODES.filter((m) => m.id !== active);
   return [...current, ...rest];

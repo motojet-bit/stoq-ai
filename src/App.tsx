@@ -38,6 +38,7 @@ import {
 } from "@/lib/prompts/analysisRunner";
 import { providerReadiness } from "@/lib/config/providers";
 import { initFontSize } from "@/lib/ui/fontStore";
+import { initLocale } from "@/lib/i18n/i18n";
 import { SLOT_IDS, useSlots, type PanelId, type SlotId } from "@/lib/ui/layoutStore";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
@@ -163,6 +164,7 @@ export default function App() {
   // 起動時に Rust 側から設定と一時保存中の資料を読み込む
   useEffect(() => {
     initFontSize();
+    initLocale();
     void loadSettings();
     void loadStagedDocuments();
     void loadChatSessions();

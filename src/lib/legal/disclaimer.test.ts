@@ -13,6 +13,7 @@ import {
   toggleDisclaimer,
 } from "@/lib/legal/disclaimerStore";
 import { MENUS, type MenuAction } from "@/components/MenuBar";
+import { setLocale, t } from "@/lib/i18n/i18n";
 
 /**
  * 免責の文面は法的リスクの遮断が目的なので、
@@ -156,17 +157,20 @@ describe("免責モーダルの開閉", () => {
 });
 
 describe("メニューバーからの呼び出し", () => {
-  const helpMenu = MENUS.find((m) => m.label === "ヘルプ")!;
+  const helpMenu = MENUS.find((m) => m.labelKey === "menu.help")!;
 
   it("ヘルプメニューに免責事項の項目がある", () => {
-    const item = helpMenu.items.find((i) => i.label.includes("免責事項"));
+    const item = helpMenu.items.find((i) => i.labelKey === "menu.help.disclaimer");
     expect(item).toBeDefined();
     expect(item?.action).toBe("open-disclaimer");
   });
 
-  it("項目のラベルに英語表記も併記されている", () => {
-    const item = helpMenu.items.find((i) => i.action === "open-disclaimer");
-    expect(item?.label).toBe("免責事項（Legal Disclaimer）");
+  it("**日英どちらの辞書にもラベルがある**（切り替えても消えない）", () => {
+    setLocale("ja");
+    expect(t("menu.help.disclaimer")).toBe("免責事項（Legal Disclaimer）");
+    setLocale("en");
+    expect(t("menu.help.disclaimer")).toBe("Legal Disclaimer");
+    setLocale("ja");
   });
 
   it("免責アクションを受けるとモーダルが開く（App のハンドラ相当）", () => {

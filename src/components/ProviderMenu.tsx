@@ -5,6 +5,7 @@ import { saveSettings } from "@/lib/config/settingsStore";
 import { toastError } from "@/lib/ui/toastStore";
 import { IconChevronDown, IconSettings } from "@/components/Icons";
 import PortalMenu from "@/components/PortalMenu";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   settings: AppSettings | null;
@@ -18,6 +19,7 @@ interface Props {
  * 際限なく横に伸びるため、1 つのボタンとドロップダウンにまとめた。
  */
 export default function ProviderMenu({ settings, onOpenSettings }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -60,7 +62,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
         }`}
       >
         <IconSettings className="h-4 w-4 shrink-0 text-slate-500" />
-        <span className="shrink-0">AI設定</span>
+        <span className="shrink-0">{t("command.aiSettings")}</span>
         <span className="text-slate-600">|</span>
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
@@ -68,7 +70,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
           }`}
         />
         <span className="max-w-40 truncate font-medium">
-          稼働中: {providerLabel(settings, settings.provider)}
+          {t("command.activeProvider")}: {providerLabel(settings, settings.provider)}
         </span>
         <IconChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
       </button>

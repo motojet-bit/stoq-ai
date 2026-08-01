@@ -16,8 +16,18 @@ import PromptLibraryMenu from "@/components/PromptLibraryMenu";
 import { activeSystemPrompt } from "@/lib/prompts/promptLibrary";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { useChatDraft } from "@/lib/chat/chatDraft";
-import { ingestFiles, useStagedDocuments } from "@/lib/parser/documentStore";
-import { IconPaperclip } from "@/components/Icons";
+import {
+  attachChatFiles,
+  buildAttachmentContext,
+  clearChatAttachments,
+  getChatAttachments,
+  MAX_CHAT_ATTACHMENTS,
+  removeChatAttachment,
+  useChatAttachments,
+  useChatAttachmentsBusy,
+} from "@/lib/chat/chatAttachments";
+import { IconClose, IconPaperclip } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   settings: AppSettings | null;
@@ -48,9 +58,15 @@ export default function ChatPanel({
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // 単発のプレスリリースなどをここから直接読み込ませる
+  /*
+   * 単発のプレスリリースなどをここから直接読み込ませる。
+   * **上部ドロップゾーンの「一時保存中の資料」とは別管理。**
+   * あちらは分析に毎回渡る恒久的なコンテキスト、こちらは使い捨て。
+   */
   const fileRef = useRef<HTMLInputElement>(null);
-  const documents = useStagedDocuments();
+  const attachments = useChatAttachments();
+  const attaching = useChatAttachmentsBusy();
+  const t = useT();
 
   const sendKeyLabel = isMac() ? "⌘+Enter" : "Ctrl+Enter";
 
@@ -97,6 +113,10 @@ ${draft.text}`));
     const text = input.trim();
     if (!text || sending) return;
 
+    // 添付があれば本文の前に載せる（送ったら使い切りで捨てる）
+    const attached = getChatAttachments();
+    const withContext = `${buildAttachmentContext(attached)}${text}`;
+
     const userMessage: DisplayMessage = { id: newId(), role: "user", content: text };
     const replyId = newId();
     const history = [...messages, userMessage];
@@ -106,7 +126,9 @@ ${draft.text}`));
     setSending(true);
 
     // ユーザー発言を先に保存する（応答が失敗しても質問は残る）
+    // **保存するのは質問本文だけ。** 資料の全文を履歴に残すと肥大化する
     await persistMessage("user", text, ticker);
+    clearChatAttachments();
 
     try {
       const { text: reply } = await streamChat(
@@ -116,7 +138,12 @@ ${draft.text}`));
           // エラー表示用のメッセージは送らない
           messages: history
             .filter((m) => !m.error)
-            .map((m) => ({ role: m.role, content: m.content })),
+            .map((m) =>
+              // 送信するときだけ、最後の発言に添付を差し込む
+              m.id === userMessage.id
+                ? { role: m.role, content: withContext }
+                : { role: m.role, content: m.content },
+            ),
         },
         {
           onStart: (_provider, model) => setActiveModel(model),
@@ -261,20 +288,21 @@ ${draft.text}`));
                 className="hidden"
                 onChange={(e) => {
                   const files = Array.from(e.target.files ?? []);
-                  if (files.length > 0) void ingestFiles(files);
+                  if (files.length > 0) void attachChatFiles(files);
                   e.target.value = "";
                 }}
               />
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                title="一次資料を添付（PDF / TXT / MD / PPTX / DOCX）"
-                aria-label="一次資料を添付"
-                className="flex min-h-11 shrink-0 items-center gap-1 rounded-md border border-slate-700 px-2 text-slate-400 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+                disabled={attaching}
+                title={`${t("chat.attach")}（この会話でのみ使う使い捨ての資料です）`}
+                aria-label={t("chat.attach")}
+                className="flex min-h-11 shrink-0 items-center gap-1 rounded-md border border-slate-700 px-2 text-slate-400 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:opacity-40"
               >
                 <IconPaperclip className="h-4 w-4" />
-                {documents.length > 0 && (
-                  <span className="font-mono t-label">{documents.length}</span>
+                {attachments.length > 0 && (
+                  <span className="font-mono t-label">{attachments.length}</span>
                 )}
               </button>
 
@@ -308,12 +336,40 @@ ${draft.text}`));
               </button>
             </div>
 
+            {/* 添付は「この会話だけ」。上部の資料一覧には入らない */}
+            {(attachments.length > 0 || attaching) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {attaching && (
+                  <span className="t-label text-slate-500">読み込み中…</span>
+                )}
+                {attachments.map((item) => (
+                  <span
+                    key={item.id}
+                    title={`${item.name}
+${item.charCount.toLocaleString()} 文字 / 概算 ${item.tokenEstimate.toLocaleString()} トークン`}
+                    className="flex min-h-6 max-w-56 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 t-label text-slate-300"
+                  >
+                    <IconPaperclip className="h-3 w-3 shrink-0 text-slate-500" />
+                    <span className="min-w-0 truncate">{item.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeChatAttachment(item.id)}
+                      aria-label={`${item.name} を外す`}
+                      className="shrink-0 rounded text-slate-600 hover:text-red-300"
+                    >
+                      <IconClose className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <p className="t-label mt-1 flex flex-wrap items-center justify-between gap-2 text-slate-600">
               <span>
-                📎 で最新のプレスリリース等を添付できます
-                {documents.length > 0 ? `（読み込み済み ${documents.length} 件）` : ""}
+                📎 の資料は**この会話でのみ**使われ、送信後に破棄されます（最大
+                {MAX_CHAT_ATTACHMENTS} 件）
               </span>
-              <span>{sendKeyLabel} で送信 / Enter で改行</span>
+              <span>{t("chat.sendHint", { key: sendKeyLabel })}</span>
             </p>
           </div>
       </>

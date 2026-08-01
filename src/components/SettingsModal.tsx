@@ -18,6 +18,7 @@ import ThresholdSettings from "@/components/ThresholdSettings";
 import DisplaySettings from "@/components/DisplaySettings";
 import LicenseSettings from "@/components/LicenseSettings";
 import ModalShell from "@/components/ModalShell";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -49,6 +50,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   // 誤操作防止。削除対象のプロバイダ ID を持つ
   const [deletingKeyOf, setDeletingKeyOf] = useState<ProviderId | null>(null);
+  const t = useT();
   const [tab, setTab] = useState<
     "providers" | "market" | "thresholds" | "display" | "shortcuts" | "license"
   >("providers");
@@ -161,7 +163,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   return (
     <ModalShell
       open={open}
-      title="設定"
+      title={t("settings.title")}
       icon={<IconKey className="h-4 w-4 text-emerald-400" />}
       onClose={onClose}
       footer={
@@ -202,12 +204,12 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
       <div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-4">
         {(
           [
-            ["providers", "APIキー・モデル"],
-            ["market", "データ取得元"],
-            ["thresholds", "分析ルール・閾値"],
-            ["display", "表示"],
-            ["shortcuts", "ショートカット"],
-            ["license", "ライセンス認証"],
+            ["providers", t("settings.tab.providers")],
+            ["market", t("settings.tab.market")],
+            ["thresholds", t("settings.tab.thresholds")],
+            ["display", t("settings.tab.general")],
+            ["shortcuts", t("settings.tab.shortcuts")],
+            ["license", t("settings.tab.license")],
           ] as const
         ).map(([id, label]) => (
           <button

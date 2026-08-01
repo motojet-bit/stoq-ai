@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
+import { clearChatAttachments } from "@/lib/chat/chatAttachments";
 import type { ChatSession, DisplayMessage, StoredChatMessage } from "@/types";
 
 /**
@@ -77,6 +78,8 @@ export async function loadChatSessions(): Promise<void> {
 }
 
 export async function selectSession(id: string): Promise<void> {
+  // 会話を切り替えたら、前の会話に付けた使い捨て資料は捨てる
+  clearChatAttachments();
   if (!isTauri()) return;
 
   activeId = id;

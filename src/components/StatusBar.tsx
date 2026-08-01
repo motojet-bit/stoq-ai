@@ -2,6 +2,7 @@ import { APP_VERSION, COPYRIGHT } from "@/lib/ui/appMeta";
 import { IconHelp } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   ticker: string | null;
@@ -23,15 +24,19 @@ export default function StatusBar({
   helpOpen,
   onToggleHelp,
 }: Props) {
+  const t = useT();
+
   return (
     <footer className="grid min-h-6 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-t border-slate-800 bg-slate-900 px-3 t-label text-slate-500">
       {/* 左: 状態 */}
       <div className="flex min-w-0 items-center gap-4">
-        <span className="shrink-0 text-emerald-500">● 準備完了</span>
-        <span className="truncate">銘柄: {ticker ?? "—"}</span>
+        <span className="shrink-0 text-emerald-500">{t("app.ready")}</span>
+        <span className="truncate">
+          {t("status.ticker")}: {ticker ?? t("common.none")}
+        </span>
         {/* 狭いときは資料件数から先に隠す（中央の表記を潰さないため） */}
         <span className="hidden truncate lg:inline">
-          読み込み済み資料: {documentCount} 件
+          {t("status.documents")}: {documentCount} {t("status.documentsUnit")}
         </span>
       </div>
 
@@ -54,7 +59,7 @@ export default function StatusBar({
             }`}
           >
             <IconHelp className="h-3.5 w-3.5" />
-            ヘルプ
+            {t("status.help")}
           </button>
         </Tooltip>
 

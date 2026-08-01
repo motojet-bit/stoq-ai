@@ -1,4 +1,5 @@
 import { setShowTooltips, useShowTooltips } from "@/lib/ui/displayPrefs";
+import { localeOptions, setLocale, useLocale, useT } from "@/lib/i18n/i18n";
 import {
   MAX_FONT_SIZE,
   MIN_FONT_SIZE,
@@ -11,6 +12,8 @@ import { resetSlots } from "@/lib/ui/layoutStore";
 export default function DisplaySettings() {
   const showTooltips = useShowTooltips();
   const fontSize = useFontSize();
+  const locale = useLocale();
+  const t = useT();
 
   return (
     <div className="space-y-3">
@@ -18,19 +21,35 @@ export default function DisplaySettings() {
         表示に関する設定です。変更は即座に画面へ反映され、この端末に保存されます。
       </p>
 
+      {/* 言語は AI の応答にも連動するので先頭に置く */}
+      <Row title={t("general.language")} description={t("general.languageHint")}>
+        <select
+          value={locale}
+          onChange={(e) => setLocale(e.target.value)}
+          aria-label={t("general.language")}
+          className="min-h-8 shrink-0 rounded-md border border-slate-700 bg-slate-950 px-2.5 t-body text-slate-100 focus:border-emerald-500 focus:outline-none"
+        >
+          {localeOptions().map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </Row>
+
       <Row
-        title="ツールチップ（ホバー案内）を表示する"
-        description="ボタンにマウスを重ねたとき、使い方の吹き出しを出します。慣れてきたら OFF にできます。"
+        title={t("general.tooltips")}
+        description={t("general.tooltipsHint")}
       >
         <Toggle
           checked={showTooltips}
           onChange={setShowTooltips}
-          label="ツールチップ（ホバー案内）を表示する"
+          label={t("general.tooltips")}
         />
       </Row>
 
       <Row
-        title="文字サイズ"
+        title={t("general.fontSize")}
         description={`本文・パネル・サイドバーの文字サイズ（${MIN_FONT_SIZE}〜${MAX_FONT_SIZE}px）。メニューバー右端でも変更できます。`}
       >
         <span className="flex shrink-0 items-center gap-2">
@@ -41,7 +60,7 @@ export default function DisplaySettings() {
             step={1}
             value={fontSize}
             onChange={(e) => setFontSize(Number(e.target.value))}
-            aria-label="文字サイズ"
+            aria-label={t("general.fontSize")}
             className="h-1 w-40 cursor-pointer accent-emerald-500"
           />
           <span className="w-12 shrink-0 text-right font-mono t-label text-slate-400">
@@ -51,7 +70,7 @@ export default function DisplaySettings() {
       </Row>
 
       <Row
-        title="パネル配置を初期状態に戻す"
+        title={t("general.resetLayout")}
         description="市場データ・分析結果・対話の配置を、既定の並びに戻します。"
       >
         <button
@@ -59,7 +78,7 @@ export default function DisplaySettings() {
           onClick={() => resetSlots()}
           className="min-h-8 shrink-0 whitespace-nowrap rounded-md border border-slate-600 px-3 t-body text-slate-200 transition-colors hover:border-emerald-700 hover:bg-slate-800 hover:text-emerald-300"
         >
-          配置を初期化
+          {t("general.resetLayoutButton")}
         </button>
       </Row>
     </div>

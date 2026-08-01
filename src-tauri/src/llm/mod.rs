@@ -63,6 +63,9 @@ pub struct LlmRequest {
     /// 秘匿プロンプトとの結合は Rust 側で行う（`crate::prompts` を参照）。
     #[serde(default)]
     pub analysis_preset: Option<crate::prompts::AnalysisPreset>,
+    /// 出力言語（`ja` / `en` …）。対話・ヘルプでも使う
+    #[serde(default)]
+    pub locale: Option<String>,
     pub messages: Vec<ChatMessage>,
     #[serde(default)]
     pub max_tokens: Option<u32>,
@@ -92,8 +95,23 @@ pub async fn send(
      * 分析プリセットが来たら、ここで秘匿プロンプトと結合する。
      * **組み立てた文字列はフロントへ返さない**（返した時点で秘匿の意味が無くなる）。
      */
-    if let Some(preset) = request.analysis_preset.take() {
+    if let Some(mut preset) = request.analysis_preset.take() {
+        // プリセットに言語が無ければリクエストの言語を使う
+        if preset.locale.is_none() {
+            preset.locale = request.locale.clone();
+        }
         request.system = Some(crate::prompts::build_system_prompt(&preset));
+    } else if let Some(directive) = crate::prompts::language_directive(request.locale.as_deref())
+    {
+        /*
+         * 対話・ヘルプ側。フロントが組み立てたシステムプロンプトの後ろへ足す。
+         * **言語の指定は Rust 側で一元的に付ける**ので、
+         * 画面ごとに書き分けて食い違うことがない。
+         */
+        request.system = Some(match request.system.take() {
+            Some(system) if !system.trim().is_empty() => format!("{system}\n\n{directive}"),
+            _ => directive.to_string(),
+        });
     }
 
     let provider = request

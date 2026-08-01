@@ -7,6 +7,7 @@ import {
   COPYRIGHT,
   COPYRIGHT_YEAR,
 } from "@/lib/ui/appMeta";
+import { setLocale, t } from "@/lib/i18n/i18n";
 
 /**
  * ステータスバーの表示。
@@ -59,12 +60,29 @@ describe("ステータスバーの組み方", () => {
     expect(SOURCE).toContain("whitespace-nowrap");
   });
 
-  it("左の状態表示と右のヘルプ・版が残っている", () => {
-    expect(SOURCE).toContain("準備完了");
-    expect(SOURCE).toContain("銘柄:");
-    expect(SOURCE).toContain("読み込み済み資料:");
-    expect(SOURCE).toContain("ヘルプ");
+  it("左の状態表示と右のヘルプ・版が残っている（辞書キー経由）", () => {
+    for (const key of [
+      "app.ready",
+      "status.ticker",
+      "status.documents",
+      "status.help",
+    ]) {
+      expect(SOURCE).toContain(key);
+    }
     expect(SOURCE).toContain("APP_VERSION");
+  });
+
+  it("**表示文字列を直書きしていない**（言語を切り替えても残らない）", () => {
+    expect(SOURCE).not.toContain("準備完了");
+    expect(SOURCE).not.toContain("読み込み済み資料:");
+  });
+
+  it("日英どちらの辞書にもステータスの語がある", () => {
+    setLocale("ja");
+    expect(t("status.help")).toBe("ヘルプ");
+    setLocale("en");
+    expect(t("status.help")).toBe("Help");
+    setLocale("ja");
   });
 
   it("文字サイズはバー全体の `t-label` に揃えている", () => {

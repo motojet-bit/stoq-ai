@@ -16,6 +16,7 @@ import {
 } from "@/lib/ui/sidebarMode";
 import { clampFirstSize } from "@/lib/ui/splitMath";
 import { IconArchive, IconPanelLeft, IconPlus } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 const HEIGHT_KEY = "stockanalyzer.candidatesHeight";
 const COLLAPSED_KEY = "stockanalyzer.candidatesCollapsed";
@@ -74,6 +75,7 @@ export default function Sidebar({
   onCandidateImportOpenChange,
   onCompareTickers,
 }: Props) {
+  const t = useT();
   const mode = useSidebarMode();
   const [width, setWidth] = useState(() => readSidebarWidth());
   const [widthDragging, setWidthDragging] = useState(false);
@@ -226,14 +228,14 @@ export default function Sidebar({
             type="button"
             onClick={() => setSidebarMode(item.id)}
             aria-pressed={mode === item.id}
-            title={item.label}
+            title={t(item.labelKey)}
             className={`rounded-md px-2 py-1 t-label transition-all ${
               mode === item.id
                 ? "shrink-0 whitespace-nowrap bg-slate-700 font-medium text-emerald-300"
                 : "min-w-0 flex-1 truncate text-slate-400 hover:bg-slate-800 hover:text-slate-200"
             }`}
           >
-            {item.label}
+            {t(item.labelKey)}
           </button>
         ))}
       </div>

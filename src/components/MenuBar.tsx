@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import FontSizeControl from "@/components/FontSizeControl";
+import { useT } from "@/lib/i18n/i18n";
 
 /** メニュー項目。action が未設定のものは未実装。 */
 interface MenuItem {
-  label: string;
+  /** 辞書キー。表示は `t()` で引く */
+  labelKey: string;
   shortcut?: string;
   separatorBefore?: boolean;
   /** 実装済みの動作。親へ通知される。 */
@@ -13,54 +15,59 @@ interface MenuItem {
 export type MenuAction = "open-settings" | "open-disclaimer";
 
 interface Menu {
-  label: string;
+  labelKey: string;
   items: MenuItem[];
 }
 
 /** テストから参照できるよう公開する。 */
 export const MENUS: Menu[] = [
   {
-    label: "ファイル",
+    labelKey: "menu.file",
     items: [
-      { label: "新規チャット", shortcut: "Ctrl+N" },
-      { label: "PDFを開く…", shortcut: "Ctrl+O" },
-      { label: "分析結果を書き出す…", separatorBefore: true },
-      { label: "設定…", shortcut: "Ctrl+,", separatorBefore: true, action: "open-settings" },
-      { label: "終了", shortcut: "Alt+F4" },
-    ],
-  },
-  {
-    label: "表示",
-    items: [
-      { label: "サイドバーの表示切替", shortcut: "Ctrl+B" },
-      { label: "下部パネルの表示切替", shortcut: "Ctrl+J" },
-      { label: "拡大", shortcut: "Ctrl++", separatorBefore: true },
-      { label: "縮小", shortcut: "Ctrl+-" },
-      { label: "等倍に戻す", shortcut: "Ctrl+0" },
-    ],
-  },
-  {
-    label: "分析",
-    items: [
-      { label: "ファンダメンタル分析を実行", shortcut: "Ctrl+Enter" },
-      { label: "SEC提出書類を取得" },
-      { label: "株価・指標を更新" },
-      { label: "決算PDFを要約", separatorBefore: true },
-      { label: "銘柄を比較…" },
-    ],
-  },
-  {
-    label: "ヘルプ",
-    items: [
-      { label: "APIキーの設定…", action: "open-settings" },
-      { label: "使い方" },
-      { label: "キーボードショートカット", shortcut: "Ctrl+/" },
+      { labelKey: "menu.file.newChat", shortcut: "Ctrl+N" },
+      { labelKey: "menu.file.openPdf", shortcut: "Ctrl+O" },
+      { labelKey: "menu.file.exportAnalysis", separatorBefore: true },
       {
-        label: "免責事項（Legal Disclaimer）",
+        labelKey: "menu.file.settings",
+        shortcut: "Ctrl+,",
+        separatorBefore: true,
+        action: "open-settings",
+      },
+      { labelKey: "menu.file.quit", shortcut: "Alt+F4" },
+    ],
+  },
+  {
+    labelKey: "menu.view",
+    items: [
+      { labelKey: "menu.view.toggleSidebar", shortcut: "Ctrl+B" },
+      { labelKey: "menu.view.toggleBottom", shortcut: "Ctrl+J" },
+      { labelKey: "menu.view.zoomIn", shortcut: "Ctrl++", separatorBefore: true },
+      { labelKey: "menu.view.zoomOut", shortcut: "Ctrl+-" },
+      { labelKey: "menu.view.zoomReset", shortcut: "Ctrl+0" },
+    ],
+  },
+  {
+    labelKey: "menu.analysis",
+    items: [
+      { labelKey: "menu.analysis.run", shortcut: "Ctrl+Enter" },
+      { labelKey: "menu.analysis.fetchSec" },
+      { labelKey: "menu.analysis.refresh" },
+      { labelKey: "menu.analysis.summarizePdf", separatorBefore: true },
+      { labelKey: "menu.analysis.compare" },
+    ],
+  },
+  {
+    labelKey: "menu.help",
+    items: [
+      { labelKey: "menu.help.apiKeys", action: "open-settings" },
+      { labelKey: "menu.help.usage" },
+      { labelKey: "menu.help.shortcuts", shortcut: "Ctrl+/" },
+      {
+        labelKey: "menu.help.disclaimer",
         separatorBefore: true,
         action: "open-disclaimer",
       },
-      { label: "StoQ AI Analyzer について" },
+      { labelKey: "menu.help.about" },
     ],
   },
 ];
@@ -79,6 +86,7 @@ interface Props {
  * スライダーがカーソルの下から動いてしまうため。
  */
 export default function MenuBar({ onAction, right }: Props) {
+  const t = useT();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +122,7 @@ export default function MenuBar({ onAction, right }: Props) {
       </div>
 
       {MENUS.map((menu, i) => (
-        <div key={menu.label} className="relative">
+        <div key={menu.labelKey} className="relative">
           <button
             type="button"
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
@@ -125,13 +133,13 @@ export default function MenuBar({ onAction, right }: Props) {
                 : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
             }`}
           >
-            {menu.label}
+            {t(menu.labelKey)}
           </button>
 
           {openIndex === i && (
             <div className="absolute left-0 top-full mt-px min-w-56 rounded-md border border-slate-700 bg-slate-800 py-1 shadow-xl shadow-black/40">
               {menu.items.map((item) => (
-                <div key={item.label}>
+                <div key={item.labelKey}>
                   {item.separatorBefore && <div className="my-1 border-t border-slate-700" />}
                   <button
                     type="button"
@@ -143,7 +151,7 @@ export default function MenuBar({ onAction, right }: Props) {
                       item.action ? "text-slate-300" : "text-slate-500"
                     }`}
                   >
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                     {item.shortcut && (
                       <span className="font-mono text-[11px] text-slate-500">{item.shortcut}</span>
                     )}

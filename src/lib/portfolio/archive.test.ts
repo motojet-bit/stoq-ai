@@ -44,8 +44,9 @@ describe("サイドバーのモード切替", () => {
 
   it("2 つのモードが定義されている", () => {
     expect(SIDEBAR_MODES.map((m) => m.id)).toEqual(["chat", "portfolio"]);
-    expect(SIDEBAR_MODES[0].label).toContain("対話履歴");
-    expect(SIDEBAR_MODES[1].label).toContain("マイポートフォリオ");
+    // 表示名は辞書から引く（キーだけを持つ）
+    expect(SIDEBAR_MODES[0].labelKey).toBe("sidebar.modeChat");
+    expect(SIDEBAR_MODES[1].labelKey).toBe("sidebar.modePortfolio");
   });
 
   it("既定は対話履歴", () => {
@@ -91,8 +92,8 @@ describe("サイドバーのモード切替", () => {
   it("並べ替えてもタブが増減しない", () => {
     for (const mode of ["chat", "portfolio"] as const) {
       expect(orderedModes(mode)).toHaveLength(SIDEBAR_MODES.length);
-      expect(orderedModes(mode).map((m) => m.label).sort()).toEqual(
-        SIDEBAR_MODES.map((m) => m.label).sort(),
+      expect(orderedModes(mode).map((m) => m.labelKey).sort()).toEqual(
+        SIDEBAR_MODES.map((m) => m.labelKey).sort(),
       );
     }
   });
