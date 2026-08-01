@@ -5,8 +5,13 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import CandidateStocksPanel from "@/components/CandidateStocksPanel";
 import PortfolioPanel from "@/components/PortfolioPanel";
 import {
+  clampSidebarWidth,
+  MAX_SIDEBAR_WIDTH,
+  MIN_SIDEBAR_WIDTH,
+  orderedModes,
+  readSidebarWidth,
   setSidebarMode,
-  SIDEBAR_MODES,
+  storeSidebarWidth,
   useSidebarMode,
 } from "@/lib/ui/sidebarMode";
 import { clampFirstSize } from "@/lib/ui/splitMath";
@@ -70,6 +75,8 @@ export default function Sidebar({
   onCompareTickers,
 }: Props) {
   const mode = useSidebarMode();
+  const [width, setWidth] = useState(() => readSidebarWidth());
+  const [widthDragging, setWidthDragging] = useState(false);
   const [deleting, setDeleting] = useState<ChatSession | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
@@ -123,6 +130,36 @@ export default function Sidebar({
     store(COLLAPSED_KEY, candidatesCollapsed ? "1" : "0");
   }, [candidatesCollapsed]);
 
+  /*
+   * サイドバーの幅を変える。左端からの距離をそのまま幅にする。
+   * 「💼 マイポートフォリオ」が省略される幅まで狭められないよう下限を設ける。
+   */
+  const onWidthMove = useCallback((e: globalThis.PointerEvent) => {
+    const rect = asideRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setWidth(clampSidebarWidth(e.clientX - rect.left));
+  }, []);
+
+  useEffect(() => {
+    if (!widthDragging) return;
+
+    const stop = () => setWidthDragging(false);
+    document.body.classList.add("is-resizing-h");
+    document.addEventListener("pointermove", onWidthMove);
+    document.addEventListener("pointerup", stop);
+    document.addEventListener("pointercancel", stop);
+    return () => {
+      document.body.classList.remove("is-resizing-h");
+      document.removeEventListener("pointermove", onWidthMove);
+      document.removeEventListener("pointerup", stop);
+      document.removeEventListener("pointercancel", stop);
+    };
+  }, [widthDragging, onWidthMove]);
+
+  useEffect(() => {
+    storeSidebarWidth(width);
+  }, [width]);
+
   const startResize = (e: PointerEvent) => {
     if (candidatesCollapsed) return;
     e.preventDefault();
@@ -159,20 +196,41 @@ export default function Sidebar({
   return (
     <aside
       ref={asideRef}
-      className="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900"
+      style={{ width }}
+      className="relative flex shrink-0 flex-col border-r border-slate-800 bg-slate-900"
     >
-      {/* 対話とポートフォリオの切替。見たいものが違うので同居させない */}
-      <div className="flex shrink-0 items-stretch gap-1 border-b border-slate-800 px-2 py-1.5">
-        {SIDEBAR_MODES.map((item) => (
+      {/* 右端をドラッグして幅を変えられる */}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="サイドバーの幅を変更"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+          setWidthDragging(true);
+        }}
+        title={`ドラッグして幅を変更（${MIN_SIDEBAR_WIDTH}〜${MAX_SIDEBAR_WIDTH}px）`}
+        className={`absolute inset-y-0 right-0 z-20 w-1 cursor-col-resize ${
+          widthDragging ? "bg-emerald-500" : "hover:bg-emerald-600"
+        }`}
+      />
+      {/*
+        対話とポートフォリオの切替。見たいものが違うので同居させない。
+        **選択中のタブを先頭へ寄せ、ラベルを省略させない**（いま見ている
+        モード名が読めないのがいちばん困るため）。
+      */}
+      <div className="flex shrink-0 items-stretch gap-1 overflow-hidden border-b border-slate-800 px-2 py-1.5">
+        {orderedModes(mode).map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setSidebarMode(item.id)}
             aria-pressed={mode === item.id}
-            className={`min-w-0 flex-1 truncate rounded-md px-2 py-1 t-label transition-colors ${
+            title={item.label}
+            className={`rounded-md px-2 py-1 t-label transition-all ${
               mode === item.id
-                ? "bg-slate-700 font-medium text-emerald-300"
-                : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                ? "shrink-0 whitespace-nowrap bg-slate-700 font-medium text-emerald-300"
+                : "min-w-0 flex-1 truncate text-slate-400 hover:bg-slate-800 hover:text-slate-200"
             }`}
           >
             {item.label}

@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   setActiveRole,
   useActiveRoleId,
   useAnalystRoles,
 } from "@/lib/prompts/analystRoleStore";
 import { IconChevronDown, IconPersona } from "@/components/Icons";
+import PortalMenu from "@/components/PortalMenu";
 
 /**
  * 20項目分析の「役割」を切り替える。
@@ -16,33 +17,17 @@ export default function AnalystRoleMenu() {
   const roles = useAnalystRoles();
   const activeId = useActiveRoleId();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  // 開閉と位置合わせは PortalMenu に任せる（親パネルの overflow に切られないため）
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const active = roles.find((r) => r.id === activeId) ?? roles[0] ?? null;
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
 
   if (roles.length === 0) return null;
 
   return (
-    <div ref={rootRef} className="ui-fixed relative shrink-0">
+    <div className="ui-fixed shrink-0">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
@@ -55,11 +40,12 @@ export default function AnalystRoleMenu() {
         <IconChevronDown className="h-3 w-3 shrink-0 text-slate-500" />
       </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-100 mt-1 max-h-96 w-96 overflow-y-auto rounded-md border border-slate-700 bg-slate-800 py-1 shadow-xl shadow-black/40"
-        >
+      <PortalMenu
+        open={open}
+        anchorRef={buttonRef}
+        onClose={() => setOpen(false)}
+        widthClass="w-96"
+      >
           <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
             分析の役割（企業タイプに合わせて選ぶ）
           </div>
@@ -99,8 +85,7 @@ export default function AnalystRoleMenu() {
               </button>
             );
           })}
-        </div>
-      )}
+      </PortalMenu>
     </div>
   );
 }

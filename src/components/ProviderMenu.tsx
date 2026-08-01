@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { AppSettings, ProviderId } from "@/types";
 import { BUILTIN_PROVIDERS, providerLabel, providerReadiness } from "@/lib/config/providers";
 import { saveSettings } from "@/lib/config/settingsStore";
 import { toastError } from "@/lib/ui/toastStore";
 import { IconChevronDown, IconSettings } from "@/components/Icons";
+import PortalMenu from "@/components/PortalMenu";
 
 interface Props {
   settings: AppSettings | null;
@@ -18,25 +19,7 @@ interface Props {
  */
 export default function ProviderMenu({ settings, onOpenSettings }: Props) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (!settings) {
     return <span className="text-slate-600">設定を読み込み中…</span>;
@@ -62,8 +45,9 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
   };
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <div className="shrink-0">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={active.reason ?? "送信可能"}
@@ -89,11 +73,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
         <IconChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
       </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-100 mt-1 min-w-72 rounded-md border border-slate-700 bg-slate-800 py-1 shadow-xl shadow-black/40"
-        >
+      <PortalMenu open={open} anchorRef={buttonRef} onClose={() => setOpen(false)} widthClass="w-72">
           <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
             プロバイダを選択
           </div>
@@ -142,8 +122,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
             <IconSettings className="h-3.5 w-3.5 text-slate-500" />
             APIキー・モデルの設定を開く…
           </button>
-        </div>
-      )}
+      </PortalMenu>
     </div>
   );
 }

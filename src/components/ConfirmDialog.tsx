@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { MODAL_OVERLAY_CLASS } from "@/lib/ui/modalDrag";
 
 interface Props {
   open: boolean;
@@ -44,7 +45,7 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="ui-fixed fixed inset-0 z-200 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
+      className={`ui-fixed fixed inset-0 z-200 flex items-center justify-center p-6 ${MODAL_OVERLAY_CLASS}`}
       onClick={onCancel}
       role="dialog"
       aria-modal="true"

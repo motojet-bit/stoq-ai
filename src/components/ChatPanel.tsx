@@ -15,6 +15,7 @@ import PanelHeader from "@/components/PanelHeader";
 import PromptLibraryMenu from "@/components/PromptLibraryMenu";
 import { activeSystemPrompt } from "@/lib/prompts/promptLibrary";
 import { isMac } from "@/lib/ui/shortcutKeys";
+import { useChatDraft } from "@/lib/chat/chatDraft";
 
 interface Props {
   settings: AppSettings | null;
@@ -47,6 +48,21 @@ export default function ChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const sendKeyLabel = isMac() ? "⌘+Enter" : "Ctrl+Enter";
+
+  /*
+   * 過去ログからの「対話へ引用」を受け取る。
+   * 入力中の内容は消さず、後ろに足す（書きかけを失わせない）。
+   */
+  const draft = useChatDraft();
+  useEffect(() => {
+    if (!draft) return;
+    setInput((prev) => (prev.trim() === "" ? draft.text : `${prev}
+
+${draft.text}`));
+    inputRef.current?.focus();
+    // seq が変わったときだけ反映する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.seq]);
 
   /*
    * 入力量に合わせて高さを自動調整する。

@@ -5,7 +5,13 @@ import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
 import AnalystRoleMenu from "@/components/AnalystRoleMenu";
-import { IconChart, IconPlay, IconStop, IconTrash } from "@/components/Icons";
+import {
+  IconBookmark,
+  IconChart,
+  IconPlay,
+  IconStop,
+  IconTrash,
+} from "@/components/Icons";
 
 interface Props {
   ticker: string | null;
@@ -20,6 +26,8 @@ interface Props {
   onRun: () => void;
   onCancel: () => void;
   onClear: () => void;
+  /** マイポートフォリオへの保存先を選ぶ */
+  onSaveToPortfolio: () => void;
   onOpenSettings: () => void;
 }
 
@@ -44,6 +52,7 @@ export default function AnalysisPanel({
   onRun,
   onCancel,
   onClear,
+  onSaveToPortfolio,
   onOpenSettings,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -87,6 +96,18 @@ export default function AnalysisPanel({
               <span className="t-label shrink-0 font-mono text-emerald-400">
                 平均 {result.averageScore.toFixed(1)} / 5
               </span>
+            )}
+
+            {hasContent && !streaming && (
+              <button
+                type="button"
+                onClick={onSaveToPortfolio}
+                title="この分析をマイポートフォリオのリストに残す"
+                className="t-label flex min-h-6 shrink-0 items-center gap-1 rounded border border-slate-700 px-2 text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+              >
+                <IconBookmark className="h-3 w-3" />
+                保存
+              </button>
             )}
 
             {hasContent && !streaming && (

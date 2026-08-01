@@ -23,6 +23,15 @@ export interface ClampInput {
 export const DEFAULT_MARGIN = 24;
 
 /**
+ * モーダル背景のクラス。
+ *
+ * **`backdrop-blur` は使わない。** ぼかすと背後の株価や分析テキストが
+ * 読めなくなり、「何を消そうとしているのか」を確認できなくなる。
+ * ワントーン暗くするだけに留める。
+ */
+export const MODAL_OVERLAY_CLASS = "bg-black/35";
+
+/**
  * ずれを画面内に収める。
  *
  * **完全に画面外へ出さない**のが目的。タイトルバーが掴めなくなると

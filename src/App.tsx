@@ -58,6 +58,10 @@ import WelcomeTour from "@/components/WelcomeTour";
 import LegalDisclaimerModal from "@/components/LegalDisclaimerModal";
 import DisclaimerTicker from "@/components/DisclaimerTicker";
 import ComparePanel from "@/components/ComparePanel";
+import PortfolioHistoryPanel from "@/components/PortfolioHistoryPanel";
+import SaveToPortfolioModal from "@/components/SaveToPortfolioModal";
+import { useSidebarMode } from "@/lib/ui/sidebarMode";
+import { usePortfolioSplit } from "@/lib/ui/portfolioLayout";
 
 const newId = () => crypto.randomUUID();
 
@@ -83,6 +87,10 @@ export default function App() {
   const [candidateImportOpen, setCandidateImportOpen] = useState(false);
   // 使い方を案内するヘルプ AI（最下部バーの「ヘルプ」から開く）
   const [helpOpen, setHelpOpen] = useState(false);
+  // 分析結果をどのリストに残すか選ぶダイアログ
+  const [savingTicker, setSavingTicker] = useState<string | null>(null);
+  const sidebarMode = useSidebarMode();
+  const portfolioSplit = usePortfolioSplit();
   // 初回だけ自動で開くチュートリアル。閉じたら印を残して二度と自動表示しない
   const [tourOpen, setTourOpen] = useState(false);
 
@@ -210,6 +218,7 @@ export default function App() {
             onRun={handleRunAnalysis}
             onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
             onClear={() => activeTicker && void clearAnalysis(activeTicker)}
+            onSaveToPortfolio={() => activeTicker && setSavingTicker(activeTicker)}
             onOpenSettings={() => setSettingsOpen(true)}
           />
         );
@@ -225,6 +234,48 @@ export default function App() {
           />
         );
     }
+  };
+
+  /**
+   * マイポートフォリオ選択時の専有レイアウト。
+   *
+   * **市場データ・分析結果の枠は出さない。** 過去ログを読みながら
+   * AI に聞く画面なので、2 ペインに絞って広く使う。
+   */
+  const renderPortfolioWorkspace = () => {
+    const history = (
+      <PortfolioHistoryPanel
+        onToggleCollapse={() => {}}
+        collapseDisabledReason="マイポートフォリオ画面では最小化できません"
+      />
+    );
+    const chat = (
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col border-slate-800">
+        <ChatPanel
+          settings={settings}
+          ticker={activeTicker}
+          onToggleCollapse={() => {}}
+          collapseDisabledReason="マイポートフォリオ画面では最小化できません"
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      </div>
+    );
+
+    return (
+      <ResizableSplit
+        key={portfolioSplit}
+        direction={portfolioSplit === "vertical" ? "vertical" : "horizontal"}
+        initialFirstSize={
+          portfolioSplit === "vertical"
+            ? Math.round(window.innerHeight * 0.5)
+            : Math.round(window.innerWidth * 0.45)
+        }
+        minFirstSize={220}
+        minSecondSize={260}
+        first={history}
+        second={chat}
+      />
+    );
   };
 
   /**
@@ -483,7 +534,9 @@ export default function App() {
               右カラム: 20項目の分析結果（縦長）
             最小化した枠はここに現れず、残ったパネルが 100% を占有する。
           */}
-          {activeTab?.kind === "compare" ? (
+          {sidebarMode === "portfolio" ? (
+            renderPortfolioWorkspace()
+          ) : activeTab?.kind === "compare" ? (
             <section className="panel bg-slate-950">
               <ComparePanel
                 tickers={activeTab.tickers ?? []}
@@ -555,6 +608,12 @@ export default function App() {
           startAnalysis();
         }}
         onCancel={() => setConfirmingNoDocs(false)}
+      />
+
+      <SaveToPortfolioModal
+        open={savingTicker !== null}
+        ticker={savingTicker}
+        onClose={() => setSavingTicker(null)}
       />
 
       <LegalDisclaimerModal />

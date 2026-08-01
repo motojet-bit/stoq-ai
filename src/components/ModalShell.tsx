@@ -6,7 +6,13 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { clampOffset, isCentered, offsetFromDrag, type Offset } from "@/lib/ui/modalDrag";
+import {
+  clampOffset,
+  isCentered,
+  MODAL_OVERLAY_CLASS,
+  offsetFromDrag,
+  type Offset,
+} from "@/lib/ui/modalDrag";
 import { IconClose, IconGrip } from "@/components/Icons";
 
 interface Props {
@@ -118,7 +124,9 @@ export default function ModalShell({
      * 閉じるのは ✕ / キャンセル / Esc だけ。
      * 背後の操作は塞ぐ（クリックが裏側へ抜けると意図しない状態になるため）。
      */
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-950/60 p-6 backdrop-blur-[2px]">
+    <div
+      className={`fixed inset-0 z-100 flex items-center justify-center p-6 ${MODAL_OVERLAY_CLASS}`}
+    >
       <div
         ref={cardRef}
         style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}

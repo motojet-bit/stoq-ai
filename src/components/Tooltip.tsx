@@ -1,5 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useShowTooltips } from "@/lib/ui/displayPrefs";
+import { useAnyMenuOpen } from "@/lib/ui/overlayStore";
+import { countTooltipShown, withHint } from "@/lib/ui/tooltipHint";
 
 type Placement = "top" | "bottom" | "left" | "right";
 
@@ -20,6 +22,8 @@ interface Props {
  * 文字サイズは `.ui-fixed` で固定する（本文を拡大しても吹き出しは崩さない）。
  *
  * 設定で OFF にすると、子要素だけを素通しして吹き出しを出さない。
+ * **ドロップダウンが開いている間も出さない**（重なるとどちらも読めなくなる）。
+ * 5 回に 1 回、切り方の案内を末尾に添える。
  */
 export default function Tooltip({
   content,
@@ -28,8 +32,11 @@ export default function Tooltip({
   children,
 }: Props) {
   const enabled = useShowTooltips();
+  const menuOpen = useAnyMenuOpen();
   const [open, setOpen] = useState(false);
   const [flipped, setFlipped] = useState<Placement>(placement);
+  // 表示するたびに回数を数え、その回の本文を決める
+  const [body, setBody] = useState(content);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
   // 画面外にはみ出すときは反対側へ寄せる
@@ -44,8 +51,13 @@ export default function Tooltip({
     else setFlipped(placement);
   }, [open, placement]);
 
-  // OFF のときは余計な要素を挟まず、子要素をそのまま返す
-  if (!enabled) return <>{children}</>;
+  const show = () => {
+    setBody(withHint(content, countTooltipShown()));
+    setOpen(true);
+  };
+
+  // OFF のとき、またはメニューが開いているときは子要素をそのまま返す
+  if (!enabled || menuOpen) return <>{children}</>;
 
   const position: Record<Placement, string> = {
     top: "bottom-full left-1/2 mb-1.5 -translate-x-1/2",
@@ -57,9 +69,9 @@ export default function Tooltip({
   return (
     <span
       className="relative inline-flex"
-      onPointerEnter={() => setOpen(true)}
+      onPointerEnter={show}
       onPointerLeave={() => setOpen(false)}
-      onFocusCapture={() => setOpen(true)}
+      onFocusCapture={show}
       onBlurCapture={() => setOpen(false)}
     >
       {children}
@@ -68,9 +80,10 @@ export default function Tooltip({
         <span
           ref={bubbleRef}
           role="tooltip"
+          /* メニュー（z-index 9999）より下に置く。重なっても前へ出さない */
           className={`ui-fixed pointer-events-none absolute z-300 ${position[flipped]} ${widthClass} whitespace-pre-wrap rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 leading-relaxed text-slate-100 shadow-xl shadow-black/50`}
         >
-          {content}
+          {body}
         </span>
       )}
     </span>

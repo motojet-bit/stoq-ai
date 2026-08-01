@@ -14,7 +14,50 @@ export const SIDEBAR_MODES: { id: SidebarMode; label: string }[] = [
   { id: "portfolio", label: "💼 マイポートフォリオ" },
 ];
 
+/**
+ * 選択中のタブを先頭（左）へ寄せた並びを返す。
+ *
+ * **アクティブなタブは必ず左端に置き、ラベルを省略させない。**
+ * 幅が足りないと右側のタブが「マイポートフ…」と切れるが、
+ * いま見ているモードの名前が読めないのがいちばん困るため。
+ */
+export function orderedModes(active: SidebarMode): { id: SidebarMode; label: string }[] {
+  const current = SIDEBAR_MODES.filter((m) => m.id === active);
+  const rest = SIDEBAR_MODES.filter((m) => m.id !== active);
+  return [...current, ...rest];
+}
+
 const STORAGE_KEY = "stockanalyzer.sidebarMode";
+
+/** サイドバーの幅（px）。ドラッグで変えられる */
+const WIDTH_KEY = "stockanalyzer.sidebarWidth";
+export const MIN_SIDEBAR_WIDTH = 220;
+export const MAX_SIDEBAR_WIDTH = 480;
+/** 「💼 マイポートフォリオ」が省略されずに収まる幅 */
+export const DEFAULT_SIDEBAR_WIDTH = 288;
+
+/** 範囲外の幅を丸める。 */
+export function clampSidebarWidth(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_SIDEBAR_WIDTH;
+  return Math.round(Math.min(Math.max(value, MIN_SIDEBAR_WIDTH), MAX_SIDEBAR_WIDTH));
+}
+
+export function readSidebarWidth(): number {
+  try {
+    const raw = Number(localStorage.getItem(WIDTH_KEY));
+    return Number.isFinite(raw) && raw > 0 ? clampSidebarWidth(raw) : DEFAULT_SIDEBAR_WIDTH;
+  } catch {
+    return DEFAULT_SIDEBAR_WIDTH;
+  }
+}
+
+export function storeSidebarWidth(value: number): void {
+  try {
+    localStorage.setItem(WIDTH_KEY, String(clampSidebarWidth(value)));
+  } catch {
+    // 保存できなくても動作は続ける
+  }
+}
 const DEFAULT_MODE: SidebarMode = "chat";
 
 /** 保存値が壊れていても必ず有効なモードを返す。 */

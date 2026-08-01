@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   DEFAULT_SYSTEM_PROMPT,
   setActivePrompt,
@@ -7,6 +7,7 @@ import {
 } from "@/lib/prompts/promptLibrary";
 import PromptLibraryModal from "@/components/PromptLibraryModal";
 import { IconChevronDown, IconPersona, IconSettings } from "@/components/Icons";
+import PortalMenu from "@/components/PortalMenu";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
 
@@ -19,27 +20,9 @@ export default function PromptLibraryMenu() {
   const activeId = useActivePromptId();
   const [open, setOpen] = useState(false);
   const [managing, setManaging] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const active = prompts.find((p) => p.id === activeId) ?? null;
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
 
   const select = (id: string | null) => {
     setActivePrompt(id);
@@ -47,9 +30,10 @@ export default function PromptLibraryMenu() {
   };
 
   return (
-    <div ref={rootRef} className="ui-fixed relative shrink-0">
+    <div className="ui-fixed shrink-0">
       <Tooltip content={TOOLTIPS.promptRole} placement="bottom" widthClass="w-80">
         <button
+          ref={buttonRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-haspopup="menu"
@@ -62,11 +46,7 @@ export default function PromptLibraryMenu() {
         </button>
       </Tooltip>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-100 mt-1 max-h-80 w-80 overflow-y-auto rounded-md border border-slate-700 bg-slate-800 py-1 shadow-xl shadow-black/40"
-        >
+      <PortalMenu open={open} anchorRef={buttonRef} onClose={() => setOpen(false)}>
           <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
             AI の役割を選ぶ
           </div>
@@ -102,8 +82,7 @@ export default function PromptLibraryMenu() {
             <IconSettings className="h-3.5 w-3.5 text-slate-500" />
             役割を追加・編集…
           </button>
-        </div>
-      )}
+      </PortalMenu>
 
       <PromptLibraryModal open={managing} onClose={() => setManaging(false)} />
     </div>

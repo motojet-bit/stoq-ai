@@ -7,10 +7,17 @@ import {
   periodLabelOf,
 } from "@/lib/portfolio/archive";
 import {
+  clampSidebarWidth,
+  DEFAULT_SIDEBAR_WIDTH,
   getSidebarMode,
+  MAX_SIDEBAR_WIDTH,
+  MIN_SIDEBAR_WIDTH,
   normalizeMode,
+  orderedModes,
+  readSidebarWidth,
   setSidebarMode,
   SIDEBAR_MODES,
+  storeSidebarWidth,
   subscribeSidebarMode,
 } from "@/lib/ui/sidebarMode";
 
@@ -73,6 +80,51 @@ describe("サイドバーのモード切替", () => {
     unsubscribe();
     setSidebarMode("portfolio");
     expect(notify).toHaveBeenCalledTimes(2);
+  });
+
+  it("**選択中のタブが先頭（左）に来る**", () => {
+    expect(orderedModes("chat").map((m) => m.id)).toEqual(["chat", "portfolio"]);
+    expect(orderedModes("portfolio").map((m) => m.id)).toEqual(["portfolio", "chat"]);
+  });
+
+  it("並べ替えてもタブが増減しない", () => {
+    for (const mode of ["chat", "portfolio"] as const) {
+      expect(orderedModes(mode)).toHaveLength(SIDEBAR_MODES.length);
+      expect(orderedModes(mode).map((m) => m.label).sort()).toEqual(
+        SIDEBAR_MODES.map((m) => m.label).sort(),
+      );
+    }
+  });
+});
+
+describe("サイドバーの幅", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("既定幅は「💼 マイポートフォリオ」が省略されない広さ", () => {
+    expect(DEFAULT_SIDEBAR_WIDTH).toBeGreaterThanOrEqual(280);
+    expect(readSidebarWidth()).toBe(DEFAULT_SIDEBAR_WIDTH);
+  });
+
+  it("上下限に丸める", () => {
+    expect(clampSidebarWidth(50)).toBe(MIN_SIDEBAR_WIDTH);
+    expect(clampSidebarWidth(9999)).toBe(MAX_SIDEBAR_WIDTH);
+    expect(clampSidebarWidth(300)).toBe(300);
+  });
+
+  it("NaN は既定へ戻す", () => {
+    expect(clampSidebarWidth(Number.NaN)).toBe(DEFAULT_SIDEBAR_WIDTH);
+  });
+
+  it("保存して読み直せる", () => {
+    storeSidebarWidth(320);
+    expect(readSidebarWidth()).toBe(320);
+  });
+
+  it("壊れた保存値でも既定へ落ちる", () => {
+    localStorage.setItem("stockanalyzer.sidebarWidth", "not-a-number");
+    expect(readSidebarWidth()).toBe(DEFAULT_SIDEBAR_WIDTH);
   });
 });
 
