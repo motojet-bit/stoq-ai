@@ -6,7 +6,7 @@ interface Props {
 /** 最下部のステータスバー */
 export default function StatusBar({ ticker, documentCount }: Props) {
   return (
-    <footer className="flex h-6 shrink-0 items-center gap-4 border-t border-slate-800 bg-slate-900 px-3 text-[11px] text-slate-500">
+    <footer className="flex min-h-6 shrink-0 items-center gap-4 border-t border-slate-800 bg-slate-900 px-3 t-label text-slate-500">
       <span className="text-emerald-500">● 準備完了</span>
       <span>銘柄: {ticker ?? "—"}</span>
       <span>読み込み済み資料: {documentCount} 件</span>

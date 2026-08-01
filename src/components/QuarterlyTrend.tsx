@@ -114,7 +114,7 @@ export default function QuarterlyTrend({ series, loading }: Props) {
           previousYoy={previousYoy}
         />
 
-        <span className="ml-auto text-[10px] text-slate-600">{series.source}</span>
+        <span className="ml-auto t-label text-slate-600">{series.source}</span>
       </div>
 
       <div className="flex items-stretch gap-3">
@@ -144,7 +144,7 @@ export default function QuarterlyTrend({ series, loading }: Props) {
               </div>
               <div className="t-label truncate text-center text-slate-500">{q.label}</div>
 
-              <div className="mt-1 flex justify-center gap-2 text-[10px]">
+              <div className="mt-1 flex justify-center gap-2 t-label">
                 <Delta label="QoQ" value={q.revenueQoq} muted />
                 <Delta label="YoY" value={q.revenueYoy} />
               </div>
@@ -176,7 +176,7 @@ function MomentumBadge({
 }) {
   if (accelerating === null || latestYoy === null || previousYoy === null) {
     return (
-      <span className="rounded border border-slate-700 bg-slate-800/60 px-1.5 py-0.5 text-[10px] text-slate-500">
+      <span className="rounded border border-slate-700 bg-slate-800/60 px-1.5 py-0.5 t-label text-slate-500">
         モメンタム判定不能
       </span>
     );
@@ -185,7 +185,7 @@ function MomentumBadge({
   return (
     <span
       title={`売上 YoY: ${previousYoy.toFixed(1)}% → ${latestYoy.toFixed(1)}%`}
-      className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${
+      className={`rounded border px-1.5 py-0.5 t-label font-medium ${
         accelerating
           ? "border-emerald-800 bg-emerald-950/50 text-emerald-300"
           : "border-amber-800 bg-amber-950/50 text-amber-300"

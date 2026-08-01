@@ -227,7 +227,7 @@ export default function ChatPanel({
                 type="button"
                 onClick={() => void send()}
                 disabled={sending || input.trim().length === 0}
-                className="h-11 w-20 shrink-0 rounded-md bg-emerald-600 text-[13px] font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
+                className="t-body min-h-11 shrink-0 rounded-md bg-emerald-600 px-4 font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
               >
                 {sending ? "送信中…" : "送信"}
               </button>

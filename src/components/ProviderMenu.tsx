@@ -39,7 +39,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
   }, [open]);
 
   if (!settings) {
-    return <span className="text-[12px] text-slate-600">設定を読み込み中…</span>;
+    return <span className="t-label text-slate-600">設定を読み込み中…</span>;
   }
 
   const active = providerReadiness(settings, settings.provider);
@@ -69,7 +69,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
         title={active.reason ?? "送信可能"}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-8 items-center gap-2 rounded-md border px-2.5 text-[12px] transition-colors ${
+        className={`flex min-h-8 items-center gap-2 rounded-md border px-2.5 t-label transition-colors ${
           active.ready
             ? "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600"
             : "border-amber-800 bg-amber-950/40 text-amber-300 hover:border-amber-700"
@@ -94,7 +94,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
           role="menu"
           className="absolute right-0 top-full z-100 mt-1 min-w-72 rounded-md border border-slate-700 bg-slate-800 py-1 shadow-xl shadow-black/40"
         >
-          <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          <div className="px-3 py-1.5 t-label font-medium uppercase tracking-wider text-slate-500">
             プロバイダを選択
           </div>
 
@@ -108,7 +108,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
                 role="menuitem"
                 onClick={() => void select(id)}
                 title={state.reason ?? "送信可能"}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12.5px] hover:bg-slate-700 ${
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left t-body hover:bg-slate-700 ${
                   isActive ? "text-emerald-300" : "text-slate-300"
                 }`}
               >
@@ -119,11 +119,11 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
                 />
                 <span className="min-w-0 flex-1 truncate">{label}</span>
                 {!state.ready && (
-                  <span className="shrink-0 text-[10.5px] text-slate-500">
+                  <span className="shrink-0 t-label text-slate-500">
                     {state.reason?.replace(/。$/, "")}
                   </span>
                 )}
-                {isActive && <span className="shrink-0 text-[11px]">✓</span>}
+                {isActive && <span className="shrink-0 t-label">✓</span>}
               </button>
             );
           })}
@@ -137,7 +137,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
               setOpen(false);
               onOpenSettings();
             }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12.5px] text-slate-300 hover:bg-slate-700"
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-left t-body text-slate-300 hover:bg-slate-700"
           >
             <IconSettings className="h-3.5 w-3.5 text-slate-500" />
             APIキー・モデルの設定を開く…

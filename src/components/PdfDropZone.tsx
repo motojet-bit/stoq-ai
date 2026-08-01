@@ -31,7 +31,7 @@ export default function PdfDropZone({ onFiles }: Props) {
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
       title={`対応形式: ${SUPPORTED_EXTENSIONS.join(" / ")}\n\n※ WebサイトのURLではなく、ローカルのファイルをドロップしてください。\n　 クリックするとファイル選択ダイアログが開きます。`}
-      className={`flex h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 text-[12px] transition-colors ${
+      className={`flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 t-label transition-colors ${
         isOver
           ? "border-emerald-500 bg-emerald-950/40 text-emerald-300"
           : "border-slate-700 bg-slate-900/60 text-slate-500 hover:border-slate-600 hover:text-slate-400"

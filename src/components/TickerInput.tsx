@@ -29,12 +29,12 @@ export default function TickerInput({ onSubmit }: Props) {
           placeholder="ティッカー（例: NVDA, 7203.T, ASML.AS）"
           spellCheck={false}
           autoComplete="off"
-          className="selectable h-8 w-80 rounded-md border border-slate-700 bg-slate-950 pl-8 pr-3 text-[13px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+          className="selectable min-h-8 w-80 rounded-md border border-slate-700 bg-slate-950 pl-8 pr-3 t-body text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
         />
       </div>
       <button
         type="submit"
-        className="h-8 rounded-md bg-emerald-600 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700"
+        className="min-h-8 rounded-md bg-emerald-600 px-3.5 t-body font-medium text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700"
       >
         分析
       </button>

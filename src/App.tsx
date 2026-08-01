@@ -262,7 +262,7 @@ export default function App() {
       <DocumentTray tokenLimit={settings?.maxPromptTokens ?? 180_000} />
 
       {settingsError && (
-        <div className="selectable shrink-0 border-b border-amber-900/60 bg-amber-950/40 px-3 py-1.5 text-[12px] text-amber-300">
+        <div className="selectable t-label shrink-0 border-b border-amber-900/60 bg-amber-950/40 px-3 py-1.5 text-amber-300">
           {settingsError}
         </div>
       )}
@@ -295,7 +295,7 @@ export default function App() {
           */}
           <ResizableSplit
             direction="horizontal"
-            initialSecondSize={Math.round(window.innerWidth / 2)}
+            initialFirstSize={Math.round(window.innerWidth / 2)}
             minFirstSize={280}
             minSecondSize={320}
             collapsed={
@@ -308,7 +308,7 @@ export default function App() {
             first={
               <ResizableSplit
                 direction="vertical"
-                initialSecondSize={Math.round(window.innerHeight / 3)}
+                initialFirstSize={Math.round(window.innerHeight * 0.45)}
                 minFirstSize={140}
                 minSecondSize={140}
                 collapsed={
@@ -320,14 +320,16 @@ export default function App() {
                 }
                 first={renderPanel("leftTop")}
                 second={
-                  <div className="h-full border-t border-slate-800">
+                  <div className="flex min-h-0 flex-1 flex-col border-t border-slate-800">
                     {renderPanel("leftBottom")}
                   </div>
                 }
               />
             }
             second={
-              <div className="h-full border-l border-slate-800">{renderPanel("right")}</div>
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-slate-800">
+                {renderPanel("right")}
+              </div>
             }
           />
         </main>

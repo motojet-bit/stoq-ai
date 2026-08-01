@@ -41,9 +41,9 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
   return (
     <div
       title={`${doc.originalName}\n${doc.charCount.toLocaleString()} 文字 / 概算 ${doc.tokenEstimate.toLocaleString()} トークン\nクリックでプレビュー`}
-      className="flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-emerald-900/70 bg-emerald-950/30 pl-1.5 pr-1 text-[12px]"
+      className="flex min-h-7 shrink-0 items-center gap-1.5 rounded-md border border-emerald-900/70 bg-emerald-950/30 pl-1.5 pr-1 t-label"
     >
-      <span aria-hidden="true" className="text-[10px]" title="一時保存中">
+      <span aria-hidden="true" className="t-label" title="一時保存中">
         🟢
       </span>
       <IconFile className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
@@ -56,7 +56,7 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
           onBlur={commit}
           onKeyDown={handleKeyDown}
           aria-label="表示名"
-          className="selectable h-5 w-44 rounded border border-emerald-700 bg-slate-950 px-1 text-[12px] text-slate-100 focus:outline-none"
+          className="selectable h-5 w-44 rounded border border-emerald-700 bg-slate-950 px-1 t-label text-slate-100 focus:outline-none"
         />
       ) : (
         <button
@@ -68,7 +68,7 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
         </button>
       )}
 
-      <span className="shrink-0 font-mono text-[10px] text-slate-500">
+      <span className="shrink-0 font-mono t-label text-slate-500">
         {formatTokens(doc.tokenEstimate)}
       </span>
 

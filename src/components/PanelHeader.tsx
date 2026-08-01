@@ -57,17 +57,28 @@ export default function PanelHeader({
 
   return (
     <header
-      draggable={Boolean(slot)}
-      onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDragLeave={() => setDropActive(false)}
       onDrop={onDrop}
-      title={slot ? "ヘッダーをドラッグすると、他のパネルと配置を入れ替えられます" : undefined}
-      className={`flex h-9 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-900/60 px-3 ${
-        slot ? "cursor-grab active:cursor-grabbing" : ""
-      } ${dropActive ? "bg-emerald-950/50 ring-1 ring-inset ring-emerald-500" : ""}`}
+      className={`flex min-h-9 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-900/60 px-2 py-1 ${
+        dropActive ? "bg-emerald-950/60 ring-1 ring-inset ring-emerald-500" : ""
+      }`}
     >
-      {slot && <IconGrip className="h-3.5 w-3.5 shrink-0 text-slate-600" />}
+      {slot && (
+        // グリップだけをドラッグ対象にする。ヘッダー全体を draggable にすると
+        // 中のボタンやスライダーが操作しづらくなるため。
+        <span
+          draggable
+          onDragStart={onDragStart}
+          onDragEnd={() => setDropActive(false)}
+          role="button"
+          aria-label={`${title} パネルを移動`}
+          title="ドラッグして他のパネルと位置を入れ替え"
+          className="shrink-0 cursor-grab rounded px-0.5 py-1 text-slate-600 hover:bg-slate-800 hover:text-emerald-400 active:cursor-grabbing"
+        >
+          <IconGrip className="h-4 w-4" />
+        </span>
+      )}
       <span className="shrink-0 text-slate-600">{icon}</span>
       <span className="t-heading shrink-0 font-medium text-slate-300">{title}</span>
 

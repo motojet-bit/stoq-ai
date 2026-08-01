@@ -53,11 +53,11 @@ export default function Sidebar({
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900">
-      <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-2">
+      <div className="flex min-h-11 shrink-0 items-center justify-between gap-2 px-2">
         <button
           type="button"
           onClick={onNewChat}
-          className="flex h-8 flex-1 items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-2.5 text-[13px] text-slate-200 transition-colors hover:border-emerald-700 hover:bg-slate-700 hover:text-emerald-300"
+          className="flex min-h-8 flex-1 items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-2.5 t-body text-slate-200 transition-colors hover:border-emerald-700 hover:bg-slate-700 hover:text-emerald-300"
         >
           <IconPlus className="h-4 w-4" />
           <span>新規チャット</span>
@@ -73,17 +73,17 @@ export default function Sidebar({
       </div>
 
       <div className="flex items-center justify-between px-3 pb-1 pt-2">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+        <span className="t-label font-medium uppercase tracking-wider text-slate-500">
           履歴
         </span>
         {sessions.length > 0 && (
-          <span className="font-mono text-[11px] text-slate-600">{sessions.length}</span>
+          <span className="font-mono t-label text-slate-600">{sessions.length}</span>
         )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 pb-2">
         {sessions.length === 0 ? (
-          <p className="px-2 py-6 text-center text-[12px] leading-relaxed text-slate-600">
+          <p className="px-2 py-6 text-center t-label leading-relaxed text-slate-600">
             まだ会話がありません。
             <br />
             対話ウィンドウで質問すると、
@@ -106,7 +106,7 @@ export default function Sidebar({
         )}
       </nav>
 
-      <div className="shrink-0 border-t border-slate-800 px-3 py-2 text-[11px] text-slate-600">
+      <div className="shrink-0 border-t border-slate-800 px-3 py-2 t-label text-slate-600">
         会話は自動保存されます
       </div>
 

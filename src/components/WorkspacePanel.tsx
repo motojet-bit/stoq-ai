@@ -48,7 +48,7 @@ function PanelBody({
 }: Pick<Props, "tab" | "analysis" | "onRetry">) {
   if (!tab) {
     return (
-      <div className="flex flex-1 items-center justify-center text-[13px] text-slate-600">
+      <div className="flex flex-1 items-center justify-center t-body text-slate-600">
         タブがありません
       </div>
     );
@@ -59,13 +59,13 @@ function PanelBody({
     return (
       <div className="flex flex-1 items-center justify-center px-6">
         <div className="max-w-md text-center">
-          <h1 className="mb-2 text-[15px] font-semibold text-slate-300">{tab.title}</h1>
-          <p className="selectable text-[13px] leading-relaxed text-slate-500">
+          <h1 className="mb-2 t-body font-semibold text-slate-300">{tab.title}</h1>
+          <p className="selectable t-body leading-relaxed text-slate-500">
             上部のフォームにティッカーを入力して「分析」を押すと、
             <br />
             Yahoo Finance の主要指標と SEC の提出状況を取得します。
           </p>
-          <p className="mt-3 font-mono text-[12px] text-slate-600">
+          <p className="mt-3 font-mono t-label text-slate-600">
             例: AAPL / NVDA / 7203.T / ASML.AS
           </p>
         </div>
@@ -85,11 +85,11 @@ function PanelBody({
           <h1 className="text-lg font-semibold text-slate-100">
             {fundamentals?.name ?? tab.ticker}
           </h1>
-          <span className="rounded bg-emerald-950 px-1.5 py-0.5 font-mono text-[12px] text-emerald-300">
+          <span className="rounded bg-emerald-950 px-1.5 py-0.5 font-mono t-label text-emerald-300">
             {tab.ticker}
           </span>
           {fundamentals?.exchange && (
-            <span className="text-[12px] text-slate-500">{fundamentals.exchange}</span>
+            <span className="t-label text-slate-500">{fundamentals.exchange}</span>
           )}
         </div>
 
@@ -104,7 +104,7 @@ function PanelBody({
                 </span>
                 {change !== null && (
                   <span
-                    className={`font-mono text-[13px] ${
+                    className={`font-mono t-body ${
                       change >= 0 ? "text-emerald-400" : "text-red-400"
                     }`}
                   >
@@ -123,7 +123,7 @@ function PanelBody({
           />
 
           {fundamentals && (
-            <span className="ml-auto text-[11px] text-slate-600">
+            <span className="ml-auto t-label text-slate-600">
               取得: {new Date(fundamentals.fetchedAtMs).toLocaleTimeString("ja-JP")}
             </span>
           )}
@@ -132,11 +132,11 @@ function PanelBody({
 
       {error && (
         <div className="mb-4 rounded-lg border border-red-900 bg-red-950/40 px-3.5 py-3">
-          <p className="selectable text-[12px] leading-relaxed text-red-300">{error}</p>
+          <p className="selectable t-label leading-relaxed text-red-300">{error}</p>
           <button
             type="button"
             onClick={() => onRetry(tab.ticker!)}
-            className="mt-2 h-7 rounded-md border border-red-800 px-2.5 text-[12px] text-red-200 hover:bg-red-950"
+            className="mt-2 h-7 rounded-md border border-red-800 px-2.5 t-label text-red-200 hover:bg-red-950"
           >
             再試行
           </button>
@@ -144,7 +144,7 @@ function PanelBody({
       )}
 
       {fundamentals?.warning && (
-        <p className="selectable mb-4 rounded-lg border border-amber-900/70 bg-amber-950/30 px-3.5 py-2.5 text-[12px] leading-relaxed text-amber-300">
+        <p className="selectable mb-4 rounded-lg border border-amber-900/70 bg-amber-950/30 px-3.5 py-2.5 t-label leading-relaxed text-amber-300">
           {fundamentals.warning}
         </p>
       )}
@@ -162,7 +162,7 @@ function PanelBody({
       </div>
 
       {!loading && !error && fundamentals && fundamentals.groups.length === 0 && (
-        <p className="text-[13px] text-slate-600">
+        <p className="t-body text-slate-600">
           詳細指標を取得できませんでした。銘柄によっては Yahoo Finance が指標を提供していません。
         </p>
       )}

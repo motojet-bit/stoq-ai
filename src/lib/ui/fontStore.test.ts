@@ -11,7 +11,9 @@ import {
  * 10〜20px の外に出ると、ボタンが潰れたりレイアウトが破綻する。
  */
 describe("clampFontSize", () => {
-  it("範囲内はそのまま", () => {
+  it("範囲内（10〜28px）はそのまま", () => {
+    expect(MIN_FONT_SIZE).toBe(10);
+    expect(MAX_FONT_SIZE).toBe(28);
     for (let px = MIN_FONT_SIZE; px <= MAX_FONT_SIZE; px++) {
       expect(clampFontSize(px)).toBe(px);
     }
@@ -21,7 +23,7 @@ describe("clampFontSize", () => {
     expect(clampFontSize(0)).toBe(MIN_FONT_SIZE);
     expect(clampFontSize(9)).toBe(MIN_FONT_SIZE);
     expect(clampFontSize(-100)).toBe(MIN_FONT_SIZE);
-    expect(clampFontSize(21)).toBe(MAX_FONT_SIZE);
+    expect(clampFontSize(29)).toBe(MAX_FONT_SIZE);
     expect(clampFontSize(9999)).toBe(MAX_FONT_SIZE);
   });
 
@@ -50,6 +52,21 @@ describe("fontStore の保存と適用", () => {
     expect(document.documentElement.style.getPropertyValue("--fs-base")).toBe("17px");
     expect(localStorage.getItem("stockanalyzer.fontSize")).toBe("17");
     expect(mod.getFontSize()).toBe(17);
+  });
+
+  it("28px まで上げられ、:root に反映される（全域連動の起点）", async () => {
+    const mod = await import("@/lib/ui/fontStore");
+    mod.setFontSize(28);
+    expect(mod.getFontSize()).toBe(28);
+    expect(document.documentElement.style.getPropertyValue("--fs-base")).toBe("28px");
+  });
+
+  it("initFontSize が保存値を :root に復元する", async () => {
+    const mod = await import("@/lib/ui/fontStore");
+    mod.setFontSize(22);
+    document.documentElement.style.removeProperty("--fs-base");
+    mod.initFontSize();
+    expect(document.documentElement.style.getPropertyValue("--fs-base")).toBe("22px");
   });
 
   it("範囲外を渡しても丸めた値が保存される", async () => {

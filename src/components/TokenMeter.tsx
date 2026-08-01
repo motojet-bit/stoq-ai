@@ -22,11 +22,11 @@ export default function TokenMeter({ tokens, limit }: Props) {
       title={`${usage.label}｜概算 ${tokens.toLocaleString()} / 上限 ${usage.limit.toLocaleString()} トークン（${(usage.ratio * 100).toFixed(1)}%）`}
       className="flex shrink-0 items-center gap-2"
     >
-      <span aria-hidden="true" className="text-[11px]">
+      <span aria-hidden="true" className="t-label">
         {style.emoji}
       </span>
       <div className="flex flex-col gap-1">
-        <div className="flex items-baseline gap-1.5 font-mono text-[11px]">
+        <div className="flex items-baseline gap-1.5 font-mono t-label">
           <span className={style.text}>{formatTokens(usage.tokens)}</span>
           <span className="text-slate-600">/ {formatTokens(usage.limit)} tok</span>
         </div>

@@ -34,9 +34,9 @@ export default function ToastHost() {
               {style.icon}
             </span>
             <div className="min-w-0 flex-1">
-              <p className={`text-[12px] font-medium ${style.accent}`}>{t.title}</p>
+              <p className={`t-label font-medium ${style.accent}`}>{t.title}</p>
               {t.detail && (
-                <p className="selectable mt-0.5 break-words text-[11px] leading-relaxed text-slate-400">
+                <p className="selectable t-label mt-0.5 break-words text-slate-400">
                   {t.detail}
                 </p>
               )}

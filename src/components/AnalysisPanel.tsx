@@ -4,7 +4,6 @@ import { CRITERIA } from "@/lib/prompts/criteria";
 import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
-import FontSizeControl from "@/components/FontSizeControl";
 import { IconChart, IconPlay, IconStop, IconTrash } from "@/components/Icons";
 
 interface Props {
@@ -86,14 +85,12 @@ export default function AnalysisPanel({
               </span>
             )}
 
-            <FontSizeControl />
-
             {hasContent && !streaming && (
               <button
                 type="button"
                 onClick={onClear}
                 title="この銘柄の分析結果を削除（保存済みキャッシュも消えます）"
-                className="t-label flex h-6 shrink-0 items-center gap-1 rounded border border-slate-700 px-2 text-slate-400 hover:border-red-800 hover:text-red-300"
+                className="t-label flex min-h-6 shrink-0 items-center gap-1 rounded border border-slate-700 px-2 text-slate-400 hover:border-red-800 hover:text-red-300"
               >
                 <IconTrash className="h-3 w-3" />
                 クリア
@@ -104,7 +101,7 @@ export default function AnalysisPanel({
               <button
                 type="button"
                 onClick={onCancel}
-                className="t-label flex h-6 shrink-0 items-center gap-1.5 rounded border border-red-800 px-2 text-red-300 hover:bg-red-950/50"
+                className="t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded border border-red-800 px-2 text-red-300 hover:bg-red-950/50"
               >
                 <IconStop className="h-3 w-3" />
                 中断
@@ -115,7 +112,7 @@ export default function AnalysisPanel({
                 onClick={onRun}
                 disabled={!ticker || !ready}
                 title={!ticker ? "先に銘柄を分析してください" : (readyReason ?? "AI分析を実行")}
-                className="t-label flex h-6 shrink-0 items-center gap-1.5 rounded bg-emerald-600 px-2.5 font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
+                className="t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded bg-emerald-600 px-2.5 font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
               >
                 <IconPlay className="h-3 w-3" />
                 {hasContent ? "再分析" : "AI分析を実行"}

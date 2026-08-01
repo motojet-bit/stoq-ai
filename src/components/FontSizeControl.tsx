@@ -8,7 +8,7 @@ import {
 } from "@/lib/ui/fontStore";
 
 /**
- * 文字サイズ（10〜20px を 1px 刻み）の調整コントロール。
+ * 文字サイズ（10〜28px を 1px 刻み）の調整コントロール。
  * 設定は全パネルに連動し、localStorage に自動保存される。
  */
 export default function FontSizeControl() {

@@ -38,7 +38,7 @@ export default function ModelCombo({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 pl-2.5 pr-7 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
+        className="selectable t-mono min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 py-1 pl-2.5 pr-7 font-mono text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
       />
       {suggestions.length > 0 && (
         <span

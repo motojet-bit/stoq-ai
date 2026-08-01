@@ -2,6 +2,7 @@ import type { AppSettings } from "@/types";
 import TickerInput from "@/components/TickerInput";
 import PdfDropZone from "@/components/PdfDropZone";
 import ProviderMenu from "@/components/ProviderMenu";
+import FontSizeControl from "@/components/FontSizeControl";
 
 interface Props {
   settings: AppSettings | null;
@@ -21,7 +22,7 @@ export default function CommandBar({
   onOpenSettings,
 }: Props) {
   return (
-    <div className="flex h-12 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-900/60 px-3">
+    <div className="flex min-h-12 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-900/60 px-3">
       <TickerInput onSubmit={onTickerSubmit} />
 
       <div className="h-6 w-px bg-slate-800" />
@@ -30,7 +31,10 @@ export default function CommandBar({
 
       <div className="h-6 w-px bg-slate-800" />
 
-      <ProviderMenu settings={settings} onOpenSettings={onOpenSettings} />
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <ProviderMenu settings={settings} onOpenSettings={onOpenSettings} />
+        <FontSizeControl />
+      </div>
     </div>
   );
 }

@@ -3,12 +3,13 @@ import { useSyncExternalStore } from "react";
 /**
  * アプリ全体の基準フォントサイズ（px）。
  *
- * 10〜20px を 1px 刻みで調整でき、市場データ・分析結果・対話のすべてに連動する。
+ * 10〜28px を 1px 刻みで調整でき、**アプリ全体の UI に一律連動する**
+ * （メニューバー・タブ・サイドバー・資料チップ・本文すべて）。
  * 実際の適用は `:root` の CSS 変数 `--fs-base` を書き換えることで行うため、
  * コンポーネント側は `.t-body` / `.t-label` などのクラスを付けるだけでよい。
  */
 export const MIN_FONT_SIZE = 10;
-export const MAX_FONT_SIZE = 20;
+export const MAX_FONT_SIZE = 28;
 export const DEFAULT_FONT_SIZE = 13;
 
 const STORAGE_KEY = "stockanalyzer.fontSize";

@@ -112,7 +112,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     const status = keyStatus(id);
     return (
       <label className="block">
-        <span className="mb-1 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+        <span className="mb-1 flex items-center justify-between gap-2 t-label text-slate-500">
           <span>APIキー{source ? `（${source}）` : ""}</span>
           {status?.configured ? (
             <span className="flex items-center gap-1.5 text-emerald-400">
@@ -136,7 +136,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
           value={keyDrafts[id] ?? ""}
           onChange={(e) => setKeyDrafts((prev) => ({ ...prev, [id]: e.target.value }))}
           placeholder={status?.configured ? "変更する場合のみ入力" : placeholder}
-          className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
+          className="selectable min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono t-label text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
         />
       </label>
     );
@@ -151,10 +151,10 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
         className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-slate-800 px-4">
+        <header className="flex min-h-12 shrink-0 items-center justify-between border-b border-slate-800 px-4">
           <div className="flex items-center gap-2">
             <IconKey className="h-4 w-4 text-emerald-400" />
-            <h2 className="text-[14px] font-semibold text-slate-100">設定</h2>
+            <h2 className="t-body font-semibold text-slate-100">設定</h2>
           </div>
           <button
             type="button"
@@ -168,12 +168,12 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
           {!settings ? (
-            <p className="text-[13px] text-slate-400">設定を読み込んでいます…</p>
+            <p className="t-body text-slate-400">設定を読み込んでいます…</p>
           ) : (
             <>
               {/* ------------------------------------------------ プロバイダ選択 */}
               <section className="mb-5">
-                <h3 className="mb-2 text-[12px] font-medium uppercase tracking-wider text-slate-500">
+                <h3 className="mb-2 t-label font-medium uppercase tracking-wider text-slate-500">
                   使用するプロバイダ
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -192,7 +192,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                         type="button"
                         title={reason ?? "送信可能"}
                         onClick={() => void run(() => saveSettings({ provider: id }))}
-                        className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-[13px] transition-colors ${
+                        className={`flex items-center gap-2 rounded-md border px-3 py-1.5 t-body transition-colors ${
                           active
                             ? "border-emerald-500 bg-emerald-950/60 text-emerald-200"
                             : "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600 hover:text-slate-100"
@@ -212,7 +212,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
 
               {/* ------------------------------------------------ 組み込みプロバイダ */}
               <section className="mb-5 space-y-3">
-                <h3 className="text-[12px] font-medium uppercase tracking-wider text-slate-500">
+                <h3 className="t-label font-medium uppercase tracking-wider text-slate-500">
                   APIキーとモデル
                 </h3>
 
@@ -221,13 +221,13 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                     key={p.id}
                     className="rounded-lg border border-slate-800 bg-slate-900/60 p-3"
                   >
-                    <div className="mb-2 text-[13px] font-medium text-slate-200">{p.label}</div>
+                    <div className="mb-2 t-body font-medium text-slate-200">{p.label}</div>
 
                     <div className="grid gap-2 sm:grid-cols-2">
                       {renderKeyRow(p.id, p.keyPlaceholder, p.keySource)}
 
                       <div>
-                        <span className="mb-1 block text-[11px] text-slate-500">
+                        <span className="mb-1 block t-label text-slate-500">
                           モデル名（候補から選択、または手入力）
                         </span>
                         <ModelCombo
@@ -243,7 +243,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                     </div>
 
                     {p.id === "anthropic" && (
-                      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                      <p className="mt-2 t-label leading-relaxed text-slate-500">
                         Claude Opus 5 では <code className="text-slate-400">temperature</code>{" "}
                         が廃止されているため送信しません。出力の深さは{" "}
                         <code className="text-slate-400">effort</code> で制御しています。
@@ -256,13 +256,13 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
               {/* ------------------------------------------------ OpenAI互換（可変長） */}
               <section className="mb-5">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <h3 className="text-[12px] font-medium uppercase tracking-wider text-slate-500">
+                  <h3 className="t-label font-medium uppercase tracking-wider text-slate-500">
                     OpenAI互換 API（DeepSeek / Moonshot など）
                   </h3>
                   <button
                     type="button"
                     onClick={() => void run(() => addCustomProvider())}
-                    className="flex h-7 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800 px-2.5 text-[12px] text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+                    className="flex h-7 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
                   >
                     <IconPlus className="h-3.5 w-3.5" />
                     プロバイダーを追加
@@ -270,7 +270,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                 </div>
 
                 {settings.customProviders.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-slate-800 px-3 py-4 text-center text-[12px] text-slate-600">
+                  <p className="rounded-lg border border-dashed border-slate-800 px-3 py-4 text-center t-label text-slate-600">
                     OpenAI互換の API はまだ登録されていません。
                     <br />
                     「プロバイダーを追加」から Base URL とキーを設定してください。
@@ -297,7 +297,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                               onChange={(e) => patchCustomDraft(c.id, { label: e.target.value })}
                               placeholder="識別ラベル（例: DeepSeek）"
                               aria-label="識別ラベル"
-                              className="selectable h-7 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-[13px] font-medium text-slate-200 placeholder:text-slate-600 hover:border-slate-700 focus:border-emerald-500 focus:bg-slate-950 focus:outline-none"
+                              className="selectable h-7 flex-1 rounded-md border border-transparent bg-transparent px-1.5 t-body font-medium text-slate-200 placeholder:text-slate-600 hover:border-slate-700 focus:border-emerald-500 focus:bg-slate-950 focus:outline-none"
                             />
                             <button
                               type="button"
@@ -314,7 +314,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                             {renderKeyRow(c.id, "sk-…")}
 
                             <div>
-                              <span className="mb-1 block text-[11px] text-slate-500">
+                              <span className="mb-1 block t-label text-slate-500">
                                 モデル名（候補から選択、または手入力）
                               </span>
                               <ModelCombo
@@ -329,7 +329,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                           </div>
 
                           <label className="mt-2 block">
-                            <span className="mb-1 block text-[11px] text-slate-500">
+                            <span className="mb-1 block t-label text-slate-500">
                               Base URL（末尾の /chat/completions は不要）
                             </span>
                             <input
@@ -339,7 +339,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                               value={draft.baseUrl}
                               onChange={(e) => patchCustomDraft(c.id, { baseUrl: e.target.value })}
                               placeholder="https://api.deepseek.com/v1"
-                              className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
+                              className="selectable min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono t-label text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
                             />
                           </label>
                         </div>
@@ -351,11 +351,11 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
 
               {/* ------------------------------------------------ SEC */}
               <section className="mb-2">
-                <h3 className="mb-2 text-[12px] font-medium uppercase tracking-wider text-slate-500">
+                <h3 className="mb-2 t-label font-medium uppercase tracking-wider text-slate-500">
                   SEC EDGAR
                 </h3>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] text-slate-500">
+                  <span className="mb-1 block t-label text-slate-500">
                     User-Agent（「アプリ名 メールアドレス」形式。SEC が必須としています）
                   </span>
                   <input
@@ -365,13 +365,13 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                     value={secUserAgent}
                     onChange={(e) => setSecUserAgent(e.target.value)}
                     placeholder="StockAnalyzer you@example.com"
-                    className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
+                    className="selectable min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 t-label text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
                   />
                 </label>
               </section>
 
               {error && (
-                <p className="selectable mt-4 rounded-md border border-red-900 bg-red-950/50 px-3 py-2 text-[12px] leading-relaxed text-red-300">
+                <p className="selectable mt-4 rounded-md border border-red-900 bg-red-950/50 px-3 py-2 t-label leading-relaxed text-red-300">
                   {error}
                 </p>
               )}
@@ -380,7 +380,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
         </div>
 
         <footer className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4">
-          <span className="text-[11px] text-slate-600">
+          <span className="t-label text-slate-600">
             {savedAt
               ? `保存しました（${savedAt}）`
               : "APIキーは OS のアプリ設定ディレクトリに保存され、画面には表示されません。"}
@@ -389,7 +389,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="h-8 rounded-md border border-slate-700 px-3.5 text-[13px] text-slate-300 hover:bg-slate-800"
+              className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 hover:bg-slate-800"
             >
               閉じる
             </button>
@@ -397,7 +397,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
               type="button"
               onClick={() => void handleSave()}
               disabled={busy || !settings}
-              className="h-8 rounded-md bg-emerald-600 px-4 text-[13px] font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+              className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
               {busy ? "保存中…" : "保存"}
             </button>

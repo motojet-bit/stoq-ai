@@ -86,7 +86,7 @@ export default function ChatHistoryItem({
               onBlur={commit}
               onKeyDown={handleKeyDown}
               aria-label="チャットのタイトル"
-              className="selectable h-6 w-full rounded border border-emerald-700 bg-slate-950 px-1 text-[13px] text-slate-100 focus:outline-none"
+              className="selectable h-6 w-full rounded border border-emerald-700 bg-slate-950 px-1 t-body text-slate-100 focus:outline-none"
             />
           ) : (
             <button
@@ -94,15 +94,15 @@ export default function ChatHistoryItem({
               onClick={onSelect}
               onDoubleClick={() => setEditing(true)}
               title={`${session.title}\nダブルクリックで名前を変更`}
-              className="block w-full truncate text-left text-[13px] leading-snug"
+              className="block w-full truncate text-left t-body leading-snug"
             >
               {session.title}
             </button>
           )}
 
-          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
+          <div className="mt-0.5 flex items-center gap-1.5 t-label text-slate-500">
             {session.ticker && (
-              <span className="rounded bg-slate-700/70 px-1 font-mono text-[10px] text-slate-300">
+              <span className="rounded bg-slate-700/70 px-1 font-mono t-label text-slate-300">
                 {session.ticker}
               </span>
             )}

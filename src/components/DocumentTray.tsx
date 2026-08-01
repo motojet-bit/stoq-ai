@@ -34,10 +34,10 @@ export default function DocumentTray({ tokenLimit }: Props) {
     <>
       <div className="flex min-h-11 shrink-0 items-center gap-3 border-b border-slate-800 bg-slate-900/40 px-3 py-1.5">
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          <span className="t-label font-medium uppercase tracking-wider text-slate-500">
             一時保存中の資料
           </span>
-          <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-400">
+          <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono t-label text-slate-400">
             {documents.length}
           </span>
         </div>
@@ -56,11 +56,11 @@ export default function DocumentTray({ tokenLimit }: Props) {
           {ingesting.map((job) => (
             <div
               key={job.id}
-              className="flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 text-[12px] text-slate-400"
+              className="flex min-h-7 shrink-0 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 t-label text-slate-400"
             >
               <span className="h-3 w-3 animate-spin rounded-full border border-slate-600 border-t-emerald-500" />
               <span className="max-w-40 truncate">{job.name}</span>
-              <span className="text-[10px] text-slate-600">
+              <span className="t-label text-slate-600">
                 {job.phase === "extracting" ? "抽出中" : "保存中"}
               </span>
             </div>
@@ -73,7 +73,7 @@ export default function DocumentTray({ tokenLimit }: Props) {
           <button
             type="button"
             onClick={() => setConfirmingClear(true)}
-            className="h-7 shrink-0 rounded-md border border-slate-700 px-2.5 text-[12px] text-slate-400 transition-colors hover:border-red-800 hover:text-red-300"
+            className="min-h-7 shrink-0 rounded-md border border-slate-700 px-2.5 t-label text-slate-400 transition-colors hover:border-red-800 hover:text-red-300"
           >
             一括クリア
           </button>

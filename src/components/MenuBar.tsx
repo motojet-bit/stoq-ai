@@ -89,10 +89,10 @@ export default function MenuBar({ onAction }: Props) {
   return (
     <div
       ref={barRef}
-      className="relative z-50 flex h-9 shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-2"
+      className="relative z-50 flex min-h-9 shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-2"
     >
       <div className="mr-2 flex items-center gap-2 pl-1 pr-3">
-        <span className="text-[13px] font-semibold tracking-tight">
+        <span className="t-body font-semibold tracking-tight">
           <span className="text-emerald-400">StoQ</span>
           <span className="ml-1 text-slate-300">AI Analyzer</span>
         </span>
@@ -104,7 +104,7 @@ export default function MenuBar({ onAction }: Props) {
             type="button"
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
             onPointerEnter={() => openIndex !== null && setOpenIndex(i)}
-            className={`rounded px-3 py-1 text-[13px] transition-colors ${
+            className={`rounded px-3 py-1 t-body transition-colors ${
               openIndex === i
                 ? "bg-slate-700 text-slate-100"
                 : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
@@ -124,13 +124,13 @@ export default function MenuBar({ onAction }: Props) {
                       setOpenIndex(null);
                       if (item.action) onAction(item.action);
                     }}
-                    className={`flex w-full items-center justify-between gap-8 px-3 py-1.5 text-left text-[13px] hover:bg-slate-700 hover:text-slate-100 ${
+                    className={`flex w-full items-center justify-between gap-8 px-3 py-1.5 text-left t-body hover:bg-slate-700 hover:text-slate-100 ${
                       item.action ? "text-slate-300" : "text-slate-500"
                     }`}
                   >
                     <span>{item.label}</span>
                     {item.shortcut && (
-                      <span className="font-mono text-[11px] text-slate-500">{item.shortcut}</span>
+                      <span className="font-mono t-label text-slate-500">{item.shortcut}</span>
                     )}
                   </button>
                 </div>

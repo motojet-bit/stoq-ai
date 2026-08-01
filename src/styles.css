@@ -8,8 +8,9 @@
 }
 
 /*
- * 基準フォントサイズ。fontStore が `--fs-base` を 10〜20px の範囲で書き換え、
- * 派生サイズと行間はここで計算する。全パネルが同じ変数を参照する。
+ * 基準フォントサイズ。fontStore が `--fs-base` を 10〜28px の範囲で書き換え、
+ * 派生サイズと行間はここで計算する。
+ * **アプリ全体（メニューバー・タブ・サイドバー・資料チップ・本文）が同じ変数を参照する。**
  */
 :root {
   --fs-base: 13px;
@@ -18,6 +19,9 @@
   --fs-heading: max(10px, calc(var(--fs-base) - 1px));
   --fs-mono: max(10px, calc(var(--fs-base) - 0.5px));
   --lh-body: 1.85;
+
+  /* 既定の文字サイズも連動させる。個別指定の無い要素に効く */
+  font-size: var(--fs-base);
 }
 
 .t-body {
@@ -53,7 +57,8 @@ body,
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  /* 高さは親（スプリッターのペイン）から受け取る。固定値を持たせない */
+  flex: 1 1 0%;
 }
 .panel-scroll {
   flex: 1 1 0%;
