@@ -14,6 +14,7 @@ mod html;
 mod http;
 mod library;
 mod llm;
+mod market;
 mod prompts;
 mod quarterly;
 mod settings;
@@ -28,6 +29,8 @@ pub fn run() {
             commands::settings_load,
             commands::settings_save,
             commands::settings_set_key,
+            commands::market_set_key,
+            commands::market_health_check,
             commands::settings_add_custom_provider,
             commands::settings_update_custom_provider,
             commands::settings_remove_custom_provider,

@@ -26,6 +26,21 @@ export interface KeyStatus {
   masked: string | null;
 }
 
+/** 市場データの取得元 */
+export type MarketProviderId = "yahoo" | "fmp" | "alphavantage";
+
+/** 取得元 1 件の状態 */
+export interface MarketProviderStatus {
+  id: MarketProviderId;
+  label: string;
+  /** APIキーが必要か */
+  requiresKey: boolean;
+  /** いま取得できる状態か */
+  ready: boolean;
+  /** 使えない理由。使えるなら null */
+  reason: string | null;
+}
+
 /** Rust 側から返る設定の安全な表現。生の APIキーは含まれない。 */
 export interface AppSettings {
   provider: ProviderId;
@@ -34,6 +49,10 @@ export interface AppSettings {
   customProviders: CustomProvider[];
   secUserAgent: string;
   maxPromptTokens: number;
+  /** 選択中の市場データ取得元 */
+  marketProvider: MarketProviderId;
+  /** 取得元ごとの状態 */
+  marketProviders: MarketProviderStatus[];
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
 }
@@ -44,6 +63,7 @@ export interface SettingsPatch {
   models?: Record<string, string>;
   secUserAgent?: string;
   maxPromptTokens?: number;
+  marketProvider?: MarketProviderId;
 }
 
 /** settings_update_custom_provider に渡す差分 */

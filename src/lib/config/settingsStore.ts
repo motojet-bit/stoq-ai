@@ -4,6 +4,7 @@ import { providerReadiness } from "@/lib/config/providers";
 import type {
   AppSettings,
   CustomProviderPatch,
+  MarketProviderId,
   ProviderId,
   SettingsPatch,
 } from "@/types";
@@ -77,6 +78,24 @@ export async function saveSettings(patch: SettingsPatch): Promise<AppSettings> {
 /** APIキーを保存する。空文字を渡すと削除。組み込み・カスタムどちらの ID でも可。 */
 export async function setApiKey(provider: ProviderId, apiKey: string): Promise<AppSettings> {
   return commit(await invoke<AppSettings>("settings_set_key", { provider, apiKey }));
+}
+
+// ------------------------------------------------ 市場データの取得元
+
+/** 取得元の APIキーを保存する。空文字を渡すと削除。 */
+export async function setMarketKey(
+  provider: MarketProviderId,
+  apiKey: string,
+): Promise<AppSettings> {
+  return commit(await invoke<AppSettings>("market_set_key", { provider, apiKey }));
+}
+
+/** 実際に 1 銘柄引いて疎通を確認する。成功時は人間向けの一言が返る。 */
+export async function marketHealthCheck(
+  provider: MarketProviderId,
+  ticker?: string,
+): Promise<string> {
+  return invoke<string>("market_health_check", { provider, ticker });
 }
 
 // ------------------------------------------------ OpenAI互換プロバイダの追加・更新・削除

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import type { StoredPrompt } from "@/types";
 import { removePrompt, savePrompt, usePrompts } from "@/lib/prompts/promptLibrary";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { IconClose, IconPersona, IconPlus, IconTrash } from "@/components/Icons";
+import { IconPersona, IconPlus, IconTrash } from "@/components/Icons";
+import ModalShell from "@/components/ModalShell";
 
 interface Props {
   open: boolean;
@@ -22,8 +23,6 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
   useEffect(() => {
     if (open) startNew();
   }, [open]);
-
-  if (!open) return null;
 
   const startNew = () => {
     setEditingId(null);
@@ -50,33 +49,13 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-6"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="AI の役割ライブラリ"
+    <ModalShell
+      open={open}
+      title="AI の役割ライブラリ"
+      icon={<IconPersona className="h-4 w-4 text-emerald-400" />}
+      onClose={onClose}
     >
-      <div
-        className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex min-h-12 shrink-0 items-center justify-between border-b border-slate-800 px-4">
-          <div className="flex items-center gap-2">
-            <IconPersona className="h-4 w-4 text-emerald-400" />
-            <h2 className="t-body font-semibold text-slate-100">AI の役割ライブラリ</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="閉じる"
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-          >
-            <IconClose className="h-4 w-4" />
-          </button>
-        </header>
-
-        <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto px-4 py-4 sm:grid-cols-[16rem_1fr]">
+        <div className="grid gap-4 px-4 py-4 sm:grid-cols-[16rem_1fr]">
           {/* ---------------------------------------------- 一覧 */}
           <div className="min-w-0">
             <div className="mb-2 flex items-center justify-between gap-2">
@@ -138,7 +117,7 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 spellCheck={false}
-                placeholder="例: テンバガー発掘アナリスト"
+                placeholder="例: 高成長・グロース株アナリスト"
                 className="selectable min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 t-body text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
               />
             </label>
@@ -195,7 +174,6 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
           }}
           onCancel={() => setDeleting(null)}
         />
-      </div>
-    </div>
+    </ModalShell>
   );
 }

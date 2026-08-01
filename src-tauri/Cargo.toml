@@ -35,6 +35,10 @@ reqwest = { version = "0.12", default-features = false, features = [
   "rustls-tls",
 ] }
 
+[dev-dependencies]
+# 非同期のコマンド層をテストするため（本体には不要）
+tokio = { version = "1", features = ["macros", "rt"] }
+
 [profile.release]
 codegen-units = 1
 lto = true

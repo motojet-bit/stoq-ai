@@ -47,6 +47,7 @@ import ToastHost from "@/components/ToastHost";
 import DocumentTray from "@/components/DocumentTray";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PanelRestoreBar from "@/components/PanelRestoreBar";
+import HelpAssistant from "@/components/HelpAssistant";
 
 const newId = () => crypto.randomUUID();
 
@@ -67,6 +68,8 @@ export default function App() {
   );
   // 検討中銘柄のインポート。ショートカットからも開けるよう App が持つ
   const [candidateImportOpen, setCandidateImportOpen] = useState(false);
+  // 使い方を案内するヘルプ AI（最下部バーの「ヘルプ」から開く）
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // 枠ごとの折りたたみ状態。畳んだ枠は描画せず、最上部バーの復元ボタンに退避する
   const slots = useSlots();
@@ -423,7 +426,22 @@ export default function App() {
         </main>
       </div>
 
-      <StatusBar ticker={currentTicker} documentCount={documents.length} />
+      <StatusBar
+        ticker={currentTicker}
+        documentCount={documents.length}
+        helpOpen={helpOpen}
+        onToggleHelp={() => setHelpOpen((v) => !v)}
+      />
+
+      <HelpAssistant
+        open={helpOpen}
+        settings={settings}
+        onClose={() => setHelpOpen(false)}
+        onOpenSettings={() => {
+          setHelpOpen(false);
+          setSettingsOpen(true);
+        }}
+      />
 
       <SettingsModal
         open={settingsOpen}

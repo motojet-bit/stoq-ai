@@ -13,6 +13,8 @@ import { IconClose, IconKey, IconPlus } from "@/components/Icons";
 import ModelCombo from "@/components/ModelCombo";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ShortcutSettings from "@/components/ShortcutSettings";
+import MarketProviderSettings from "@/components/MarketProviderSettings";
+import ModalShell from "@/components/ModalShell";
 
 interface Props {
   open: boolean;
@@ -44,7 +46,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   // 誤操作防止。削除対象のプロバイダ ID を持つ
   const [deletingKeyOf, setDeletingKeyOf] = useState<ProviderId | null>(null);
-  const [tab, setTab] = useState<"providers" | "shortcuts">("providers");
+  const [tab, setTab] = useState<"providers" | "market" | "shortcuts">("providers");
 
   // モーダルを開いた時点の設定値を入力欄の初期値にする
   useEffect(() => {
@@ -72,8 +74,6 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
       return next;
     });
   }, [open, settings]);
-
-  if (!open) return null;
 
   const patchCustomDraft = (id: string, patch: Partial<CustomDraft>) => {
     setCustomDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -154,55 +154,71 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-6"
-      onClick={onClose}
-    >
-      <div
-        className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex min-h-12 shrink-0 items-center justify-between border-b border-slate-800 px-4">
-          <div className="flex items-center gap-2">
-            <IconKey className="h-4 w-4 text-emerald-400" />
-            <h2 className="t-body font-semibold text-slate-100">設定</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="設定を閉じる"
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-          >
-            <IconClose className="h-4 w-4" />
-          </button>
-        </header>
-
-        <div className="flex shrink-0 items-center gap-1 border-b border-slate-800 px-4">
-          {(
-            [
-              ["providers", "APIキー・モデル"],
-              ["shortcuts", "ショートカット"],
-            ] as const
-          ).map(([id, label]) => (
+    <ModalShell
+      open={open}
+      title="設定"
+      icon={<IconKey className="h-4 w-4 text-emerald-400" />}
+      onClose={onClose}
+      footer={
+        <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
+          <span className="t-label text-slate-600">
+            {tab === "shortcuts"
+              ? "ショートカットの変更は即座に保存されます。"
+              : tab === "market"
+                ? "データ取得元の変更とキーは即座に保存されます。"
+                : savedAt
+                  ? `保存しました（${savedAt}）`
+                  : "APIキーは OS のアプリ設定ディレクトリに保存され、画面には表示されません。"}
+          </span>
+          <div className="flex shrink-0 gap-2">
             <button
-              key={id}
               type="button"
-              onClick={() => setTab(id)}
-              aria-pressed={tab === id}
-              className={`-mb-px border-b-2 px-3 py-2 t-body transition-colors ${
-                tab === id
-                  ? "border-emerald-500 font-medium text-emerald-300"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
-              }`}
+              onClick={onClose}
+              className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
             >
-              {label}
+              閉じる
             </button>
-          ))}
-        </div>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={busy || !settings || tab !== "providers"}
+              className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+            >
+              {busy ? "保存中…" : "保存"}
+            </button>
+          </div>
+        </footer>
+      }
+    >
+      <div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-4">
+        {(
+          [
+            ["providers", "APIキー・モデル"],
+            ["market", "データ取得元"],
+            ["shortcuts", "ショートカット"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            aria-pressed={tab === id}
+            className={`-mb-px border-b-2 px-3 py-2 t-body transition-colors ${
+              tab === id
+                ? "border-emerald-500 font-medium text-emerald-300"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div className="px-4 py-4">
           {tab === "shortcuts" ? (
             <ShortcutSettings />
+          ) : tab === "market" ? (
+            <MarketProviderSettings settings={settings} />
           ) : !settings ? (
             <p className="t-body text-slate-400">設定を読み込んでいます…</p>
           ) : (
@@ -413,37 +429,10 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
               )}
             </>
           )}
-        </div>
+      </div>
 
-        <footer className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4">
-          <span className="t-label text-slate-600">
-            {tab === "shortcuts"
-              ? "ショートカットの変更は即座に保存されます。"
-              : savedAt
-                ? `保存しました（${savedAt}）`
-                : "APIキーは OS のアプリ設定ディレクトリに保存され、画面には表示されません。"}
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 hover:bg-slate-800"
-            >
-              閉じる
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={busy || !settings || tab !== "providers"}
-              className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
-            >
-              {busy ? "保存中…" : "保存"}
-            </button>
-          </div>
-        </footer>
-
-        {/* APIキーの削除は取り消せないので確認を挟む */}
-        <ConfirmDialog
+      {/* APIキーの削除は取り消せないので確認を挟む */}
+      <ConfirmDialog
           open={deletingKeyOf !== null}
           title="APIキーの削除"
           message="登録されているAPIキーを削除しますか？"
@@ -457,8 +446,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
           }}
           onCancel={() => setDeletingKeyOf(null)}
         />
-      </div>
-    </div>
+    </ModalShell>
   );
 }
 

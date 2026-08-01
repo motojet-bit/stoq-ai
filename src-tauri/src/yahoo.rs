@@ -383,7 +383,7 @@ fn str_at(v: &Value, key: &str) -> Option<String> {
 
 // ---------------------------------------------------------------- 整形
 
-fn fmt_price(v: f64, currency: &str) -> String {
+pub fn fmt_price(v: f64, currency: &str) -> String {
     if currency.is_empty() {
         format!("{v:.2}")
     } else {
@@ -391,7 +391,7 @@ fn fmt_price(v: f64, currency: &str) -> String {
     }
 }
 
-fn fmt_money(v: f64, currency: &str) -> String {
+pub fn fmt_money(v: f64, currency: &str) -> String {
     let abs = v.abs();
     let (scaled, unit) = if abs >= 1e12 {
         (v / 1e12, "兆")
@@ -416,11 +416,16 @@ fn fmt_money(v: f64, currency: &str) -> String {
     }
 }
 
-fn fmt_pct(v: f64) -> String {
+pub fn fmt_pct(v: f64) -> String {
     format!("{v:.2}%")
 }
 
 fn fmt_num(v: f64) -> String {
+    format!("{v:.2}")
+}
+
+/// 倍率（PER・PBR など）の表記。取得元をまたいで揃える。
+pub fn fmt_ratio(v: f64) -> String {
     format!("{v:.2}")
 }
 

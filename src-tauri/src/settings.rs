@@ -47,6 +47,9 @@ pub struct Settings {
     pub sec_user_agent: String,
     /// プロンプトに載せる最大トークン数（概算）の上限
     pub max_prompt_tokens: usize,
+    /// 市場データの取得元（`yahoo` / `fmp` / `alphavantage`）。
+    /// 取得元の APIキーは `keys` に `market:<id>` として入る。
+    pub market_provider: String,
 
     /// 旧形式（カスタム枠が 1 つ固定だった頃）の Base URL。
     /// 読み込み時に `custom_providers` へ移行し、以降は空になる。
@@ -68,6 +71,7 @@ impl Default for Settings {
             custom_providers: Vec::new(),
             sec_user_agent: String::new(),
             max_prompt_tokens: 180_000,
+            market_provider: crate::market::DEFAULT_PROVIDER.to_string(),
             custom_base_url: String::new(),
         }
     }
@@ -85,6 +89,10 @@ pub struct SettingsView {
     pub custom_providers: Vec<CustomProvider>,
     pub sec_user_agent: String,
     pub max_prompt_tokens: usize,
+    /// 市場データの取得元
+    pub market_provider: String,
+    /// 取得元ごとの状態（キーが要るか / いま使えるか）
+    pub market_providers: Vec<crate::market::ProviderStatus>,
     /// 組み込み + カスタムの全プロバイダのキー状態
     pub keys: Vec<KeyStatus>,
 }
@@ -151,6 +159,8 @@ impl Settings {
             custom_providers: self.custom_providers.clone(),
             sec_user_agent: self.sec_user_agent.clone(),
             max_prompt_tokens: self.max_prompt_tokens,
+            market_provider: crate::market::normalize_id(&self.market_provider),
+            market_providers: crate::market::all_statuses(self),
             keys: self
                 .provider_ids()
                 .into_iter()

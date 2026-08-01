@@ -11,6 +11,7 @@ use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
+use crate::market;
 use crate::prompts::{self, StoredPrompt};
 use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
@@ -51,6 +52,8 @@ pub struct SettingsPatch {
     pub models: Option<std::collections::BTreeMap<String, String>>,
     pub sec_user_agent: Option<String>,
     pub max_prompt_tokens: Option<usize>,
+    /// 市場データの取得元（`yahoo` / `fmp` / `alphavantage`）
+    pub market_provider: Option<String>,
 }
 
 #[tauri::command]
@@ -77,9 +80,45 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
     if let Some(limit) = patch.max_prompt_tokens {
         current.max_prompt_tokens = limit.clamp(1_000, 2_000_000);
     }
+    if let Some(provider) = patch.market_provider {
+        if !market::PROVIDER_IDS.contains(&provider.as_str()) {
+            return Err(AppError::msg(format!("未知のデータ取得元です: {provider}")));
+        }
+        current.market_provider = provider;
+    }
 
     settings::save(&app, &current)?;
     Ok(current.to_view())
+}
+
+/// 市場データ取得元の APIキーを保存する。空文字を渡すと削除。
+#[tauri::command]
+pub fn market_set_key(app: AppHandle, provider: String, api_key: String) -> Result<SettingsView> {
+    if !market::PROVIDER_IDS.contains(&provider.as_str()) {
+        return Err(AppError::msg(format!("未知のデータ取得元です: {provider}")));
+    }
+    let mut current = settings::load(&app)?;
+    let slot = market::key_id(&provider);
+    let trimmed = api_key.trim();
+    if trimmed.is_empty() {
+        current.keys.remove(&slot);
+    } else {
+        current.keys.insert(slot, trimmed.to_string());
+    }
+    settings::save(&app, &current)?;
+    Ok(current.to_view())
+}
+
+/// 取得元の疎通確認。キーが正しいか、実際に 1 銘柄引いて確かめる。
+#[tauri::command]
+pub async fn market_health_check(
+    app: AppHandle,
+    provider: String,
+    ticker: Option<String>,
+) -> Result<String> {
+    let current = settings::load(&app)?;
+    let symbol = ticker.unwrap_or_else(|| "AAPL".to_string());
+    market::health_check(&current, &provider, &symbol).await
 }
 
 /// APIキーを保存する。空文字を渡すと削除。組み込み・カスタムどちらの ID も受け付ける。
@@ -397,8 +436,10 @@ pub fn analysis_delete(app: AppHandle, ticker: String) -> Result<()> {
 
 /// Yahoo Finance から主要指標を取得する。
 #[tauri::command]
-pub async fn yahoo_fetch_fundamentals(ticker: String) -> Result<Fundamentals> {
-    yahoo::fetch_fundamentals(&ticker).await
+pub async fn yahoo_fetch_fundamentals(app: AppHandle, ticker: String) -> Result<Fundamentals> {
+    // 名前は互換のため据え置き。実体は選択中の取得元へ振り分ける
+    let current = settings::load(&app)?;
+    market::fetch_fundamentals(&current, &ticker).await
 }
 
 /// 直近 4 四半期の推移とモメンタム判定を取得する。

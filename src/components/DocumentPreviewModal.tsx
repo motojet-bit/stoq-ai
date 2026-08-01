@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { StagedDocument } from "@/types";
 import { readDocumentText } from "@/lib/parser/documentStore";
-import { IconClose, IconFile } from "@/components/Icons";
+import { IconFile } from "@/components/Icons";
+import ModalShell from "@/components/ModalShell";
 
 interface Props {
   doc: StagedDocument | null;
@@ -42,43 +43,25 @@ export default function DocumentPreviewModal({ doc, onClose }: Props) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [doc, onClose]);
 
-  if (!doc) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-6"
-      onClick={onClose}
+    <ModalShell
+      open={doc !== null}
+      title={doc?.displayName ?? ""}
+      icon={<IconFile className="h-4 w-4 shrink-0 text-emerald-400" />}
+      maxWidthClass="max-w-4xl"
+      onClose={onClose}
     >
-      <div
-        className="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-slate-800 px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <IconFile className="h-4 w-4 shrink-0 text-emerald-400" />
-            <h2 className="truncate t-body font-semibold text-slate-100">
-              {doc.displayName}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="プレビューを閉じる"
-            className="shrink-0 rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-          >
-            <IconClose className="h-4 w-4" />
-          </button>
-        </header>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 px-4 py-2 t-label text-slate-500">
-          <span>元ファイル: {doc.originalName}</span>
-          <span>{(doc.sizeBytes / 1024).toFixed(0)} KB</span>
-          <span>{doc.charCount.toLocaleString()} 文字</span>
-          <span>概算 {doc.tokenEstimate.toLocaleString()} トークン</span>
-          <span>取り込み: {new Date(doc.savedAtMs).toLocaleString("ja-JP")}</span>
+        <div className="sticky top-0 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 bg-slate-900 px-4 py-2 t-label text-slate-500">
+          <span>元ファイル: {doc?.originalName}</span>
+          <span>{((doc?.sizeBytes ?? 0) / 1024).toFixed(0)} KB</span>
+          <span>{(doc?.charCount ?? 0).toLocaleString()} 文字</span>
+          <span>概算 {(doc?.tokenEstimate ?? 0).toLocaleString()} トークン</span>
+          <span>
+            取り込み: {doc ? new Date(doc.savedAtMs).toLocaleString("ja-JP") : "—"}
+          </span>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="p-4">
           {error ? (
             <p className="selectable rounded border border-red-900 bg-red-950/40 px-3 py-2 t-label text-red-300">
               {error}
@@ -99,7 +82,6 @@ export default function DocumentPreviewModal({ doc, onClose }: Props) {
             </pre>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

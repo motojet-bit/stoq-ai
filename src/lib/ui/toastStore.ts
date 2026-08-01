@@ -54,6 +54,11 @@ export function dismissToast(id: string): void {
   emit();
 }
 
+/** 成功の通知。 */
+export function toastSuccess(title: string, detail?: string): void {
+  pushToast("success", title, detail);
+}
+
 /** Error / 文字列のどちらでも受け取れるエラー用ショートカット。 */
 export function toastError(title: string, cause: unknown): void {
   pushToast("error", title, cause instanceof Error ? cause.message : String(cause));

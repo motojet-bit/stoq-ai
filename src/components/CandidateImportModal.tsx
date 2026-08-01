@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { parseCandidates } from "@/lib/candidates/parseCandidates";
 import { addCandidates } from "@/lib/candidates/candidateStore";
-import { IconClose, IconBookmark } from "@/components/Icons";
+import { IconBookmark } from "@/components/Icons";
+import ModalShell from "@/components/ModalShell";
 
 interface Props {
   open: boolean;
@@ -29,8 +30,6 @@ export default function CandidateImportModal({ open, onClose }: Props) {
 
   const result = useMemo(() => parseCandidates(text), [text]);
 
-  if (!open) return null;
-
   const submit = async () => {
     if (result.items.length === 0) return;
     setBusy(true);
@@ -45,33 +44,33 @@ export default function CandidateImportModal({ open, onClose }: Props) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-6"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="検討中銘柄の追加"
-    >
-      <div
-        className="flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex min-h-12 shrink-0 items-center justify-between border-b border-slate-800 px-4">
-          <div className="flex items-center gap-2">
-            <IconBookmark className="h-4 w-4 text-emerald-400" />
-            <h2 className="t-body font-semibold text-slate-100">検討中銘柄の追加</h2>
-          </div>
+    <ModalShell
+      open={open}
+      title="検討中銘柄の追加"
+      icon={<IconBookmark className="h-4 w-4 text-emerald-400" />}
+      maxWidthClass="max-w-2xl"
+      onClose={onClose}
+      footer={
+        <footer className="flex min-h-14 shrink-0 items-center justify-end gap-2 border-t border-slate-800 px-4 py-2">
           <button
             type="button"
             onClick={onClose}
-            aria-label="閉じる"
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+            className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
           >
-            <IconClose className="h-4 w-4" />
+            キャンセル
           </button>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <button
+            type="button"
+            onClick={() => void submit()}
+            disabled={busy || result.items.length === 0}
+            className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+          >
+            {busy ? "保存中…" : `${result.items.length} 件を追加`}
+          </button>
+        </footer>
+      }
+    >
+        <div className="px-4 py-4">
           <label className="block">
             <span className="mb-1.5 block t-body text-slate-300">
               パイプ区切りで ティッカー|社名|ジャンル を入力してください（複数行可）
@@ -148,25 +147,6 @@ export default function CandidateImportModal({ open, onClose }: Props) {
             </div>
           )}
         </div>
-
-        <footer className="flex min-h-14 shrink-0 items-center justify-end gap-2 border-t border-slate-800 px-4 py-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 hover:bg-slate-800"
-          >
-            キャンセル
-          </button>
-          <button
-            type="button"
-            onClick={() => void submit()}
-            disabled={busy || result.items.length === 0}
-            className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
-          >
-            {busy ? "保存中…" : `${result.items.length} 件を追加`}
-          </button>
-        </footer>
-      </div>
-    </div>
+    </ModalShell>
   );
 }
