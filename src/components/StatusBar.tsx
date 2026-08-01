@@ -1,3 +1,4 @@
+import { APP_VERSION, COPYRIGHT } from "@/lib/ui/appMeta";
 import { IconHelp } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
@@ -9,7 +10,13 @@ interface Props {
   onToggleHelp: () => void;
 }
 
-/** 最下部のステータスバー */
+/**
+ * 最下部のステータスバー。
+ *
+ * **左・中央・右の 3 分割にしている。** 中央の権利表記を `mx-auto` で
+ * 寄せるだけだと、左右の情報の長さ（銘柄名や件数）で中心がずれてしまうため、
+ * 左右の枠に同じ比重（`1fr`）を持たせて位置を固定する。
+ */
 export default function StatusBar({
   ticker,
   documentCount,
@@ -17,13 +24,24 @@ export default function StatusBar({
   onToggleHelp,
 }: Props) {
   return (
-    <footer className="flex min-h-6 shrink-0 items-center gap-4 border-t border-slate-800 bg-slate-900 px-3 t-label text-slate-500">
-      <span className="text-emerald-500">● 準備完了</span>
-      <span>銘柄: {ticker ?? "—"}</span>
-      <span>読み込み済み資料: {documentCount} 件</span>
+    <footer className="grid min-h-6 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-t border-slate-800 bg-slate-900 px-3 t-label text-slate-500">
+      {/* 左: 状態 */}
+      <div className="flex min-w-0 items-center gap-4">
+        <span className="shrink-0 text-emerald-500">● 準備完了</span>
+        <span className="truncate">銘柄: {ticker ?? "—"}</span>
+        {/* 狭いときは資料件数から先に隠す（中央の表記を潰さないため） */}
+        <span className="hidden truncate lg:inline">
+          読み込み済み資料: {documentCount} 件
+        </span>
+      </div>
 
-      {/* 使い方の質問はここから。バージョン表記の左に置く */}
-      <span className="ml-auto shrink-0">
+      {/* 中央: 権利表記 */}
+      <div className="justify-self-center whitespace-nowrap text-center text-slate-600">
+        {COPYRIGHT}
+      </div>
+
+      {/* 右: ヘルプとバージョン */}
+      <div className="flex items-center justify-end gap-3">
         <Tooltip content={TOOLTIPS.help} placement="top">
           <button
             type="button"
@@ -39,9 +57,9 @@ export default function StatusBar({
             ヘルプ
           </button>
         </Tooltip>
-      </span>
 
-      <span className="shrink-0 font-mono">Phase 1 / v0.1.0</span>
+        <span className="shrink-0 whitespace-nowrap font-mono">v{APP_VERSION}</span>
+      </div>
     </footer>
   );
 }
