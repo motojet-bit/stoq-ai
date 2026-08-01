@@ -1,7 +1,22 @@
 /** アプリ全体で共有する型定義 */
 
-/** LLM プロバイダ */
-export type ProviderId = "openai" | "anthropic" | "gemini" | "custom";
+/** ID が固定の組み込みプロバイダ */
+export type BuiltinProviderId = "openai" | "anthropic" | "gemini";
+
+/**
+ * プロバイダ ID。組み込みの 3 種、またはユーザーが追加した
+ * OpenAI互換プロバイダの採番済み ID（例: `custom-1738…`）。
+ */
+export type ProviderId = string;
+
+/** ユーザーが追加した OpenAI互換プロバイダ 1 件 */
+export interface CustomProvider {
+  id: ProviderId;
+  /** 画面に出す識別ラベル（例: DeepSeek, Moonshot） */
+  label: string;
+  baseUrl: string;
+  model: string;
+}
 
 /** APIキーの設定状況（キー本体は保持せず、マスク済み文字列のみ持つ） */
 export interface KeyStatus {
@@ -14,10 +29,12 @@ export interface KeyStatus {
 /** Rust 側から返る設定の安全な表現。生の APIキーは含まれない。 */
 export interface AppSettings {
   provider: ProviderId;
+  /** 組み込みプロバイダのモデル名 */
   models: Record<string, string>;
-  customBaseUrl: string;
+  customProviders: CustomProvider[];
   secUserAgent: string;
   maxPromptTokens: number;
+  /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
 }
 
@@ -25,9 +42,15 @@ export interface AppSettings {
 export interface SettingsPatch {
   provider?: ProviderId;
   models?: Record<string, string>;
-  customBaseUrl?: string;
   secUserAgent?: string;
   maxPromptTokens?: number;
+}
+
+/** settings_update_custom_provider に渡す差分 */
+export interface CustomProviderPatch {
+  label?: string;
+  baseUrl?: string;
+  model?: string;
 }
 
 /** LLM に渡す会話 1 メッセージ */

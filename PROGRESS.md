@@ -8,17 +8,19 @@
 ## 現在のステータス
 
 **フェーズ: 2 — データパイプライン ＆ AI分析エンジン**
-**Step 1（APIキー設定画面 + LLM 接続基盤）✅ 完了**
+**Step 1（APIキー設定画面 + LLM 接続基盤）および Step 1.1（OpenAI互換の可変長リスト化）✅ 完了**
 
 Phase 2 の全体設計を `docs/設計.md` に記載。
-Step 1 として、設定モーダル・APIキーの安全な保存・4 プロバイダ対応の LLM 接続基盤・
-対話パネルからのストリーミング疎通確認までを実装した。
+Step 1 として設定モーダル・APIキーの安全な保存・LLM 接続基盤・対話パネルからの
+ストリーミング疎通確認までを実装し、Step 1.1 で OpenAI互換プロバイダを
+固定 1 枠から**自由に追加・削除できるリスト**へ拡張した。
 
 ### Phase 2 のステップ
 
 | Step | 内容 | 状態 |
 | --- | --- | --- |
 | **Step 1** | APIキー設定画面（モーダル UI）と LLM 接続基盤 | ✅ 完了 |
+| **Step 1.1** | OpenAI互換プロバイダの可変長リスト化（追加・削除） | ✅ 完了 |
 | Step 2 | Financial Data Fetcher（Yahoo Finance / SEC EDGAR）と UI 接続 | 🔶 SEC のみ先行実装（UI 未接続） |
 | Step 3 | PDF パーサ ＋ トークンカウンター ＋ オーバーフロー警告 | ⬜ |
 | Step 4 | Prompt Engine（20項目）とパイプライン | ⬜ |
@@ -31,9 +33,10 @@ Step 1 として、設定モーダル・APIキーの安全な保存・4 プロ�
 | 設定の永続化（OS のアプリ設定ディレクトリ） | ✅ `src-tauri/src/settings.rs` |
 | APIキーのマスク表示（生の値をフロントに渡さない） | ✅ |
 | 設定モーダル UI | ✅ `src/components/SettingsModal.tsx` |
-| プロバイダ選択（OpenAI / Anthropic / Gemini / Custom） | ✅ |
-| モデル名・Base URL・SEC User-Agent の設定 | ✅ |
-| LLM 共通インターフェース（4 プロバイダ） | ✅ `src-tauri/src/llm/` |
+| プロバイダ選択（組み込み 3 種 + カスタム任意個） | ✅ |
+| **OpenAI互換プロバイダの追加・削除（可変長リスト）** | ✅ ラベル / Base URL / キー / モデル名 |
+| モデル名・SEC User-Agent の設定 | ✅ |
+| LLM 共通インターフェース | ✅ `src-tauri/src/llm/` |
 | SSE ストリーミング → Tauri Channel | ✅ |
 | 対話パネルからの疎通確認 | ✅ `src/components/ChatPanel.tsx` |
 | メニュー「ファイル > 設定…」/「ヘルプ > APIキーの設定…」から起動 | ✅ |
@@ -73,6 +76,25 @@ Step 1 として、設定モーダル・APIキーの安全な保存・4 プロ�
 ---
 
 ## 作業履歴
+
+### 2026-08-01 — Phase 2 Step 1.1: OpenAI互換プロバイダの可変長リスト化 ✅
+- 固定 1 枠だった OpenAI互換プロバイダを、**任意個追加・削除できるリスト**に変更
+  - `CustomProvider { id, label, base_url, model }` を導入し、`Settings.custom_providers: Vec<_>` で保持
+  - APIキーは組み込み・カスタムを区別せず同一辞書（プロバイダ ID → キー）で管理。
+    マスク表示・保存・削除のロジックが 1 本で済む
+  - 枠を削除すると対応する APIキーも同時に破棄。選択中のものを消した場合は組み込みへ戻す
+  - 旧形式（`custom_base_url` + `keys["custom"]`）を読み込み時に自動でリストへ移行
+- Rust コマンドを追加: `settings_add_custom_provider` / `settings_update_custom_provider` /
+  `settings_remove_custom_provider`
+- `llm/mod.rs` のディスパッチを ID ベースに変更。組み込み 3 種以外は
+  カスタム定義を引いて OpenAI 互換実装を再利用する
+- フロントエンド
+  - `providers.ts` を組み込み定義 + ラベル解決 + `providerReadiness()`（キー / Base URL /
+    モデル名が揃っているかの判定）に再編
+  - `SettingsModal` に「＋ プロバイダーを追加」と各枠の「✕」を実装。ラベルはインライン編集
+  - `ApiKeyIndicator` を全プロバイダ表示に対応（横スクロール、ラベル truncate）
+- **将来の複数 LLM 直列/並列検証**に備え、カスタムプロバイダを配列として保持している
+- **次**: Step 2（Yahoo Finance クライアントと財務データの UI 接続）
 
 ### 2026-08-01 — Phase 2 Step 1: 設定モーダルと LLM 接続基盤 ✅
 - `docs/設計.md` に Phase 2 の全体設計図を記載（モジュール構成・データフロー・

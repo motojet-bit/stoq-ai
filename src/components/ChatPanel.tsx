@@ -92,8 +92,8 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
         <IconMessage className="h-3.5 w-3.5 text-slate-600" />
         対話
         {settings && (
-          <span className="ml-auto font-mono text-[11px] text-slate-600">
-            {providerLabel(settings.provider)}
+          <span className="ml-auto truncate font-mono text-[11px] text-slate-600">
+            {providerLabel(settings, settings.provider)}
             {activeModel ? ` / ${activeModel}` : ""}
           </span>
         )}

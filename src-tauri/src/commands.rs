@@ -34,14 +34,13 @@ pub fn settings_load(app: AppHandle) -> Result<SettingsView> {
     Ok(settings::load(&app)?.to_view())
 }
 
-/// キー以外の設定項目を更新する。指定した項目のみ差し替える。
+/// キーとカスタムプロバイダ以外の設定項目を更新する。指定した項目のみ差し替える。
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsPatch {
     pub provider: Option<String>,
-    /// プロバイダ名 → モデル名
+    /// 組み込みプロバイダ名 → モデル名
     pub models: Option<std::collections::BTreeMap<String, String>>,
-    pub custom_base_url: Option<String>,
     pub sec_user_agent: Option<String>,
     pub max_prompt_tokens: Option<usize>,
 }
@@ -51,7 +50,7 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
     let mut current = settings::load(&app)?;
 
     if let Some(provider) = patch.provider {
-        if !settings::PROVIDERS.contains(&provider.as_str()) {
+        if !current.has_provider(&provider) {
             return Err(AppError::msg(format!("未知のプロバイダです: {provider}")));
         }
         current.provider = provider;
@@ -59,13 +58,10 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
     if let Some(models) = patch.models {
         for (provider, model) in models {
             let model = model.trim().to_string();
-            if !model.is_empty() {
+            if !model.is_empty() && settings::BUILTIN_PROVIDERS.contains(&provider.as_str()) {
                 current.models.insert(provider, model);
             }
         }
-    }
-    if let Some(url) = patch.custom_base_url {
-        current.custom_base_url = url.trim().trim_end_matches('/').to_string();
     }
     if let Some(ua) = patch.sec_user_agent {
         current.sec_user_agent = ua.trim().to_string();
@@ -78,19 +74,78 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
     Ok(current.to_view())
 }
 
-/// APIキーを保存する。空文字を渡すと削除。
+/// APIキーを保存する。空文字を渡すと削除。組み込み・カスタムどちらの ID も受け付ける。
 #[tauri::command]
 pub fn settings_set_key(app: AppHandle, provider: String, api_key: String) -> Result<SettingsView> {
-    if !settings::PROVIDERS.contains(&provider.as_str()) {
+    let mut current = settings::load(&app)?;
+    if !current.has_provider(&provider) {
         return Err(AppError::msg(format!("未知のプロバイダです: {provider}")));
     }
-    let mut current = settings::load(&app)?;
     let trimmed = api_key.trim();
     if trimmed.is_empty() {
         current.keys.remove(&provider);
     } else {
         current.keys.insert(provider, trimmed.to_string());
     }
+    settings::save(&app, &current)?;
+    Ok(current.to_view())
+}
+
+// ------------------------------------------------ OpenAI互換プロバイダの追加・更新・削除
+
+/// 新しい OpenAI互換プロバイダ枠を追加し、採番された ID を含む設定を返す。
+#[tauri::command]
+pub fn settings_add_custom_provider(app: AppHandle, label: Option<String>) -> Result<SettingsView> {
+    let mut current = settings::load(&app)?;
+    current.add_custom_provider(label);
+    settings::save(&app, &current)?;
+    Ok(current.to_view())
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CustomProviderPatch {
+    pub label: Option<String>,
+    pub base_url: Option<String>,
+    pub model: Option<String>,
+}
+
+/// OpenAI互換プロバイダの表示名 / Base URL / モデル名を更新する。
+#[tauri::command]
+pub fn settings_update_custom_provider(
+    app: AppHandle,
+    id: String,
+    patch: CustomProviderPatch,
+) -> Result<SettingsView> {
+    let mut current = settings::load(&app)?;
+    let entry = current
+        .custom_providers
+        .iter_mut()
+        .find(|c| c.id == id)
+        .ok_or_else(|| AppError::msg(format!("プロバイダ {id} が見つかりませんでした。")))?;
+
+    if let Some(label) = patch.label {
+        let label = label.trim().to_string();
+        if !label.is_empty() {
+            entry.label = label;
+        }
+    }
+    if let Some(url) = patch.base_url {
+        entry.base_url = url.trim().trim_end_matches('/').to_string();
+    }
+    if let Some(model) = patch.model {
+        entry.model = model.trim().to_string();
+    }
+
+    settings::save(&app, &current)?;
+    Ok(current.to_view())
+}
+
+/// OpenAI互換プロバイダを削除する。対応する APIキーも破棄する。
+#[tauri::command]
+pub fn settings_remove_custom_provider(app: AppHandle, id: String) -> Result<SettingsView> {
+    let mut current = settings::load(&app)?;
+    current.remove_custom_provider(&id)?;
     settings::save(&app, &current)?;
     Ok(current.to_view())
 }

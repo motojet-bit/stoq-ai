@@ -81,21 +81,28 @@ pub async fn send(settings: &Settings, request: LlmRequest, channel: Channel<Llm
             )
             .await
         }
-        "custom" => {
-            let base = settings.custom_base_url.trim().trim_end_matches('/');
-            if base.is_empty() {
-                Err(AppError::msg(
-                    "OpenAI互換 API の Base URL が未設定です。設定画面から登録してください。",
-                ))
-            } else {
-                openai::stream(base, &api_key, &model, &request, max_tokens, &channel).await
-            }
-        }
         "anthropic" => anthropic::stream(&api_key, &model, &request, max_tokens, &channel).await,
         "gemini" => gemini::stream(&api_key, &model, &request, max_tokens, &channel).await,
-        other => Err(AppError::msg(format!(
-            "未知のプロバイダです: {other}"
-        ))),
+        // それ以外はユーザーが追加した OpenAI互換プロバイダ
+        id => match settings.custom(id) {
+            None => Err(AppError::msg(format!("未知のプロバイダです: {id}"))),
+            Some(custom) => {
+                let base = custom.base_url.trim().trim_end_matches('/');
+                if base.is_empty() {
+                    Err(AppError::msg(format!(
+                        "「{}」の Base URL が未設定です。設定画面から登録してください。",
+                        custom.label
+                    )))
+                } else if model.trim().is_empty() {
+                    Err(AppError::msg(format!(
+                        "「{}」のモデル名が未設定です。設定画面から登録してください。",
+                        custom.label
+                    )))
+                } else {
+                    openai::stream(base, &api_key, &model, &request, max_tokens, &channel).await
+                }
+            }
+        },
     };
 
     match result {

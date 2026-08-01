@@ -1,13 +1,26 @@
 import { useEffect, useState } from "react";
-import type { AppSettings, ProviderId } from "@/types";
-import { PROVIDERS } from "@/lib/config/providers";
-import { saveSettings, setApiKey } from "@/lib/config/settingsStore";
-import { IconClose, IconKey } from "@/components/Icons";
+import type { AppSettings, CustomProvider, ProviderId } from "@/types";
+import { BUILTIN_PROVIDERS, providerReadiness } from "@/lib/config/providers";
+import {
+  addCustomProvider,
+  removeCustomProvider,
+  saveSettings,
+  setApiKey,
+  updateCustomProvider,
+} from "@/lib/config/settingsStore";
+import { IconClose, IconKey, IconPlus } from "@/components/Icons";
 
 interface Props {
   open: boolean;
   settings: AppSettings | null;
   onClose: () => void;
+}
+
+/** カスタム枠 1 件分の未保存入力値 */
+interface CustomDraft {
+  label: string;
+  baseUrl: string;
+  model: string;
 }
 
 /**
@@ -20,7 +33,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
   // 未保存の入力値。プロバイダ ID をキーにする。
   const [keyDrafts, setKeyDrafts] = useState<Record<string, string>>({});
   const [modelDrafts, setModelDrafts] = useState<Record<string, string>>({});
-  const [baseUrl, setBaseUrl] = useState("");
+  const [customDrafts, setCustomDrafts] = useState<Record<string, CustomDraft>>({});
   const [secUserAgent, setSecUserAgent] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,27 +44,36 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     if (!open || !settings) return;
     setKeyDrafts({});
     setModelDrafts({ ...settings.models });
-    setBaseUrl(settings.customBaseUrl);
+    setCustomDrafts(toDrafts(settings.customProviders));
     setSecUserAgent(settings.secUserAgent);
     setError(null);
     setSavedAt(null);
-  }, [open, settings]);
+    // open の切り替わり時のみ初期化する（入力中に settings が更新されても上書きしない）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
+  // 枠の追加・削除で構成が変わったら、増減分だけ下書きに反映する
   useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+    if (!open || !settings) return;
+    setCustomDrafts((prev) => {
+      const next: Record<string, CustomDraft> = {};
+      for (const c of settings.customProviders) {
+        next[c.id] = prev[c.id] ?? { label: c.label, baseUrl: c.baseUrl, model: c.model };
+      }
+      return next;
+    });
+  }, [open, settings]);
 
   if (!open) return null;
 
-  const handleSelectProvider = async (provider: ProviderId) => {
+  const patchCustomDraft = (id: string, patch: Partial<CustomDraft>) => {
+    setCustomDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+  };
+
+  const run = async (fn: () => Promise<unknown>) => {
     setError(null);
     try {
-      await saveSettings({ provider });
+      await fn();
     } catch (e) {
       setError(String(e));
     }
@@ -64,14 +86,14 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
       // 入力されたキーだけを個別に保存する
       for (const [provider, value] of Object.entries(keyDrafts)) {
         if (value.trim().length > 0) {
-          await setApiKey(provider as ProviderId, value);
+          await setApiKey(provider, value);
         }
       }
-      await saveSettings({
-        models: modelDrafts,
-        customBaseUrl: baseUrl,
-        secUserAgent,
-      });
+      // カスタム枠のラベル / Base URL / モデル名
+      for (const [id, draft] of Object.entries(customDrafts)) {
+        await updateCustomProvider(id, draft);
+      }
+      await saveSettings({ models: modelDrafts, secUserAgent });
       setKeyDrafts({});
       setSavedAt(new Date().toLocaleTimeString("ja-JP"));
     } catch (e) {
@@ -81,14 +103,41 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
     }
   };
 
-  const handleClearKey = async (provider: ProviderId) => {
-    setError(null);
-    try {
-      await setApiKey(provider, "");
-      setKeyDrafts((prev) => ({ ...prev, [provider]: "" }));
-    } catch (e) {
-      setError(String(e));
-    }
+  const keyStatus = (id: ProviderId) => settings?.keys.find((k) => k.provider === id);
+
+  /** APIキー入力欄と、設定済みバッジ */
+  const renderKeyRow = (id: ProviderId, placeholder: string, source?: string) => {
+    const status = keyStatus(id);
+    return (
+      <label className="block">
+        <span className="mb-1 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+          <span>APIキー{source ? `（${source}）` : ""}</span>
+          {status?.configured ? (
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <span className="font-mono">{status.masked}</span>
+              <button
+                type="button"
+                onClick={() => void run(() => setApiKey(id, ""))}
+                className="rounded border border-slate-700 px-1.5 text-slate-400 hover:border-red-800 hover:text-red-300"
+              >
+                削除
+              </button>
+            </span>
+          ) : (
+            <span className="text-slate-600">未設定</span>
+          )}
+        </span>
+        <input
+          type="password"
+          autoComplete="off"
+          spellCheck={false}
+          value={keyDrafts[id] ?? ""}
+          onChange={(e) => setKeyDrafts((prev) => ({ ...prev, [id]: e.target.value }))}
+          placeholder={status?.configured ? "変更する場合のみ入力" : placeholder}
+          className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
+        />
+      </label>
+    );
   };
 
   return (
@@ -120,21 +169,27 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
             <p className="text-[13px] text-slate-400">設定を読み込んでいます…</p>
           ) : (
             <>
+              {/* ------------------------------------------------ プロバイダ選択 */}
               <section className="mb-5">
                 <h3 className="mb-2 text-[12px] font-medium uppercase tracking-wider text-slate-500">
                   使用するプロバイダ
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {PROVIDERS.map((p) => {
-                    const active = settings.provider === p.id;
-                    const configured = settings.keys.find(
-                      (k) => k.provider === p.id,
-                    )?.configured;
+                  {[
+                    ...BUILTIN_PROVIDERS.map((p) => ({ id: p.id as ProviderId, label: p.label })),
+                    ...settings.customProviders.map((c) => ({
+                      id: c.id,
+                      label: c.label || "（名称未設定）",
+                    })),
+                  ].map(({ id, label }) => {
+                    const active = settings.provider === id;
+                    const { ready, reason } = providerReadiness(settings, id);
                     return (
                       <button
-                        key={p.id}
+                        key={id}
                         type="button"
-                        onClick={() => handleSelectProvider(p.id)}
+                        title={reason ?? "送信可能"}
+                        onClick={() => void run(() => saveSettings({ provider: id }))}
                         className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-[13px] transition-colors ${
                           active
                             ? "border-emerald-500 bg-emerald-950/60 text-emerald-200"
@@ -143,114 +198,159 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
                       >
                         <span
                           className={`h-1.5 w-1.5 rounded-full ${
-                            configured ? "bg-emerald-400" : "bg-slate-600"
+                            ready ? "bg-emerald-400" : "bg-slate-600"
                           }`}
                         />
-                        {p.label}
+                        {label}
                       </button>
                     );
                   })}
                 </div>
               </section>
 
+              {/* ------------------------------------------------ 組み込みプロバイダ */}
               <section className="mb-5 space-y-3">
                 <h3 className="text-[12px] font-medium uppercase tracking-wider text-slate-500">
                   APIキーとモデル
                 </h3>
 
-                {PROVIDERS.map((p) => {
-                  const status = settings.keys.find((k) => k.provider === p.id);
-                  return (
-                    <div
-                      key={p.id}
-                      className="rounded-lg border border-slate-800 bg-slate-900/60 p-3"
-                    >
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="text-[13px] font-medium text-slate-200">
-                          {p.label}
+                {BUILTIN_PROVIDERS.map((p) => (
+                  <div
+                    key={p.id}
+                    className="rounded-lg border border-slate-800 bg-slate-900/60 p-3"
+                  >
+                    <div className="mb-2 text-[13px] font-medium text-slate-200">{p.label}</div>
+
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {renderKeyRow(p.id, p.keyPlaceholder, p.keySource)}
+
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] text-slate-500">
+                          モデル名（{p.modelHint}）
                         </span>
-                        {status?.configured ? (
-                          <span className="flex items-center gap-2 text-[11px] text-emerald-400">
-                            <span className="font-mono">{status.masked}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleClearKey(p.id)}
-                              className="rounded border border-slate-700 px-1.5 py-0.5 text-slate-400 hover:border-red-800 hover:text-red-300"
-                            >
-                              削除
-                            </button>
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-slate-600">未設定</span>
-                        )}
-                      </div>
-
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-1 block text-[11px] text-slate-500">
-                            APIキー（{p.keySource}）
-                          </span>
-                          <input
-                            type="password"
-                            autoComplete="off"
-                            spellCheck={false}
-                            value={keyDrafts[p.id] ?? ""}
-                            onChange={(e) =>
-                              setKeyDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))
-                            }
-                            placeholder={
-                              status?.configured ? "変更する場合のみ入力" : p.keyPlaceholder
-                            }
-                            className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
-                          />
-                        </label>
-
-                        <label className="block">
-                          <span className="mb-1 block text-[11px] text-slate-500">
-                            モデル名（{p.modelHint}）
-                          </span>
-                          <input
-                            type="text"
-                            autoComplete="off"
-                            spellCheck={false}
-                            value={modelDrafts[p.id] ?? ""}
-                            onChange={(e) =>
-                              setModelDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))
-                            }
-                            className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 focus:border-emerald-500 focus:outline-none"
-                          />
-                        </label>
-                      </div>
-
-                      {p.needsBaseUrl && (
-                        <label className="mt-2 block">
-                          <span className="mb-1 block text-[11px] text-slate-500">
-                            Base URL（末尾の /chat/completions は不要）
-                          </span>
-                          <input
-                            type="text"
-                            autoComplete="off"
-                            spellCheck={false}
-                            value={baseUrl}
-                            onChange={(e) => setBaseUrl(e.target.value)}
-                            placeholder="https://api.deepseek.com/v1"
-                            className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
-                          />
-                        </label>
-                      )}
-
-                      {p.id === "anthropic" && (
-                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                          Claude Opus 5 では <code className="text-slate-400">temperature</code>{" "}
-                          が廃止されているため送信しません。出力の深さは{" "}
-                          <code className="text-slate-400">effort</code> で制御しています。
-                        </p>
-                      )}
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={modelDrafts[p.id] ?? ""}
+                          onChange={(e) =>
+                            setModelDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))
+                          }
+                          className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 focus:border-emerald-500 focus:outline-none"
+                        />
+                      </label>
                     </div>
-                  );
-                })}
+
+                    {p.id === "anthropic" && (
+                      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                        Claude Opus 5 では <code className="text-slate-400">temperature</code>{" "}
+                        が廃止されているため送信しません。出力の深さは{" "}
+                        <code className="text-slate-400">effort</code> で制御しています。
+                      </p>
+                    )}
+                  </div>
+                ))}
               </section>
 
+              {/* ------------------------------------------------ OpenAI互換（可変長） */}
+              <section className="mb-5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h3 className="text-[12px] font-medium uppercase tracking-wider text-slate-500">
+                    OpenAI互換 API（DeepSeek / Moonshot など）
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => void run(() => addCustomProvider())}
+                    className="flex h-7 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800 px-2.5 text-[12px] text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
+                  >
+                    <IconPlus className="h-3.5 w-3.5" />
+                    プロバイダーを追加
+                  </button>
+                </div>
+
+                {settings.customProviders.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-slate-800 px-3 py-4 text-center text-[12px] text-slate-600">
+                    OpenAI互換の API はまだ登録されていません。
+                    <br />
+                    「プロバイダーを追加」から Base URL とキーを設定してください。
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {settings.customProviders.map((c) => {
+                      const draft = customDrafts[c.id] ?? {
+                        label: c.label,
+                        baseUrl: c.baseUrl,
+                        model: c.model,
+                      };
+                      return (
+                        <div
+                          key={c.id}
+                          className="rounded-lg border border-slate-800 bg-slate-900/60 p-3"
+                        >
+                          <div className="mb-2 flex items-center gap-2">
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              spellCheck={false}
+                              value={draft.label}
+                              onChange={(e) => patchCustomDraft(c.id, { label: e.target.value })}
+                              placeholder="識別ラベル（例: DeepSeek）"
+                              aria-label="識別ラベル"
+                              className="selectable h-7 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-[13px] font-medium text-slate-200 placeholder:text-slate-600 hover:border-slate-700 focus:border-emerald-500 focus:bg-slate-950 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void run(() => removeCustomProvider(c.id))}
+                              aria-label={`${c.label} を削除`}
+                              title="このプロバイダーを削除（APIキーも破棄されます）"
+                              className="rounded p-1 text-slate-500 hover:bg-red-950/60 hover:text-red-300"
+                            >
+                              <IconClose className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {renderKeyRow(c.id, "sk-…")}
+
+                            <label className="block">
+                              <span className="mb-1 block text-[11px] text-slate-500">
+                                モデル名（例: deepseek-chat）
+                              </span>
+                              <input
+                                type="text"
+                                autoComplete="off"
+                                spellCheck={false}
+                                value={draft.model}
+                                onChange={(e) =>
+                                  patchCustomDraft(c.id, { model: e.target.value })
+                                }
+                                className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 focus:border-emerald-500 focus:outline-none"
+                              />
+                            </label>
+                          </div>
+
+                          <label className="mt-2 block">
+                            <span className="mb-1 block text-[11px] text-slate-500">
+                              Base URL（末尾の /chat/completions は不要）
+                            </span>
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              spellCheck={false}
+                              value={draft.baseUrl}
+                              onChange={(e) => patchCustomDraft(c.id, { baseUrl: e.target.value })}
+                              placeholder="https://api.deepseek.com/v1"
+                              className="selectable h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
+                            />
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* ------------------------------------------------ SEC */}
               <section className="mb-2">
                 <h3 className="mb-2 text-[12px] font-medium uppercase tracking-wider text-slate-500">
                   SEC EDGAR
@@ -296,7 +396,7 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
             </button>
             <button
               type="button"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={busy || !settings}
               className="h-8 rounded-md bg-emerald-600 px-4 text-[13px] font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
@@ -306,5 +406,11 @@ export default function SettingsModal({ open, settings, onClose }: Props) {
         </footer>
       </div>
     </div>
+  );
+}
+
+function toDrafts(list: CustomProvider[]): Record<string, CustomDraft> {
+  return Object.fromEntries(
+    list.map((c) => [c.id, { label: c.label, baseUrl: c.baseUrl, model: c.model }]),
   );
 }

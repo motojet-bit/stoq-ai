@@ -1,6 +1,12 @@
 import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
-import type { AppSettings, ProviderId, SettingsPatch } from "@/types";
+import { providerReadiness } from "@/lib/config/providers";
+import type {
+  AppSettings,
+  CustomProviderPatch,
+  ProviderId,
+  SettingsPatch,
+} from "@/types";
 
 /**
  * 設定のグローバルストア。
@@ -57,21 +63,45 @@ export async function loadSettings(): Promise<AppSettings | null> {
   return snapshot;
 }
 
+/** Rust から返った最新の設定でストアを差し替える。 */
+function commit(next: AppSettings): AppSettings {
+  snapshot = next;
+  emit();
+  return next;
+}
+
 export async function saveSettings(patch: SettingsPatch): Promise<AppSettings> {
-  snapshot = await invoke<AppSettings>("settings_save", { patch });
-  emit();
-  return snapshot;
+  return commit(await invoke<AppSettings>("settings_save", { patch }));
 }
 
-/** APIキーを保存する。空文字を渡すと削除。 */
+/** APIキーを保存する。空文字を渡すと削除。組み込み・カスタムどちらの ID でも可。 */
 export async function setApiKey(provider: ProviderId, apiKey: string): Promise<AppSettings> {
-  snapshot = await invoke<AppSettings>("settings_set_key", { provider, apiKey });
-  emit();
-  return snapshot;
+  return commit(await invoke<AppSettings>("settings_set_key", { provider, apiKey }));
 }
 
-/** 現在選択中のプロバイダにキーが設定されているか。 */
+// ------------------------------------------------ OpenAI互換プロバイダの追加・更新・削除
+
+export async function addCustomProvider(label?: string): Promise<AppSettings> {
+  return commit(await invoke<AppSettings>("settings_add_custom_provider", { label }));
+}
+
+export async function updateCustomProvider(
+  id: ProviderId,
+  patch: CustomProviderPatch,
+): Promise<AppSettings> {
+  return commit(
+    await invoke<AppSettings>("settings_update_custom_provider", { id, patch }),
+  );
+}
+
+export async function removeCustomProvider(id: ProviderId): Promise<AppSettings> {
+  return commit(await invoke<AppSettings>("settings_remove_custom_provider", { id }));
+}
+
+// ------------------------------------------------ 導出
+
+/** 現在選択中のプロバイダで送信できる状態か。 */
 export function isActiveProviderReady(settings: AppSettings | null): boolean {
   if (!settings) return false;
-  return settings.keys.some((k) => k.provider === settings.provider && k.configured);
+  return providerReadiness(settings, settings.provider).ready;
 }

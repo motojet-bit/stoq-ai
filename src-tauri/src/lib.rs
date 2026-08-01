@@ -19,6 +19,9 @@ pub fn run() {
             commands::settings_load,
             commands::settings_save,
             commands::settings_set_key,
+            commands::settings_add_custom_provider,
+            commands::settings_update_custom_provider,
+            commands::settings_remove_custom_provider,
             commands::llm_send,
             commands::sec_fetch_latest_filing,
         ])
