@@ -22,8 +22,10 @@ const SOURCE = readFileSync(
 );
 
 describe("権利表記の文面", () => {
-  it("指定どおりの文面になっている", () => {
-    expect(COPYRIGHT).toBe("© 2026 StoQ AI Analyzer. All Rights Reserved.");
+  it("指定どおりの形になっている", () => {
+    // 名称を変えても形は変わらない。文面の突き合わせは appMeta.test.ts 側
+    expect(COPYRIGHT).toBe(`© ${COPYRIGHT_YEAR} ${APP_NAME}. All Rights Reserved.`);
+    expect(COPYRIGHT).toMatch(/^© \d{4} .+\. All Rights Reserved\.$/);
   });
 
   it("アプリ名と年から組み立てている（直書きしていない）", () => {

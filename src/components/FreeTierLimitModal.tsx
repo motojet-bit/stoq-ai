@@ -2,6 +2,7 @@ import { FREE_TICKER_LIMIT } from "@/lib/license/freeTier";
 import { useUsedTickers } from "@/lib/license/freeTierStore";
 import ModalShell from "@/components/ModalShell";
 import { IconBadge, IconKey } from "@/components/Icons";
+import { APP_NAME } from "@/lib/ui/appMeta";
 
 interface Props {
   open: boolean;
@@ -10,8 +11,6 @@ interface Props {
   onClose: () => void;
   /** 設定の「ライセンス認証」タブを開く */
   onOpenLicense: () => void;
-  /** 案内（ヘルプ）を開く */
-  onOpenGuide: () => void;
 }
 
 /**
@@ -25,7 +24,6 @@ export default function FreeTierLimitModal({
   ticker,
   onClose,
   onOpenLicense,
-  onOpenGuide,
 }: Props) {
   const used = useUsedTickers();
 
@@ -47,13 +45,6 @@ export default function FreeTierLimitModal({
           </button>
           <button
             type="button"
-            onClick={onOpenGuide}
-            className="min-h-8 rounded-md border border-emerald-700 bg-emerald-950/40 px-3.5 t-body text-emerald-300 transition-colors hover:bg-emerald-900/40"
-          >
-            🎁 無料でライセンスを取得（IBKR等）
-          </button>
-          <button
-            type="button"
             onClick={onOpenLicense}
             className="flex min-h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500"
           >
@@ -65,7 +56,7 @@ export default function FreeTierLimitModal({
     >
       <div className="px-6 py-5">
         <p className="selectable t-body leading-relaxed text-slate-300">
-          StoQ AI Analyzer をご利用いただきありがとうございます。
+          {APP_NAME} をご利用いただきありがとうございます。
           {FREE_TICKER_LIMIT + 1}銘柄目以降の無制限分析を行うには、
           ライセンスキーを有効化してください。
         </p>

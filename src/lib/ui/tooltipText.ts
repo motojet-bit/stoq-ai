@@ -1,3 +1,5 @@
+import { APP_NAME } from "@/lib/ui/appMeta";
+
 /**
  * 初心者向けの案内文。
  *
@@ -41,4 +43,4 @@ export const TOOLTIPS = {
 export const FEATURE_REQUEST_EMAIL = "xxxx@xxx.com";
 export const FEATURE_REQUEST_URL =
   `mailto:${FEATURE_REQUEST_EMAIL}` +
-  `?subject=${encodeURIComponent("【StoQ AI】機能リクエスト")}`;
+  `?subject=${encodeURIComponent(`【${APP_NAME}】機能リクエスト`)}`;

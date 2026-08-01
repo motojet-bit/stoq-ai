@@ -1,3 +1,5 @@
+import { APP_NAME } from "@/lib/ui/appMeta";
+
 /**
  * 免責事項の文面。
  *
@@ -17,7 +19,7 @@ export const DISCLAIMER_SECTIONS: DisclaimerSection[] = [
   {
     title: "投資助言の否定（非勧誘）",
     body:
-      "本ツール「StoQ AI Analyzer」（以下、本ツール）が提供・表示するすべての情報" +
+      `本ツール「${APP_NAME}」（以下、本ツール）が提供・表示するすべての情報` +
       "（数値データ、AIによる分析結果、スコアリング、生成テキスト等）は、" +
       "一般的な情報提供およびリサーチ支援のみを目的としており、" +
       "金融商品取引法に基づく投資助言、投資勧誘、" +

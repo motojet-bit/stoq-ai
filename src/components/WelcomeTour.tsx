@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ModalShell from "@/components/ModalShell";
 import { IconHelp } from "@/components/Icons";
+import { APP_NAME } from "@/lib/ui/appMeta";
 
 interface Props {
   open: boolean;
@@ -18,7 +19,7 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: "ようこそ、StoQ AI Analyzer へ",
+    title: `ようこそ、${APP_NAME} へ`,
     body:
       "米国株・グローバル株のファンダメンタル分析を、AI と一緒に進めるためのアプリです。\n\n" +
       "取得した財務データと、あなたが読み込ませた決算資料をまとめて AI に渡し、\n" +

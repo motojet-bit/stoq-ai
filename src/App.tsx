@@ -650,10 +650,6 @@ export default function App() {
           setSettingsOpen(true);
           setSettingsTab("license");
         }}
-        onOpenGuide={() => {
-          setLimitedTicker(null);
-          setHelpOpen(true);
-        }}
       />
 
       <SaveToPortfolioModal
