@@ -53,6 +53,7 @@ import HelpAssistant from "@/components/HelpAssistant";
 import WelcomeTour from "@/components/WelcomeTour";
 import LegalDisclaimerModal from "@/components/LegalDisclaimerModal";
 import DisclaimerTicker from "@/components/DisclaimerTicker";
+import ComparePanel from "@/components/ComparePanel";
 
 const newId = () => crypto.randomUUID();
 
@@ -366,6 +367,32 @@ export default function App() {
     void loadTicker(ticker);
   };
 
+  /**
+   * 検討中銘柄で選んだ複数銘柄を比較タブで開く。
+   * 同じ組み合わせのタブがあれば作り直さず、そちらへ移る。
+   */
+  const handleCompare = (tickers: string[]) => {
+    const key = tickers.join(",");
+    const existing = tabs.find(
+      (t) => t.kind === "compare" && (t.tickers ?? []).join(",") === key,
+    );
+    if (existing) {
+      setActiveTabId(existing.id);
+      return;
+    }
+
+    const tab: WorkspaceTab = {
+      id: newId(),
+      title: `比較: ${tickers.join(" / ")}`,
+      kind: "compare",
+      ticker: null,
+      tickers,
+      closable: true,
+    };
+    setTabs((prev) => [...prev, tab]);
+    setActiveTabId(tab.id);
+  };
+
   const handleNewTab = () => {
     const tab: WorkspaceTab = {
       id: newId(),
@@ -432,6 +459,7 @@ export default function App() {
           onSelectTicker={handleCandidateSelect}
           candidateImportOpen={candidateImportOpen}
           onCandidateImportOpenChange={setCandidateImportOpen}
+          onCompareTickers={handleCompare}
         />
 
         <main className="flex min-w-0 flex-1 flex-col">
@@ -449,7 +477,16 @@ export default function App() {
               右カラム: 20項目の分析結果（縦長）
             最小化した枠はここに現れず、残ったパネルが 100% を占有する。
           */}
-          {renderWorkspace()}
+          {activeTab?.kind === "compare" ? (
+            <section className="panel bg-slate-950">
+              <ComparePanel
+                tickers={activeTab.tickers ?? []}
+                onOpenTicker={handleTickerSubmit}
+              />
+            </section>
+          ) : (
+            renderWorkspace()
+          )}
         </main>
       </div>
 

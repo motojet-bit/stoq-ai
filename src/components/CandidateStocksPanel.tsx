@@ -2,6 +2,7 @@ import { useState, type MouseEvent } from "react";
 import type { CandidateStock } from "@/types";
 import { removeCandidate, useCandidates } from "@/lib/candidates/candidateStore";
 import ContextMenu, { type ContextMenuItem } from "@/components/ContextMenu";
+import { MAX_COMPARE } from "@/lib/compare/compareData";
 import CandidateImportModal from "@/components/CandidateImportModal";
 import {
   IconBookmark,
@@ -27,6 +28,8 @@ interface Props {
   /** インポートモーダルの開閉（ショートカットからも開けるよう外に出している） */
   importOpen: boolean;
   onImportOpenChange: (open: boolean) => void;
+  /** チェックした銘柄を横並び比較する */
+  onCompare: (tickers: string[]) => void;
 }
 
 interface MenuState {
@@ -48,9 +51,25 @@ export default function CandidateStocksPanel({
   onResizeStart,
   importOpen,
   onImportOpenChange,
+  onCompare,
 }: Props) {
   const candidates = useCandidates();
   const [menu, setMenu] = useState<MenuState | null>(null);
+  // 比較用の複数選択。ティッカーで持つ（削除されても壊れないように）
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const visible = new Set(candidates.map((c) => c.ticker));
+  const picked = selected.filter((t) => visible.has(t));
+  const atLimit = picked.length >= MAX_COMPARE;
+
+  const toggle = (ticker: string) => {
+    setSelected((prev) =>
+      prev.includes(ticker)
+        ? prev.filter((t) => t !== ticker)
+        : // 上限を超えたら古いものから外す（押しても無反応にしない）
+          [...prev, ticker].slice(-MAX_COMPARE),
+    );
+  };
 
   const openMenu = (e: MouseEvent, candidate: CandidateStock) => {
     e.preventDefault();
@@ -153,6 +172,14 @@ export default function CandidateStocksPanel({
                     onContextMenu={(e) => openMenu(e, candidate)}
                     className="group flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-slate-800"
                   >
+                    <input
+                      type="checkbox"
+                      checked={picked.includes(candidate.ticker)}
+                      onChange={() => toggle(candidate.ticker)}
+                      aria-label={`${candidate.ticker} を比較対象にする`}
+                      title="チェックした銘柄を横並びで比較できます"
+                      className="shrink-0 accent-emerald-500"
+                    />
                     <button
                       type="button"
                       onClick={() => onSelectTicker(candidate.ticker)}
@@ -185,6 +212,25 @@ export default function CandidateStocksPanel({
                 </li>
               ))}
             </ul>
+          )}
+        </div>
+      )}
+
+      {/* 2 銘柄以上そろったら比較ボタンを出す */}
+      {picked.length >= 2 && (
+        <div className="shrink-0 border-t border-slate-800 px-2 py-1.5">
+          <button
+            type="button"
+            onClick={() => onCompare(picked)}
+            className="flex min-h-7 w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-2 t-label font-medium text-white transition-colors hover:bg-emerald-500"
+          >
+            📊 選択した銘柄を横並び比較（最大{MAX_COMPARE}社）
+            <span className="font-mono">{picked.length}</span>
+          </button>
+          {atLimit && (
+            <p className="mt-1 t-label text-slate-500">
+              最大 {MAX_COMPARE} 社まで。さらに選ぶと古い選択が外れます。
+            </p>
           )}
         </div>
       )}

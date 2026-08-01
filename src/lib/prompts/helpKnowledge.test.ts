@@ -8,6 +8,7 @@ import {
   shortcutTable,
 } from "@/lib/prompts/helpKnowledge";
 import { mergeBindings, SHORTCUTS } from "@/lib/ui/shortcutStore";
+import { TOOLTIPS } from "@/lib/ui/tooltipText";
 
 const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   provider: "anthropic",
@@ -144,6 +145,45 @@ describe("buildHelpSystemPrompt", () => {
 
   it("設定が未読み込みでも組み立てられる", () => {
     expect(() => buildHelpSystemPrompt(null, mergeBindings([]), false)).not.toThrow();
+  });
+});
+
+describe("ティッカー形式の案内", () => {
+  const prompt = () => buildHelpSystemPrompt(settings(), mergeBindings([]), false);
+
+  it("米国株の例を挙げている", () => {
+    const text = prompt();
+    expect(text).toContain("米国株");
+    expect(text).toContain("AAPL");
+    expect(text).toContain("NVDA");
+  });
+
+  it("**日本株の .T 表記**を具体例つきで案内している", () => {
+    const text = prompt();
+    expect(text).toContain("日本株");
+    expect(text).toContain("7203.T");
+    expect(text).toContain("トヨタ自動車");
+    expect(text).toContain("9984.T");
+  });
+
+  it("その他の市場のサフィックスにも触れている", () => {
+    const text = prompt();
+    expect(text).toContain("ASML.AS");
+    expect(text).toContain("0700.HK");
+  });
+
+  it("SEC EDGAR が米国上場のみであることを伝えている", () => {
+    expect(prompt()).toContain("SEC EDGAR は米国上場企業のみ");
+  });
+
+  it("入力欄のツールチップと同じ内容を案内している（食い違わない）", () => {
+    const text = prompt();
+    // ツールチップが挙げる 3 例が、ナレッジ側にもすべてある
+    for (const example of ["AAPL", "NVDA", "7203.T", "9984.T"]) {
+      expect(TOOLTIPS.ticker).toContain(example);
+      expect(text).toContain(example);
+    }
+    expect(TOOLTIPS.ticker).toContain(".T");
   });
 });
 

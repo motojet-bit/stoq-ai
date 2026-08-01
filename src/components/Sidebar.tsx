@@ -43,6 +43,8 @@ interface Props {
   /** 検討中銘柄のインポートモーダル（ショートカットからも開ける） */
   candidateImportOpen: boolean;
   onCandidateImportOpenChange: (open: boolean) => void;
+  /** チェックした銘柄を横並び比較する */
+  onCompareTickers: (tickers: string[]) => void;
 }
 
 /** Chatbox 風の会話履歴サイドバー（折りたたみ可能） */
@@ -59,6 +61,7 @@ export default function Sidebar({
   onSelectTicker,
   candidateImportOpen,
   onCandidateImportOpenChange,
+  onCompareTickers,
 }: Props) {
   const [deleting, setDeleting] = useState<ChatSession | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -242,6 +245,7 @@ export default function Sidebar({
         onResizeStart={startResize}
         importOpen={candidateImportOpen}
         onImportOpenChange={onCandidateImportOpenChange}
+        onCompare={onCompareTickers}
       />
 
       <ConfirmDialog

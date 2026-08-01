@@ -177,7 +177,7 @@ export interface StoredChatMessage {
 }
 
 /** メインエリアのタブ */
-export type TabKind = "workspace" | "analysis" | "document";
+export type TabKind = "workspace" | "analysis" | "document" | "compare";
 
 export interface WorkspaceTab {
   id: string;
@@ -185,6 +185,8 @@ export interface WorkspaceTab {
   kind: TabKind;
   ticker: string | null;
   closable: boolean;
+  /** 比較タブで並べる銘柄 */
+  tickers?: string[];
 }
 
 // ---------------------------------------------------------------- 財務データ

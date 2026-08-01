@@ -1,5 +1,12 @@
 import type { WorkspaceTab } from "@/types";
-import { IconClose, IconPlus, IconChart, IconFile, IconMessage } from "@/components/Icons";
+import {
+  IconChart,
+  IconClose,
+  IconFile,
+  IconLayoutColumns,
+  IconMessage,
+  IconPlus,
+} from "@/components/Icons";
 
 interface Props {
   tabs: WorkspaceTab[];
@@ -13,6 +20,7 @@ const KIND_ICON = {
   workspace: IconMessage,
   analysis: IconChart,
   document: IconFile,
+  compare: IconLayoutColumns,
 } as const;
 
 /** Cursor 風のマルチタブバー */
