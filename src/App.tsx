@@ -10,6 +10,8 @@ import {
 } from "@/lib/parser/documentStore";
 import {
   cancelAnalysis,
+  clearAnalysis,
+  restoreAnalysis,
   runAnalysis,
   useAnalysisRuns,
 } from "@/lib/prompts/analysisRunner";
@@ -20,9 +22,8 @@ import CommandBar from "@/components/CommandBar";
 import Sidebar from "@/components/Sidebar";
 import TabBar from "@/components/TabBar";
 import WorkspacePanel from "@/components/WorkspacePanel";
-import SplitPane from "@/components/SplitPane";
-import AnalysisPanel from "@/components/AnalysisPanel";
-import ChatPanel from "@/components/ChatPanel";
+import ResizableSplit from "@/components/ResizableSplit";
+import BottomDock from "@/components/BottomDock";
 import StatusBar from "@/components/StatusBar";
 import SettingsModal from "@/components/SettingsModal";
 import ToastHost from "@/components/ToastHost";
@@ -91,6 +92,12 @@ export default function App() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // 銘柄タブを開いたら、保存済みの分析結果を復元する。
+  // 表示中・実行中の結果があるときは何もしない（restoreAnalysis 側で判定）。
+  useEffect(() => {
+    if (activeTicker) void restoreAnalysis(activeTicker);
+  }, [activeTicker]);
 
   const handleMenuAction = (action: MenuAction) => {
     if (action === "open-settings") setSettingsOpen(true);
@@ -191,34 +198,30 @@ export default function App() {
             onNewTab={handleNewTab}
           />
 
-          <SplitPane
-            top={
+          <ResizableSplit
+            direction="vertical"
+            initialSecondSize={340}
+            minFirstSize={140}
+            minSecondSize={120}
+            first={
               <WorkspacePanel
                 tab={activeTab}
                 analysis={activeAnalysis}
                 onRetry={(ticker) => void loadTicker(ticker)}
               />
             }
-            bottom={
-              <div className="flex h-full">
-                <div className="min-w-0 flex-1">
-                  <AnalysisPanel
-                    ticker={activeTicker}
-                    run={activeRun}
-                    ready={llm.ready}
-                    readyReason={llm.reason}
-                    onRun={handleRunAnalysis}
-                    onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
-                    onOpenSettings={() => setSettingsOpen(true)}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <ChatPanel
-                    settings={settings}
-                    onOpenSettings={() => setSettingsOpen(true)}
-                  />
-                </div>
-              </div>
+            second={
+              <BottomDock
+                ticker={activeTicker}
+                run={activeRun}
+                settings={settings}
+                ready={llm.ready}
+                readyReason={llm.reason}
+                onRun={handleRunAnalysis}
+                onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
+                onClear={() => activeTicker && void clearAnalysis(activeTicker)}
+                onOpenSettings={() => setSettingsOpen(true)}
+              />
             }
           />
         </main>

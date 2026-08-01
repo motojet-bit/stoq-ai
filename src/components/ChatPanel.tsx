@@ -3,9 +3,12 @@ import type { AppSettings, DisplayMessage } from "@/types";
 import { streamChat } from "@/lib/llm/client";
 import { providerLabel, providerReadiness } from "@/lib/config/providers";
 import { IconMessage } from "@/components/Icons";
+import PanelHeader from "@/components/PanelHeader";
 
 interface Props {
   settings: AppSettings | null;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   onOpenSettings: () => void;
 }
 
@@ -16,7 +19,12 @@ const SYSTEM_PROMPT =
 const newId = () => crypto.randomUUID();
 
 /** 下部スプリット右側の対話パネル。LLM 接続の疎通確認を兼ねる。 */
-export default function ChatPanel({ settings, onOpenSettings }: Props) {
+export default function ChatPanel({
+  settings,
+  collapsed,
+  onToggleCollapse,
+  onOpenSettings,
+}: Props) {
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -88,19 +96,25 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
   };
 
   return (
-    <section className="flex h-full min-w-0 flex-col border-l border-slate-800">
-      <header className="flex h-8 shrink-0 items-center gap-2 border-b border-slate-800 px-3 text-[12px] font-medium text-slate-400">
-        <IconMessage className="h-3.5 w-3.5 text-slate-600" />
-        対話
-        {settings && (
-          <span className="ml-auto truncate font-mono text-[11px] text-slate-600">
-            {providerLabel(settings, settings.provider)}
-            {activeModel ? ` / ${activeModel}` : ""}
-          </span>
-        )}
-      </header>
+    <section className="flex h-full min-w-0 flex-col bg-slate-950">
+      <PanelHeader
+        icon={<IconMessage className="h-3.5 w-3.5" />}
+        title="対話"
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+        actions={
+          settings && (
+            <span className="truncate font-mono text-[11.5px] text-slate-600">
+              {providerLabel(settings, settings.provider)}
+              {activeModel ? ` / ${activeModel}` : ""}
+            </span>
+          )
+        }
+      />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-3">
+      {collapsed ? null : (
+        <>
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
           <div className="selectable space-y-2 text-[12px] leading-relaxed text-slate-600">
             <p>銘柄や決算資料について質問すると、ここに会話が表示されます。</p>
@@ -118,11 +132,11 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
             )}
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {messages.map((m) => (
-              <li key={m.id} className="text-[12px] leading-relaxed">
+              <li key={m.id} className="text-[13px] leading-[1.85]">
                 <div
-                  className={`mb-0.5 text-[11px] font-medium ${
+                  className={`mb-1 text-[12px] font-medium ${
                     m.role === "user" ? "text-slate-400" : "text-emerald-400"
                   }`}
                 >
@@ -173,7 +187,7 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
                 ? "質問を入力（Enter で送信 / Shift+Enter で改行）"
                 : "APIキーを設定すると送信できます"
             }
-            className="selectable min-h-[38px] flex-1 resize-none rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-[12px] text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed"
+            className="selectable min-h-[40px] flex-1 resize-none rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-[13px] leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed"
           />
           <button
             type="button"
@@ -185,6 +199,8 @@ export default function ChatPanel({ settings, onOpenSettings }: Props) {
           </button>
         </div>
       </div>
+        </>
+      )}
     </section>
   );
 }

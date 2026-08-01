@@ -1,7 +1,9 @@
 import type { CriterionResult } from "@/lib/prompts/parseAnalysis";
+import { SCALE_CLASSES, type TextScale } from "@/lib/ui/textScale";
 
 interface Props {
   row: CriterionResult;
+  scale: TextScale;
 }
 
 /** スコアに応じた色。0（判定不能）はグレー。 */
@@ -14,40 +16,38 @@ function scoreStyle(score: number | null): { bar: string; text: string } {
 }
 
 /** 20項目評価テーブルの 1 行。 */
-export default function CriterionScoreRow({ row }: Props) {
+export default function CriterionScoreRow({ row, scale }: Props) {
   const style = scoreStyle(row.score);
   const filled = row.score ?? 0;
+  const t = SCALE_CLASSES[scale];
 
   return (
-    <div className="grid grid-cols-[1.5rem_11rem_5.5rem_1fr] items-start gap-2 border-b border-slate-800/70 py-1.5 last:border-b-0">
-      <span className="pt-0.5 text-right font-mono text-[11px] text-slate-600">{row.id}</span>
+    <div className="grid grid-cols-[1.75rem_minmax(9rem,13rem)_6rem_1fr] items-start gap-3 border-b border-slate-800/70 py-2.5 last:border-b-0">
+      <span className={`pt-0.5 text-right font-mono ${t.label} text-slate-600`}>{row.id}</span>
 
       <div className="min-w-0">
-        <div className="truncate text-[12px] text-slate-300" title={row.label}>
-          {row.label}
-        </div>
-        <div className="text-[10px] text-slate-600">{row.category}</div>
+        <div className={`${t.body} text-slate-200`}>{row.label}</div>
+        <div className={`${t.label} text-slate-600`}>{row.category}</div>
       </div>
 
       <div className="pt-0.5">
-        <div className="mb-1 flex items-center gap-1" aria-label={`スコア ${row.score ?? "未判定"}`}>
+        <div
+          className="mb-1.5 flex items-center gap-1"
+          aria-label={`スコア ${row.score ?? "未判定"}`}
+        >
           {[1, 2, 3, 4, 5].map((n) => (
             <span
               key={n}
-              className={`h-1.5 w-1.5 rounded-full ${
-                n <= filled ? style.bar : "bg-slate-800"
-              }`}
+              className={`h-2 w-2 rounded-full ${n <= filled ? style.bar : "bg-slate-800"}`}
             />
           ))}
         </div>
-        <div className={`truncate text-[11px] ${style.text}`} title={row.verdict}>
+        <div className={`${t.label} ${style.text}`}>
           {row.score === 0 ? "判定不能" : row.verdict || "—"}
         </div>
       </div>
 
-      <p className="selectable pt-0.5 text-[11px] leading-relaxed text-slate-400">
-        {row.rationale}
-      </p>
+      <p className={`selectable pt-0.5 ${t.body} ${t.leading} text-slate-300`}>{row.rationale}</p>
     </div>
   );
 }

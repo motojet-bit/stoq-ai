@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 use tauri::AppHandle;
 
+use crate::analyses::{self, SavedAnalysis};
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
@@ -215,6 +216,48 @@ pub fn documents_delete(app: AppHandle, id: String) -> Result<Vec<StagedDocument
 #[tauri::command]
 pub fn documents_clear(app: AppHandle) -> Result<Vec<StagedDocument>> {
     documents::clear(&app)
+}
+
+// ---------------------------------------------------------------- 分析結果の永続化
+
+/// 分析結果を保存する（生成完了時に自動で呼ばれる）。
+#[tauri::command]
+pub fn analysis_save(
+    app: AppHandle,
+    ticker: String,
+    raw: String,
+    provider: Option<String>,
+    model: Option<String>,
+    prompt_tokens: i64,
+    notes: Vec<String>,
+) -> Result<SavedAnalysis> {
+    analyses::save(
+        &app,
+        &ticker,
+        &raw,
+        provider.as_deref(),
+        model.as_deref(),
+        prompt_tokens,
+        &notes,
+    )
+}
+
+/// 保存済みの分析結果を読み出す。無ければ null。
+#[tauri::command]
+pub fn analysis_load(app: AppHandle, ticker: String) -> Result<Option<SavedAnalysis>> {
+    analyses::load(&app, &ticker)
+}
+
+/// 保存済みの銘柄一覧（新しい順）。
+#[tauri::command]
+pub fn analysis_list(app: AppHandle) -> Result<Vec<(String, i64)>> {
+    analyses::list(&app)
+}
+
+/// 分析結果を削除する。ユーザーが明示的にクリアしたときだけ呼ばれる。
+#[tauri::command]
+pub fn analysis_delete(app: AppHandle, ticker: String) -> Result<()> {
+    analyses::delete(&app, &ticker)
 }
 
 // ---------------------------------------------------------------- 財務データ

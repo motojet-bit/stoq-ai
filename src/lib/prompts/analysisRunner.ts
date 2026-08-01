@@ -9,6 +9,7 @@ import type {
   AppSettings,
   Fundamentals,
   QuarterlySeries,
+  SavedAnalysis,
   SecFilingText,
   StagedDocument,
 } from "@/types";
@@ -29,7 +30,12 @@ export interface AnalysisRun {
   notes: string[];
   promptTokens: number;
   model: string | null;
+  provider: string | null;
   finishedAtMs: number | null;
+  /** SQLite から復元したものか */
+  fromCache: boolean;
+  /** 保存日時 */
+  savedAtMs: number | null;
 }
 
 let runs: Record<string, AnalysisRun> = {};
@@ -65,7 +71,10 @@ function blank(ticker: string): AnalysisRun {
     notes: [],
     promptTokens: 0,
     model: null,
+    provider: null,
     finishedAtMs: null,
+    fromCache: false,
+    savedAtMs: null,
   };
 }
 
@@ -117,6 +126,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     error: null,
     notes: [],
     finishedAtMs: null,
+    fromCache: false,
+    savedAtMs: null,
   });
 
   try {
@@ -180,7 +191,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         maxTokens: RESERVE_FOR_OUTPUT,
       },
       {
-        onStart: (_provider, model) => patch(ticker, { model }),
+        onStart: (provider, model) => patch(ticker, { provider, model }),
         onDelta: (delta) => {
           raw += delta;
           // 途中経過も構造化して描画する
@@ -189,7 +200,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       },
     );
 
-    const finalRaw = raw.length > 0 ? raw : "";
+    const finalRaw = raw;
     patch(ticker, {
       phase: cancelled ? "cancelled" : "done",
       raw: finalRaw,
@@ -198,8 +209,32 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       finishedAtMs: Date.now(),
     });
 
+    // 生成完了と同時に SQLite へ自動保存する。中断でも途中結果を残す。
+    if (finalRaw.trim().length > 0) {
+      const current = runs[ticker];
+      try {
+        const saved = await invoke<SavedAnalysis>("analysis_save", {
+          ticker,
+          raw: finalRaw,
+          provider: current?.provider ?? null,
+          model: current?.model ?? null,
+          promptTokens: current?.promptTokens ?? 0,
+          notes: current?.notes ?? [],
+        });
+        patch(ticker, { savedAtMs: saved.savedAtMs });
+      } catch (e) {
+        pushToast(
+          "warning",
+          "分析結果を保存できませんでした",
+          `画面には表示されていますが、次回起動時には復元されません。${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      }
+    }
+
     if (cancelled) {
-      pushToast("info", "分析を中断しました", "途中までの結果は残しています。");
+      pushToast("info", "分析を中断しました", "途中までの結果は保存しています。");
     } else {
       pushToast("success", `${ticker} の分析が完了しました`);
     }
@@ -220,4 +255,63 @@ export async function cancelAnalysis(ticker: string): Promise<void> {
   const run = runs[ticker];
   if (!run?.requestId) return;
   await cancelChat(run.requestId);
+}
+
+// ---------------------------------------------------------------- 永続化
+
+/**
+ * 保存済みの分析結果を復元する。
+ *
+ * 銘柄タブを開いたときに呼ぶ。実行中や表示済みの結果は上書きしない。
+ */
+export async function restoreAnalysis(rawTicker: string): Promise<void> {
+  const ticker = rawTicker.trim().toUpperCase();
+  if (!ticker || !isTauri()) return;
+
+  const existing = runs[ticker];
+  if (existing && existing.phase !== "idle") return;
+
+  try {
+    const saved = await invoke<SavedAnalysis | null>("analysis_load", { ticker });
+    if (!saved) return;
+
+    patch(ticker, {
+      phase: "done",
+      raw: saved.raw,
+      result: parseAnalysis(saved.raw),
+      notes: saved.notes,
+      promptTokens: saved.promptTokens,
+      provider: saved.provider,
+      model: saved.model,
+      finishedAtMs: saved.savedAtMs,
+      savedAtMs: saved.savedAtMs,
+      fromCache: true,
+      error: null,
+      requestId: null,
+    });
+  } catch {
+    // 復元できなくても分析は実行できるので、通知はしない
+  }
+}
+
+/**
+ * 分析結果を破棄する。
+ *
+ * **ユーザーが明示的に「クリア」を押したときだけ呼ぶ。**
+ * 画面上の表示と SQLite の両方を消す。
+ */
+export async function clearAnalysis(rawTicker: string): Promise<void> {
+  const ticker = rawTicker.trim().toUpperCase();
+  if (!ticker) return;
+
+  runs = { ...runs, [ticker]: blank(ticker) };
+  emit();
+
+  if (!isTauri()) return;
+  try {
+    await invoke("analysis_delete", { ticker });
+    pushToast("info", `${ticker} の分析結果を削除しました`);
+  } catch (e) {
+    toastError("分析結果を削除できませんでした", e);
+  }
 }

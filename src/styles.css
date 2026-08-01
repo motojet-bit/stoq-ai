@@ -31,9 +31,15 @@ body {
 }
 
 /* スプリッターのドラッグ中に選択が走らないようにする */
-body.is-resizing {
-  cursor: row-resize;
+body.is-resizing-v,
+body.is-resizing-h {
   user-select: none !important;
+}
+body.is-resizing-v {
+  cursor: row-resize;
+}
+body.is-resizing-h {
+  cursor: col-resize;
 }
 
 /* 細身のスクロールバー */

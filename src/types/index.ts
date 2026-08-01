@@ -73,6 +73,18 @@ export type LlmEvent =
   | { type: "done"; text: string; cancelled: boolean }
   | { type: "error"; message: string };
 
+/** SQLite に保存された分析結果 */
+export interface SavedAnalysis {
+  ticker: string;
+  /** LLM の生の Markdown 出力 */
+  raw: string;
+  provider: string | null;
+  model: string | null;
+  promptTokens: number;
+  notes: string[];
+  savedAtMs: number;
+}
+
 /** SEC 提出書類の本文（プロンプトに載せる用） */
 export interface SecFilingText {
   ticker: string;

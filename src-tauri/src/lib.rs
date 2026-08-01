@@ -3,6 +3,7 @@
 //! HTTP 通信と秘密情報の保持はすべてこちら側で行う。理由は `docs/設計.md` の
 //! 「4.1 なぜ HTTP を Rust 側に置くのか」を参照。
 
+mod analyses;
 mod commands;
 mod documents;
 mod edgar;
@@ -27,6 +28,10 @@ pub fn run() {
             commands::settings_remove_custom_provider,
             commands::llm_send,
             commands::llm_cancel,
+            commands::analysis_save,
+            commands::analysis_load,
+            commands::analysis_list,
+            commands::analysis_delete,
             commands::documents_list,
             commands::documents_stage,
             commands::documents_read_text,
