@@ -63,6 +63,7 @@ export default function App() {
       ticker: activeTicker,
       settings,
       fundamentals: activeAnalysis?.fundamentals ?? null,
+      quarterly: activeAnalysis?.quarterly ?? null,
       // EDGAR に登録がある銘柄のときだけ本文を取りに行く
       fetchFiling: activeAnalysis?.filing?.status === "ok",
       documents,

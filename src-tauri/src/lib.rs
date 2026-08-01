@@ -10,6 +10,7 @@ mod error;
 mod html;
 mod http;
 mod llm;
+mod quarterly;
 mod settings;
 mod yahoo;
 
@@ -33,6 +34,7 @@ pub fn run() {
             commands::documents_delete,
             commands::documents_clear,
             commands::yahoo_fetch_fundamentals,
+            commands::quarterly_series,
             commands::sec_filing_status,
             commands::sec_fetch_latest_filing,
         ])

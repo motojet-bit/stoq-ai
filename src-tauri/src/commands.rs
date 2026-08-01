@@ -8,6 +8,7 @@ use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
 use crate::llm::{self, LlmEvent, LlmRequest};
+use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
 use crate::yahoo::{self, Fundamentals};
 
@@ -222,6 +223,18 @@ pub fn documents_clear(app: AppHandle) -> Result<Vec<StagedDocument>> {
 #[tauri::command]
 pub async fn yahoo_fetch_fundamentals(ticker: String) -> Result<Fundamentals> {
     yahoo::fetch_fundamentals(&ticker).await
+}
+
+/// 直近 4 四半期の推移とモメンタム判定を取得する。
+///
+/// Yahoo から売上・純利益・EPS を、SEC XBRL から前年同期比の比較対象を取る。
+#[tauri::command]
+pub async fn quarterly_series(app: AppHandle, ticker: String) -> Result<QuarterlySeries> {
+    let settings = settings::load(&app)?;
+    let (summary, currency) = yahoo::fetch_quarterly_summary(&ticker).await?;
+    // 米国上場でなければ空が返り、YoY なしの系列になる
+    let xbrl = edgar::fetch_quarterly_revenue(&ticker, &settings.sec_user_agent).await;
+    quarterly::build(&ticker, &currency, &summary, &xbrl)
 }
 
 /// SEC EDGAR の提出状況（10-K / 10-Q の有無と最終提出日）を確認する。

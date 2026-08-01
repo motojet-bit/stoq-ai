@@ -136,6 +136,45 @@ export interface Fundamentals {
   fetchedAtMs: number;
 }
 
+/** 四半期 1 期分 */
+export interface Quarter {
+  label: string;
+  endDate: string;
+  revenue: number | null;
+  revenueDisplay: string;
+  netIncome: number | null;
+  netIncomeDisplay: string;
+  /** 純利益率 (%) */
+  netMargin: number | null;
+  /** 前四半期比 (%) */
+  revenueQoq: number | null;
+  /** 前年同期比 (%) */
+  revenueYoy: number | null;
+  epsActual: number | null;
+  epsEstimate: number | null;
+  epsSurprisePct: number | null;
+}
+
+export interface Momentum {
+  latestYoy: number | null;
+  previousYoy: number | null;
+  /** YoY が拡大していれば true、縮小していれば false、判定不能なら null */
+  accelerating: boolean | null;
+  marginImproving: boolean | null;
+  summary: string;
+}
+
+/** 直近 4 四半期の推移 */
+export interface QuarterlySeries {
+  ticker: string;
+  currency: string;
+  quarters: Quarter[];
+  momentum: Momentum;
+  source: string;
+  note: string | null;
+  fetchedAtMs: number;
+}
+
 /** SEC 提出書類 1 件の要約（本文は含まない） */
 export interface FilingRef {
   form: string;
@@ -165,6 +204,9 @@ export interface TickerAnalysis {
   filingLoading: boolean;
   filing: FilingStatus | null;
   filingError: string | null;
+  quarterlyLoading: boolean;
+  quarterly: QuarterlySeries | null;
+  quarterlyError: string | null;
 }
 
 // ---------------------------------------------------------------- 一次資料

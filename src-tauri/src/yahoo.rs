@@ -20,6 +20,10 @@ use crate::http;
 
 const MODULES: &str = "price,summaryDetail,defaultKeyStatistics,financialData";
 
+/// 四半期推移用のモジュール。`quoteSummary` は 1 回で取れる数に上限があるため、
+/// 指標用とは分けて取得する。
+const QUARTERLY_MODULES: &str = "price,incomeStatementHistoryQuarterly,earnings";
+
 static CRUMB: Mutex<Option<String>> = Mutex::new(None);
 
 // ---------------------------------------------------------------- 返却する型
@@ -150,13 +154,29 @@ async fn fetch_chart_meta(symbol: &str) -> Result<Value> {
         })
 }
 
+/// 四半期モジュールを取得する。通貨も一緒に返す。
+pub async fn fetch_quarterly_summary(ticker: &str) -> Result<(Value, String)> {
+    let symbol = ticker.trim().to_uppercase();
+    let summary = fetch_modules(&symbol, QUARTERLY_MODULES).await?;
+    let currency = summary
+        .pointer("/price/currency")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    Ok((summary, currency))
+}
+
 async fn fetch_quote_summary(symbol: &str) -> Result<Value> {
+    fetch_modules(symbol, MODULES).await
+}
+
+async fn fetch_modules(symbol: &str, modules: &str) -> Result<Value> {
     let mut refreshed = false;
 
     loop {
         let crumb = crumb(refreshed).await?;
         let url = format!(
-            "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules={MODULES}&crumb={crumb}"
+            "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules={modules}&crumb={crumb}"
         );
         let res = http::client()?.get(&url).send().await?;
         let status = res.status();

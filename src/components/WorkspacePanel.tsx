@@ -2,6 +2,7 @@ import type { TickerAnalysis, WorkspaceTab } from "@/types";
 import MetricCard from "@/components/MetricCard";
 import MetricCardSkeleton from "@/components/MetricCardSkeleton";
 import FilingStatusBadge from "@/components/FilingStatusBadge";
+import QuarterlyTrend from "@/components/QuarterlyTrend";
 
 interface Props {
   tab: WorkspaceTab | undefined;
@@ -114,6 +115,11 @@ export default function WorkspacePanel({ tab, analysis, onRetry }: Props) {
           {fundamentals.warning}
         </p>
       )}
+
+      <QuarterlyTrend
+        series={analysis?.quarterly ?? null}
+        loading={analysis?.quarterlyLoading ?? false}
+      />
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
         {loading && !fundamentals

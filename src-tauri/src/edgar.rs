@@ -255,6 +255,88 @@ fn now_ms() -> u64 {
         .unwrap_or(0)
 }
 
+/// XBRL で売上を表すタグ。企業によって使うタグが異なるため、この順で試す。
+const REVENUE_CONCEPTS: [&str; 4] = [
+    "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "Revenues",
+    "RevenueFromContractWithCustomerIncludingAssessedTax",
+    "SalesRevenueNet",
+];
+
+/// SEC XBRL から四半期売上の系列を取得する。
+///
+/// Yahoo の四半期履歴は 4 期分しか無く前年同期比を計算できないため、
+/// 米国上場銘柄についてはここから過去分を補う。
+/// EDGAR に無い銘柄や User-Agent 未設定なら空の Vec を返す（エラーにしない）。
+pub async fn fetch_quarterly_revenue(
+    ticker: &str,
+    user_agent: &str,
+) -> Vec<crate::quarterly::XbrlQuarter> {
+    let Ok(ua) = validate_user_agent(user_agent) else {
+        return Vec::new();
+    };
+    let Ok((cik, _)) = resolve_cik(ticker, ua).await else {
+        return Vec::new();
+    };
+
+    for concept in REVENUE_CONCEPTS {
+        let url =
+            format!("https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/us-gaap/{concept}.json");
+        let Ok(body) = get_text(&url, ua).await else {
+            continue;
+        };
+        let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) else {
+            continue;
+        };
+
+        let quarters = extract_quarters(&json);
+        if quarters.len() >= 5 {
+            return quarters;
+        }
+    }
+
+    Vec::new()
+}
+
+/// `units.USD` から 3 か月分（80〜100 日）のエントリだけを取り出す。
+///
+/// 同じ期末が複数回現れる（訂正報告など）ので、後に出てきたものを採用する。
+fn extract_quarters(json: &serde_json::Value) -> Vec<crate::quarterly::XbrlQuarter> {
+    let Some(rows) = json.pointer("/units/USD").and_then(|v| v.as_array()) else {
+        return Vec::new();
+    };
+
+    let mut by_end: std::collections::BTreeMap<String, f64> = std::collections::BTreeMap::new();
+
+    for row in rows {
+        let (Some(start), Some(end), Some(val)) = (
+            row.get("start").and_then(|v| v.as_str()),
+            row.get("end").and_then(|v| v.as_str()),
+            row.get("val").and_then(|v| v.as_f64()),
+        ) else {
+            continue;
+        };
+
+        let Some(days) = span_days(start, end) else {
+            continue;
+        };
+        if !(80..=100).contains(&days) {
+            continue;
+        }
+
+        by_end.insert(end.to_string(), val);
+    }
+
+    by_end
+        .into_iter()
+        .map(|(end_date, revenue)| crate::quarterly::XbrlQuarter { end_date, revenue })
+        .collect()
+}
+
+fn span_days(start: &str, end: &str) -> Option<i64> {
+    Some(crate::quarterly::days_between(start, end)?)
+}
+
 /// 最新の指定フォーム（例: ["10-K", "10-Q"]）を 1 件取得する。
 pub async fn fetch_latest_filing(
     ticker: &str,

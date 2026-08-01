@@ -1,6 +1,7 @@
 import { estimateTokens } from "@/lib/parser/tokenCount";
 import { buildSystemPrompt } from "@/lib/prompts/systemPrompt";
-import type { Fundamentals } from "@/types";
+import { condenseDocument } from "@/lib/prompts/condense";
+import type { Fundamentals, QuarterlySeries } from "@/types";
 
 /** プロンプトに載せる 1 件の一次資料 */
 export interface PromptDocument {
@@ -20,6 +21,7 @@ export interface PromptFiling {
 export interface PromptSources {
   ticker: string;
   fundamentals: Fundamentals | null;
+  quarterly: QuarterlySeries | null;
   filing: PromptFiling | null;
   documents: PromptDocument[];
   /** 入力トークンの上限（設定の maxPromptTokens） */
@@ -69,11 +71,13 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
 
   const header = buildHeader(sources.ticker);
   const metrics = buildMetricsSection(sources.fundamentals);
+  const quarterly = buildQuarterlySection(sources.quarterly);
 
   const fixedTokens =
     estimateTokens(system) +
     estimateTokens(header) +
     estimateTokens(metrics) +
+    estimateTokens(quarterly) +
     // 見出しや区切りの分の余裕
     500;
 
@@ -83,7 +87,7 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
     notes.push(
       "トークン上限が小さすぎるため、財務指標のみで分析します。設定で上限を引き上げてください。",
     );
-    return finish(system, [header, metrics], notes);
+    return finish(system, [header, metrics, quarterly], notes);
   }
 
   // 資料と SEC で予算を分ける。片方が使い切らなければ他方へ回す。
@@ -104,7 +108,11 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   const documentsSection = buildDocumentsSection(sources.documents, docsBudget, notes);
   const filingSection = buildFilingSection(sources.filing, filingBudget, notes);
 
-  const built = finish(system, [header, metrics, filingSection, documentsSection], notes);
+  const built = finish(
+    system,
+    [header, metrics, quarterly, filingSection, documentsSection],
+    notes,
+  );
 
   // 節ごとの切り詰めは概算なので、最後に全体で上限を検算する
   return enforceLimit(built, sources.tokenLimit - sources.reserveForOutput);
@@ -126,10 +134,14 @@ function enforceLimit(built: BuiltPrompt, limit: number): BuiltPrompt {
   const systemTokens = estimateTokens(built.system);
   const userBudget = Math.max(limit - systemTokens, 500);
 
+  // ここでもスマート圧縮を使う（中間の一括カットはしない）
   let user = built.user;
-  // 概算の誤差を詰めるため、収まるまで少しずつ削る
-  for (let attempt = 0; attempt < 6 && estimateTokens(user) > userBudget; attempt++) {
-    user = headTail(user, Math.floor(userBudget * (1 - attempt * 0.05)));
+  for (let attempt = 0; attempt < 5 && estimateTokens(user) > userBudget; attempt++) {
+    user = condenseDocument(
+      user,
+      Math.floor(userBudget * (1 - attempt * 0.05)),
+      "資料全体",
+    ).text;
   }
 
   return {
@@ -138,7 +150,7 @@ function enforceLimit(built: BuiltPrompt, limit: number): BuiltPrompt {
     tokens: systemTokens + estimateTokens(user),
     notes: [
       ...built.notes,
-      "入力トークン上限に収めるため、資料全体をさらに切り詰めました。設定で上限を引き上げると、より多くの資料を渡せます。",
+      "入力トークン上限に収めるため、資料全体をさらに圧縮しました。設定で上限を引き上げると、より多くの原文を渡せます。",
     ],
   };
 }
@@ -200,11 +212,7 @@ function buildFilingSection(
   const original = estimateTokens(filing.text);
   if (original <= budget) return head + filing.text;
 
-  const condensed = condenseFiling(filing.text, budget);
-  notes.push(
-    `${filing.form} の本文が長いため、重要な節（Risk Factors / MD&A 等）を優先して ` +
-      `約 ${Math.round((budget / original) * 100)}% に絞り込みました。`,
-  );
+  const condensed = condenseFiling(filing.text, budget, filing.form, notes);
   return head + condensed;
 }
 
@@ -232,18 +240,16 @@ function buildDocumentsSection(
   documents.forEach((doc, i) => {
     let body = doc.text;
     if (!fitsWhole[i]) {
-      body = headTail(doc.text, perOversized);
+      // 中間カットではなく、セクション採点にもとづくスマート圧縮
+      const condensed = condenseDocument(doc.text, perOversized, doc.name);
+      body = condensed.text;
+      notes.push(...condensed.notes);
       truncatedCount += 1;
     }
     parts.push(`### ${doc.name}\n\n${body}`);
   });
 
-  if (truncatedCount > 0) {
-    notes.push(
-      `添付資料 ${truncatedCount} 件が長いため、前半と末尾を残して中間を省略しました。`,
-    );
-  }
-
+  if (truncatedCount === 0) return parts.join("\n\n");
   return parts.join("\n\n");
 }
 
@@ -253,10 +259,14 @@ function buildDocumentsSection(
  * SEC 本文を予算内に収める。
  *
  * まず分析価値の高い節（Risk Factors / MD&A 等）を抜き出し、
- * それでも入らない場合は各節を前半・末尾に切り詰める。
- * 節が見つからない書類は素朴な head+tail にフォールバックする。
+ * それでも入らない節は**文単位のスマート圧縮**にかける（中間カットはしない）。
  */
-function condenseFiling(text: string, budget: number): string {
+function condenseFiling(
+  text: string,
+  budget: number,
+  form: string,
+  notes: string[],
+): string {
   const found: { label: string; body: string }[] = [];
 
   for (const section of KEY_SECTIONS) {
@@ -273,46 +283,72 @@ function condenseFiling(text: string, budget: number): string {
     if (body.length > 200) found.push({ label: section.label, body });
   }
 
-  if (found.length === 0) return headTail(text, budget);
+  if (found.length === 0) {
+    const condensed = condenseDocument(text, budget, `${form} 本文`);
+    notes.push(...condensed.notes);
+    return condensed.text;
+  }
 
   const perSection = Math.floor(budget / found.length);
-  return found
+  const kept = found.map((s) => s.label).join(" / ");
+  let compressed = 0;
+
+  const body = found
     .map((s) => {
-      const body =
-        estimateTokens(s.body) > perSection ? headTail(s.body, perSection) : s.body;
-      return `#### ${s.label}\n\n${body}`;
+      if (estimateTokens(s.body) <= perSection) return `#### ${s.label}\n\n${s.body}`;
+      compressed += 1;
+      const condensed = condenseDocument(s.body, perSection, `${form} ${s.label}`);
+      return `#### ${s.label}\n\n${condensed.text}`;
     })
     .join("\n\n");
+
+  notes.push(
+    `${form} の本文が長いため、分析価値の高い節（${kept}）を抽出しました` +
+      (compressed > 0
+        ? `。うち ${compressed} 節は文単位で重要箇所を選別しています（中間の一括カットはしていません）。`
+        : "。"),
+  );
+
+  return body;
 }
 
-/** 前半 65% と末尾 35% を残し、中間を省略する。 */
-function headTail(text: string, budgetTokens: number): string {
-  const chars = [...text];
-  const budgetChars = Math.max(charsForTokens(text, budgetTokens), 200);
-  if (chars.length <= budgetChars) return text;
-
-  const headChars = Math.floor(budgetChars * 0.65);
-  const tailChars = budgetChars - headChars;
-
-  const head = chars.slice(0, headChars).join("");
-  const tail = chars.slice(chars.length - tailChars).join("");
-  const omitted = chars.length - headChars - tailChars;
-
-  return `${head}\n\n…（中略：約 ${omitted.toLocaleString()} 文字を省略）…\n\n${tail}`;
-}
+// ---------------------------------------------------------------- 四半期推移
 
 /**
- * 指定トークン数に収まる文字数を求める。
+ * 直近 4 四半期の推移。モメンタム（加速 / 減速）の判定材料として渡す。
  *
- * CJK は 1 文字 ≒ 1 トークン、英数字は 4 文字 ≒ 1 トークンなので、
- * 固定の係数を使うと日本語資料で大幅に超過する。
- * そこで**その文章自身の「文字あたりトークン数」から逆算**する。
+ * 季節性の強い企業では QoQ が誤解を招くため、YoY を併記し、
+ * どちらを重視すべきかもプロンプトで明示する。
  */
-function charsForTokens(text: string, budgetTokens: number): number {
-  const charCount = [...text].length;
-  if (charCount === 0) return 0;
+function buildQuarterlySection(series: QuarterlySeries | null): string {
+  if (!series || series.quarters.length === 0) return "";
 
-  const tokensPerChar = estimateTokens(text) / charCount;
-  // 0 除算と過大見積もりの両方を防ぐ
-  return Math.floor(budgetTokens / Math.max(tokensPerChar, 0.25));
+  const lines = [
+    "## 四半期推移（直近4四半期）",
+    "",
+    `出典: ${series.source}`,
+    "",
+    "| 四半期 | 期末 | 売上高 | 前四半期比 | 前年同期比 | 純利益 | 純利益率 | EPS実績 | EPS予想 | サプライズ |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+  ];
+
+  for (const q of series.quarters) {
+    lines.push(
+      `| ${q.label} | ${q.endDate} | ${q.revenueDisplay} | ${pct(q.revenueQoq)} | ${pct(q.revenueYoy)} | ` +
+        `${q.netIncomeDisplay} | ${pct(q.netMargin)} | ${num(q.epsActual)} | ${num(q.epsEstimate)} | ${pct(q.epsSurprisePct)} |`,
+    );
+  }
+
+  lines.push("", `**モメンタム判定**: ${series.momentum.summary}`);
+  if (series.note) lines.push("", `※ ${series.note}`);
+
+  return lines.join("\n");
+}
+
+function pct(v: number | null): string {
+  return v === null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+}
+
+function num(v: number | null): string {
+  return v === null ? "—" : v.toFixed(2);
 }

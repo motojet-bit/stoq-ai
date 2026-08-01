@@ -5,7 +5,13 @@ import { buildAnalysisPrompt, type PromptDocument } from "@/lib/prompts/buildPro
 import { parseAnalysis, type AnalysisResult } from "@/lib/prompts/parseAnalysis";
 import { readDocumentText } from "@/lib/parser/documentStore";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
-import type { AppSettings, Fundamentals, SecFilingText, StagedDocument } from "@/types";
+import type {
+  AppSettings,
+  Fundamentals,
+  QuarterlySeries,
+  SecFilingText,
+  StagedDocument,
+} from "@/types";
 
 /** 1 銘柄分の分析実行状態 */
 export interface AnalysisRun {
@@ -75,6 +81,7 @@ export interface RunOptions {
   ticker: string;
   settings: AppSettings | null;
   fundamentals: Fundamentals | null;
+  quarterly: QuarterlySeries | null;
   /** SEC 提出書類を取りに行くか（提出状況が ok のときだけ true） */
   fetchFiling: boolean;
   documents: StagedDocument[];
@@ -150,6 +157,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     const prompt = buildAnalysisPrompt({
       ticker,
       fundamentals: options.fundamentals,
+      quarterly: options.quarterly,
       filing,
       documents,
       tokenLimit: settings?.maxPromptTokens ?? 180_000,

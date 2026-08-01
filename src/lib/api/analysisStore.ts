@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 import { fetchFundamentals } from "@/lib/api/yahoo";
 import { fetchFilingStatus } from "@/lib/api/sec";
+import { invoke, isTauri } from "@/lib/tauri";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
-import type { TickerAnalysis } from "@/types";
+import type { QuarterlySeries, TickerAnalysis } from "@/types";
 
 /**
  * ティッカーごとの取得結果を保持するストア。
@@ -46,6 +47,9 @@ function blank(ticker: string): TickerAnalysis {
     filingLoading: false,
     filing: null,
     filingError: null,
+    quarterlyLoading: false,
+    quarterly: null,
+    quarterlyError: null,
   };
 }
 
@@ -62,9 +66,30 @@ export async function loadTicker(rawTicker: string): Promise<void> {
     fundamentalsError: null,
     filingLoading: true,
     filingError: null,
+    quarterlyLoading: true,
+    quarterlyError: null,
   });
 
-  await Promise.all([loadFundamentals(ticker), loadFiling(ticker)]);
+  await Promise.all([
+    loadFundamentals(ticker),
+    loadFiling(ticker),
+    loadQuarterly(ticker),
+  ]);
+}
+
+async function loadQuarterly(ticker: string): Promise<void> {
+  if (!isTauri()) {
+    patch(ticker, { quarterlyLoading: false });
+    return;
+  }
+  try {
+    const quarterly = await invoke<QuarterlySeries>("quarterly_series", { ticker });
+    patch(ticker, { quarterly, quarterlyLoading: false, quarterlyError: null });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    patch(ticker, { quarterlyLoading: false, quarterlyError: message });
+    // 四半期推移は補助情報なので、失敗してもトーストは出さない
+  }
 }
 
 async function loadFundamentals(ticker: string): Promise<void> {
