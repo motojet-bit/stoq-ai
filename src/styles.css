@@ -148,3 +148,37 @@ body.is-resizing-h {
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/*
+ * 免責テロップ。同じ文面を 2 枚並べ、-50% まで動かして継ぎ目なくループさせる。
+ * 読ませたいときのために、ホバー中は止める。
+ */
+.ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: ticker-scroll 55s linear infinite;
+}
+.ticker-item {
+  padding-right: 4rem;
+}
+.ticker:hover .ticker-track,
+.ticker:focus-visible .ticker-track {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* アニメーションを控える設定のときは流さず、先頭を出したままにする */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}

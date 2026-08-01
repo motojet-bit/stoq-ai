@@ -213,3 +213,12 @@ export const IconHelp = (p: IconProps) => (
     <path d="M12 17.2h.01" />
   </Svg>
 );
+
+/** 警告（三角に感嘆符） */
+export const IconWarning = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+    <path d="M12 9v4.5" />
+    <path d="M12 17h.01" />
+  </Svg>
+);

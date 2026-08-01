@@ -10,14 +10,15 @@ interface MenuItem {
   action?: MenuAction;
 }
 
-export type MenuAction = "open-settings";
+export type MenuAction = "open-settings" | "open-disclaimer";
 
 interface Menu {
   label: string;
   items: MenuItem[];
 }
 
-const MENUS: Menu[] = [
+/** テストから参照できるよう公開する。 */
+export const MENUS: Menu[] = [
   {
     label: "ファイル",
     items: [
@@ -54,7 +55,12 @@ const MENUS: Menu[] = [
       { label: "APIキーの設定…", action: "open-settings" },
       { label: "使い方" },
       { label: "キーボードショートカット", shortcut: "Ctrl+/" },
-      { label: "StockAnalyzer について", separatorBefore: true },
+      {
+        label: "免責事項（Legal Disclaimer）",
+        separatorBefore: true,
+        action: "open-disclaimer",
+      },
+      { label: "StoQ AI Analyzer について" },
     ],
   },
 ];

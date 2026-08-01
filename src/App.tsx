@@ -14,6 +14,7 @@ import {
 import { loadCandidates } from "@/lib/candidates/candidateStore";
 import { loadPrompts } from "@/lib/prompts/promptLibrary";
 import { loadAnalystRoles } from "@/lib/prompts/analystRoleStore";
+import { openDisclaimer } from "@/lib/legal/disclaimerStore";
 import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
 import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
@@ -50,6 +51,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import PanelRestoreBar from "@/components/PanelRestoreBar";
 import HelpAssistant from "@/components/HelpAssistant";
 import WelcomeTour from "@/components/WelcomeTour";
+import LegalDisclaimerModal from "@/components/LegalDisclaimerModal";
+import DisclaimerTicker from "@/components/DisclaimerTicker";
 
 const newId = () => crypto.randomUUID();
 
@@ -324,6 +327,7 @@ export default function App() {
 
   const handleMenuAction = (action: MenuAction) => {
     if (action === "open-settings") setSettingsOpen(true);
+    else if (action === "open-disclaimer") openDisclaimer();
   };
 
   const handleNewChat = () => {
@@ -449,6 +453,9 @@ export default function App() {
         </main>
       </div>
 
+      {/* 免責は常時見えるところに置く。クリックで全文が開く */}
+      <DisclaimerTicker />
+
       <StatusBar
         ticker={currentTicker}
         documentCount={documents.length}
@@ -506,6 +513,8 @@ export default function App() {
         }}
         onCancel={() => setConfirmingNoDocs(false)}
       />
+
+      <LegalDisclaimerModal />
 
       <ToastHost />
     </div>
