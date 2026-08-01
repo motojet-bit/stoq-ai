@@ -17,6 +17,7 @@ import MarketProviderSettings from "@/components/MarketProviderSettings";
 import ThresholdSettings from "@/components/ThresholdSettings";
 import DisplaySettings from "@/components/DisplaySettings";
 import LicenseSettings from "@/components/LicenseSettings";
+import CloudSyncSettings from "@/components/CloudSyncSettings";
 import ModalShell from "@/components/ModalShell";
 import { useT } from "@/lib/i18n/i18n";
 
@@ -26,6 +27,7 @@ export type SettingsTab =
   | "thresholds"
   | "display"
   | "shortcuts"
+  | "cloud"
   | "license";
 
 interface Props {
@@ -184,6 +186,8 @@ export default function SettingsModal({
           <span className="t-label text-slate-600">
             {tab === "license"
               ? "ライセンスキーは OS のアプリ設定ディレクトリに保存されます。"
+              : tab === "cloud"
+                ? "アクセスするのは Google Drive のアプリ専用領域のみです。個人ファイルには触れません。"
               : tab === "shortcuts" || tab === "display"
                 ? "この画面の変更は即座に保存されます。"
               : tab === "thresholds"
@@ -222,6 +226,7 @@ export default function SettingsModal({
             ["thresholds", t("settings.tab.thresholds")],
             ["display", t("settings.tab.general")],
             ["shortcuts", t("settings.tab.shortcuts")],
+            ["cloud", t("settings.tab.cloud")],
             ["license", t("settings.tab.license")],
           ] as const
         ).map(([id, label]) => (
@@ -244,6 +249,8 @@ export default function SettingsModal({
       <div className="px-4 py-4">
           {tab === "license" ? (
             <LicenseSettings />
+          ) : tab === "cloud" ? (
+            <CloudSyncSettings />
           ) : tab === "shortcuts" ? (
             <ShortcutSettings />
           ) : tab === "display" ? (

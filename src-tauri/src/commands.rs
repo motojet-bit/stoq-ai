@@ -7,6 +7,7 @@ use tauri::AppHandle;
 use crate::analyses::{self, ArchiveEntry, SavedAnalysis};
 use crate::candidates::{self, CandidateInput, CandidateStock};
 use crate::chats::{self, ChatMessage, ChatSession};
+use crate::cloud;
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
@@ -378,6 +379,61 @@ pub fn license_clear(app: AppHandle) -> Result<LicenseStatus> {
     current.license_key = String::new();
     settings::save(&app, &current)?;
     Ok(license::status_of(""))
+}
+
+// ------------------------------------------------------ クラウド同期
+
+/// クラウド同期の状態を返す（生のトークンは含まない）。
+#[tauri::command]
+pub fn cloud_status(app: AppHandle) -> Result<cloud::CloudStatus> {
+    Ok(cloud::status_of(&settings::load(&app)?.cloud))
+}
+
+/// Google の OAuth クライアント ID を保存する。
+#[tauri::command]
+pub fn cloud_set_client_id(app: AppHandle, client_id: String) -> Result<cloud::CloudStatus> {
+    let mut current = settings::load(&app)?;
+    current.cloud.client_id = client_id.trim().to_string();
+    // 別のアプリの ID に差し替えたら、前のトークンは使えない
+    current.cloud.refresh_token = String::new();
+    settings::save(&app, &current)?;
+    Ok(cloud::status_of(&current.cloud))
+}
+
+/// 起動時の自動バックアップを切り替える。
+#[tauri::command]
+pub fn cloud_set_auto_backup(app: AppHandle, enabled: bool) -> Result<cloud::CloudStatus> {
+    let mut current = settings::load(&app)?;
+    current.cloud.auto_backup = enabled;
+    settings::save(&app, &current)?;
+    Ok(cloud::status_of(&current.cloud))
+}
+
+/// ブラウザを開いて Google と連携する。
+#[tauri::command]
+pub async fn cloud_connect(app: AppHandle) -> Result<cloud::CloudStatus> {
+    cloud::connect(&app).await
+}
+
+/// 連携を解除する（クラウド上のデータは消さない）。
+#[tauri::command]
+pub fn cloud_disconnect(app: AppHandle) -> Result<cloud::CloudStatus> {
+    cloud::disconnect(&app)
+}
+
+#[tauri::command]
+pub async fn cloud_backup(app: AppHandle) -> Result<cloud::BackupResult> {
+    cloud::backup(&app).await
+}
+
+#[tauri::command]
+pub async fn cloud_restore(app: AppHandle, file_id: Option<String>) -> Result<cloud::RestoreResult> {
+    cloud::restore(&app, file_id).await
+}
+
+#[tauri::command]
+pub async fn cloud_list_backups(app: AppHandle) -> Result<Vec<cloud::drive::BackupFile>> {
+    cloud::list(&app).await
 }
 
 // ------------------------------------------------------ ポートフォリオ

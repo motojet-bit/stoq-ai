@@ -23,7 +23,7 @@ futures-util = "0.3"
 
 # 分析結果の永続化。bundled で SQLite 本体を同梱し、実行環境への依存をなくす
 rusqlite = { version = "0.32", features = ["bundled"] }
-tokio = { version = "1", features = ["sync", "time"] }
+tokio = { version = "1", features = ["sync", "time", "rt"] }
 
 # CORS を迂回し、SEC が要求する User-Agent を設定するため
 # HTTP は必ず Rust 側から発行する
@@ -34,6 +34,9 @@ reqwest = { version = "0.12", default-features = false, features = [
   "gzip",
   "rustls-tls",
 ] }
+sha2 = "0.10.9"
+base64 = "0.23.0"
+getrandom = "0.3.4"
 
 [dev-dependencies]
 # 非同期のコマンド層をテストするため（本体には不要）

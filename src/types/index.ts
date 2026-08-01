@@ -59,8 +59,51 @@ export interface AppSettings {
   license: LicenseStatus;
   /** 無料版で分析した銘柄（大文字） */
   freeTickers: string[];
+  /** クラウド同期の状態 */
+  cloud: CloudStatus;
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
+}
+
+/** クラウド同期（Google Drive アプリ専用領域）の状態。生のトークンは含まない。 */
+export interface CloudStatus {
+  /** Google と連携済みか */
+  connected: boolean;
+  clientIdConfigured: boolean;
+  /** マスク済みのクライアント ID。未設定なら null */
+  clientIdMasked: string | null;
+  /** 起動時に自動バックアップするか */
+  autoBackup: boolean;
+  /** 最後にバックアップした時刻（ミリ秒）。未実施なら 0 */
+  lastBackupMs: number;
+  /** 要求しているアクセス範囲（アプリ専用領域のみ） */
+  scope: string;
+}
+
+/** クラウド上のバックアップ 1 件 */
+export interface CloudBackupFile {
+  id: string;
+  name: string;
+  /** RFC 3339 の更新日時 */
+  modifiedTime: string;
+  sizeBytes: number;
+}
+
+/** バックアップの結果 */
+export interface CloudBackupResult {
+  fileName: string;
+  sizeBytes: number;
+  uploadedAtMs: number;
+  /** バックアップに含めたファイル名 */
+  included: string[];
+}
+
+/** 復元の結果 */
+export interface CloudRestoreResult {
+  fileName: string;
+  createdAtMs: number;
+  /** 実際に書き戻したファイル名 */
+  restored: string[];
 }
 
 /** settings_save に渡す差分。指定した項目だけ更新される。 */

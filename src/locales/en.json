@@ -85,6 +85,7 @@
   "settings.tab.thresholds": "Rules & thresholds",
   "settings.tab.general": "General",
   "settings.tab.shortcuts": "Shortcuts",
+  "settings.tab.cloud": "Cloud sync",
   "settings.tab.license": "License",
   "settings.close": "Close",
   "settings.save": "Save",

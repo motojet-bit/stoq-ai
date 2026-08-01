@@ -85,6 +85,7 @@
   "settings.tab.thresholds": "分析ルール・閾値",
   "settings.tab.general": "一般",
   "settings.tab.shortcuts": "ショートカット",
+  "settings.tab.cloud": "クラウド同期",
   "settings.tab.license": "ライセンス認証",
   "settings.close": "閉じる",
   "settings.save": "保存",

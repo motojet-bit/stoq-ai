@@ -6,6 +6,7 @@
 mod analyses;
 mod candidates;
 mod chats;
+mod cloud;
 mod commands;
 mod documents;
 mod edgar;
@@ -27,7 +28,17 @@ mod yahoo;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    use tauri::Manager;
+
     tauri::Builder::default()
+        .setup(|app| {
+            // 起動時の自動バックアップ。**失敗しても起動は止めない**
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                cloud::auto_backup_if_enabled(&handle).await;
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::settings_load,
@@ -52,6 +63,14 @@ pub fn run() {
             commands::license_activate,
             commands::license_clear,
             commands::free_tier_set,
+            commands::cloud_status,
+            commands::cloud_set_client_id,
+            commands::cloud_set_auto_backup,
+            commands::cloud_connect,
+            commands::cloud_disconnect,
+            commands::cloud_backup,
+            commands::cloud_restore,
+            commands::cloud_list_backups,
             commands::portfolios_list,
             commands::portfolios_create,
             commands::portfolios_rename,

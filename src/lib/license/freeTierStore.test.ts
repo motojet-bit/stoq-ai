@@ -35,6 +35,14 @@ function settings(freeTickers: string[]): AppSettings {
     thresholds: {},
     license: { activated, masked: null, message: "" },
     freeTickers,
+    cloud: {
+      connected: false,
+      clientIdConfigured: false,
+      clientIdMasked: null,
+      autoBackup: false,
+      lastBackupMs: 0,
+      scope: "https://www.googleapis.com/auth/drive.appdata",
+    },
     keys: [],
   };
 }

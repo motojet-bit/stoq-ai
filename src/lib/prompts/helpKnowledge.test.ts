@@ -20,6 +20,14 @@ const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   thresholds: {},
   license: { activated: false, masked: null, message: "未登録" },
   freeTickers: [],
+  cloud: {
+    connected: false,
+    clientIdConfigured: false,
+    clientIdMasked: null,
+    autoBackup: false,
+    lastBackupMs: 0,
+    scope: "https://www.googleapis.com/auth/drive.appdata",
+  },
   marketProviders: [
     { id: "yahoo", label: "Yahoo Finance", requiresKey: false, ready: true, reason: null },
     {

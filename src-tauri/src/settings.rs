@@ -59,6 +59,10 @@ pub struct Settings {
     /// 無料版で分析した銘柄（大文字）。上限に達したら増えない
     #[serde(default)]
     pub free_tickers: Vec<String>,
+    /// クラウド同期（Google Drive アプリ専用領域）の設定。
+    /// 更新用トークンを含むため、フロントへはマスク済みの状態しか返さない
+    #[serde(default)]
+    pub cloud: crate::cloud::CloudConfig,
 
     /// 旧形式（カスタム枠が 1 つ固定だった頃）の Base URL。
     /// 読み込み時に `custom_providers` へ移行し、以降は空になる。
@@ -84,6 +88,7 @@ impl Default for Settings {
             thresholds: BTreeMap::new(),
             license_key: String::new(),
             free_tickers: Vec::new(),
+            cloud: crate::cloud::CloudConfig::default(),
             custom_base_url: String::new(),
         }
     }
@@ -111,6 +116,8 @@ pub struct SettingsView {
     pub license: crate::license::LicenseStatus,
     /// 無料版で分析した銘柄
     pub free_tickers: Vec<String>,
+    /// クラウド同期の状態（生のトークンは含まない）
+    pub cloud: crate::cloud::CloudStatus,
     /// 組み込み + カスタムの全プロバイダのキー状態
     pub keys: Vec<KeyStatus>,
 }
@@ -182,6 +189,7 @@ impl Settings {
             thresholds: self.thresholds.clone(),
             license: crate::license::status_of(&self.license_key),
             free_tickers: self.free_tickers.clone(),
+            cloud: crate::cloud::status_of(&self.cloud),
             keys: self
                 .provider_ids()
                 .into_iter()
@@ -414,6 +422,29 @@ mod tests {
         assert!(!s.has_provider(&id));
         assert!(!s.keys.contains_key(&id), "キーも一緒に消える");
         assert_eq!(s.provider, "anthropic", "選択中を消したら組み込みへ戻る");
+    }
+
+    #[test]
+    fn フロント向けの表現にクラウドの秘密が出ない() {
+        let mut s = Settings::default();
+        s.cloud.client_id = "123-secret.apps.googleusercontent.com".into();
+        s.cloud.refresh_token = "1//0gVerySecretRefreshToken".into();
+        s.cloud.auto_backup = true;
+
+        let json = serde_json::to_string(&s.to_view()).unwrap();
+        assert!(!json.contains("1//0gVerySecretRefreshToken"), "{json}");
+        assert!(!json.contains("123-secret.apps.googleusercontent.com"), "{json}");
+        assert!(s.to_view().cloud.connected, "連携済みであることは伝わる");
+    }
+
+    #[test]
+    fn クラウド設定を持たない旧設定ファイルも読める() {
+        let legacy = r#"{"provider":"openai","secUserAgent":"StoQ a@b.c"}"#;
+        let settings: Settings = serde_json::from_str(legacy).unwrap();
+
+        assert!(settings.cloud.client_id.is_empty());
+        assert!(!settings.cloud.auto_backup);
+        assert!(!settings.to_view().cloud.connected);
     }
 
     #[test]

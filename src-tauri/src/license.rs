@@ -21,9 +21,21 @@ pub struct LicenseStatus {
     pub message: String,
 }
 
+/// 開発・検証用のマスターキー。形式チェックを通さずに有効化できる。
+///
+/// **バイナリに直接埋まっているため、`strings` などで取り出せる。**
+/// 配布物に載る以上、これは「秘密」ではなく「合鍵」。
+/// 販売用の実キーと同じ強度を期待してはいけない。
+pub const MASTER_KEY: &str = "STOQ-DEV-MASTER-2026";
+
 /// 前後の空白を落とし、大文字に揃える。
 pub fn normalize_key(key: &str) -> String {
     key.trim().to_uppercase()
+}
+
+/// マスターキーか。
+pub fn is_master_key(key: &str) -> bool {
+    normalize_key(key) == MASTER_KEY
 }
 
 /// キーの形式を確かめる。
@@ -71,6 +83,14 @@ pub fn status_of(stored: &str) -> LicenseStatus {
         };
     }
 
+    if is_master_key(&key) {
+        return LicenseStatus {
+            activated: true,
+            masked: mask_key(&key),
+            message: "開発者用マスターキーで有効化されています。".to_string(),
+        };
+    }
+
     LicenseStatus {
         activated: true,
         masked: mask_key(&key),
@@ -83,6 +103,10 @@ pub fn activate(key: &str) -> Result<LicenseStatus> {
     let key = normalize_key(key);
     if key.is_empty() {
         return Err(AppError::msg("ライセンスキーを入力してください。"));
+    }
+    // マスターキーは形式チェックを通さない（UUID 形ではないため）
+    if is_master_key(&key) {
+        return Ok(status_of(&key));
     }
     if !is_valid_format(&key) {
         return Err(AppError::msg(
@@ -136,6 +160,31 @@ mod tests {
         let status = status_of(VALID);
         assert!(status.activated);
         assert_eq!(status.masked.as_deref(), Some("A1B2…7890"));
+    }
+
+    #[test]
+    fn マスターキーで有効化できる() {
+        let status = activate(MASTER_KEY).unwrap();
+        assert!(status.activated);
+        assert!(status.message.contains("マスターキー"));
+
+        // 小文字・前後空白でも通る
+        assert!(activate("  stoq-dev-master-2026  ").unwrap().activated);
+    }
+
+    #[test]
+    fn マスターキーは保存後も有効なままになる() {
+        let status = status_of(MASTER_KEY);
+        assert!(status.activated);
+        assert_eq!(status.masked.as_deref(), Some("STOQ…2026"));
+    }
+
+    #[test]
+    fn 似ているだけの文字列は通さない() {
+        assert!(!is_master_key("STOQ-DEV-MASTER-2025"));
+        assert!(!is_master_key("STOQ-DEV-MASTER"));
+        assert!(!is_master_key(""));
+        assert!(activate("STOQ-DEV-MASTER-2025").is_err());
     }
 
     #[test]
