@@ -31,7 +31,12 @@ export default function CommandBar({
 
       <div className="h-6 w-px bg-slate-800" />
 
-      <div className="flex shrink-0 flex-col items-end gap-1">
+      {/*
+        右上のコントロール群は `.ui-fixed` で文字サイズ連動から切り離す。
+        上の「AI設定」が太るとスライダーが下へずれ、ドラッグ中に
+        カーソルから逃げてしまうため、まとめて固定する。
+      */}
+      <div className="ui-fixed flex shrink-0 flex-col items-end gap-1">
         <ProviderMenu settings={settings} onOpenSettings={onOpenSettings} />
         <FontSizeControl />
       </div>

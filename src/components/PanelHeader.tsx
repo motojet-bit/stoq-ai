@@ -37,28 +37,47 @@ export default function PanelHeader({
   const onDragStart = (e: DragEvent<HTMLElement>) => {
     if (!slot) return;
     e.dataTransfer.setData(DRAG_TYPE, slot);
+    // 一部の環境ではカスタム MIME だけだとドラッグが成立しないため、
+    // 標準の text/plain にも同じ値を入れておく
+    e.dataTransfer.setData("text/plain", slot);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const onDragOver = (e: DragEvent<HTMLElement>) => {
-    if (!slot || !e.dataTransfer.types.includes(DRAG_TYPE)) return;
+  /**
+   * ドロップを許可する。
+   *
+   * HTML5 Drag and Drop はドロップ先が **dragenter と dragover の両方で
+   * `preventDefault()` を呼ばない限り、ブラウザ既定の「拒否」が働いて
+   * 進入禁止マーク（🚫）が出る**。判定を挟まず必ず打ち消すこと。
+   */
+  const allowDrop = (e: DragEvent<HTMLElement>) => {
+    if (!slot) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDropActive(true);
   };
 
+  const onDragLeave = (e: DragEvent<HTMLElement>) => {
+    // 子要素へ移っただけのときは消さない（枠がちらつくため）
+    const next = e.relatedTarget as Node | null;
+    if (next && e.currentTarget.contains(next)) return;
+    setDropActive(false);
+  };
+
   const onDrop = (e: DragEvent<HTMLElement>) => {
     if (!slot) return;
-    const from = e.dataTransfer.getData(DRAG_TYPE) as SlotId;
     e.preventDefault();
     setDropActive(false);
+    const from = (e.dataTransfer.getData(DRAG_TYPE) ||
+      e.dataTransfer.getData("text/plain")) as SlotId;
     if (from && from !== slot) movePanel(from, slot);
   };
 
   return (
     <header
-      onDragOver={onDragOver}
-      onDragLeave={() => setDropActive(false)}
+      onDragEnter={allowDrop}
+      onDragOver={allowDrop}
+      onDragLeave={onDragLeave}
       onDrop={onDrop}
       className={`flex min-h-9 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-900/60 px-2 py-1 ${
         dropActive ? "bg-emerald-950/60 ring-1 ring-inset ring-emerald-500" : ""
