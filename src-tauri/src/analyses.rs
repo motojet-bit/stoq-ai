@@ -25,6 +25,8 @@ pub struct SavedAnalysis {
     pub prompt_tokens: i64,
     /// プロンプトの圧縮などの注記（JSON 配列）
     pub notes: Vec<String>,
+    /// 分析に使ったデータ元（例: "財務指標(YF)", "SEC開示書類 10-Q", "添付資料 2件"）
+    pub basis: Vec<String>,
     pub saved_at_ms: i64,
 }
 
@@ -54,6 +56,12 @@ fn open(app: &AppHandle) -> Result<Connection> {
     )
     .map_err(|e| AppError::msg(format!("分析結果テーブルを作成できません: {e}")))?;
 
+    // 既存 DB への追加カラム。すでにあればエラーになるので黙って無視する。
+    let _ = conn.execute(
+        "ALTER TABLE analyses ADD COLUMN basis TEXT NOT NULL DEFAULT '[]'",
+        [],
+    );
+
     Ok(conn)
 }
 
@@ -66,6 +74,7 @@ pub fn save(
     model: Option<&str>,
     prompt_tokens: i64,
     notes: &[String],
+    basis: &[String],
 ) -> Result<SavedAnalysis> {
     let ticker = ticker.trim().to_uppercase();
     if raw.trim().is_empty() {
@@ -74,19 +83,21 @@ pub fn save(
 
     let saved_at_ms = now_ms();
     let notes_json = serde_json::to_string(notes)?;
+    let basis_json = serde_json::to_string(basis)?;
 
     open(app)?
         .execute(
-            "INSERT INTO analyses (ticker, raw, provider, model, prompt_tokens, notes, saved_at_ms)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            "INSERT INTO analyses (ticker, raw, provider, model, prompt_tokens, notes, basis, saved_at_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
              ON CONFLICT(ticker) DO UPDATE SET
                 raw = excluded.raw,
                 provider = excluded.provider,
                 model = excluded.model,
                 prompt_tokens = excluded.prompt_tokens,
                 notes = excluded.notes,
+                basis = excluded.basis,
                 saved_at_ms = excluded.saved_at_ms",
-            params![ticker, raw, provider, model, prompt_tokens, notes_json, saved_at_ms],
+            params![ticker, raw, provider, model, prompt_tokens, notes_json, basis_json, saved_at_ms],
         )
         .map_err(|e| AppError::msg(format!("分析結果を保存できません: {e}")))?;
 
@@ -97,6 +108,7 @@ pub fn save(
         model: model.map(str::to_string),
         prompt_tokens,
         notes: notes.to_vec(),
+        basis: basis.to_vec(),
         saved_at_ms,
     })
 }
@@ -108,7 +120,7 @@ pub fn load(app: &AppHandle, ticker: &str) -> Result<Option<SavedAnalysis>> {
     let conn = open(app)?;
     let row = conn
         .query_row(
-            "SELECT raw, provider, model, prompt_tokens, notes, saved_at_ms
+            "SELECT raw, provider, model, prompt_tokens, notes, basis, saved_at_ms
              FROM analyses WHERE ticker = ?1",
             params![ticker],
             |row| {
@@ -118,22 +130,26 @@ pub fn load(app: &AppHandle, ticker: &str) -> Result<Option<SavedAnalysis>> {
                     row.get::<_, Option<String>>(2)?,
                     row.get::<_, i64>(3)?,
                     row.get::<_, String>(4)?,
-                    row.get::<_, i64>(5)?,
+                    row.get::<_, String>(5)?,
+                    row.get::<_, i64>(6)?,
                 ))
             },
         )
         .optional()
         .map_err(|e| AppError::msg(format!("分析結果を読み出せません: {e}")))?;
 
-    Ok(row.map(|(raw, provider, model, prompt_tokens, notes, saved_at_ms)| SavedAnalysis {
-        ticker,
-        raw,
-        provider,
-        model,
-        prompt_tokens,
-        notes: serde_json::from_str(&notes).unwrap_or_default(),
-        saved_at_ms,
-    }))
+    Ok(row.map(
+        |(raw, provider, model, prompt_tokens, notes, basis, saved_at_ms)| SavedAnalysis {
+            ticker,
+            raw,
+            provider,
+            model,
+            prompt_tokens,
+            notes: serde_json::from_str(&notes).unwrap_or_default(),
+            basis: serde_json::from_str(&basis).unwrap_or_default(),
+            saved_at_ms,
+        },
+    ))
 }
 
 /// 保存済みの銘柄一覧（新しい順）。

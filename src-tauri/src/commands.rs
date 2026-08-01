@@ -5,6 +5,7 @@ use tauri::ipc::Channel;
 use tauri::AppHandle;
 
 use crate::analyses::{self, SavedAnalysis};
+use crate::chats::{self, ChatMessage, ChatSession};
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
 use crate::error::{AppError, Result};
@@ -230,6 +231,7 @@ pub fn analysis_save(
     model: Option<String>,
     prompt_tokens: i64,
     notes: Vec<String>,
+    basis: Vec<String>,
 ) -> Result<SavedAnalysis> {
     analyses::save(
         &app,
@@ -239,7 +241,53 @@ pub fn analysis_save(
         model.as_deref(),
         prompt_tokens,
         &notes,
+        &basis,
     )
+}
+
+// ---------------------------------------------------------------- チャット履歴
+
+#[tauri::command]
+pub fn chat_list_sessions(app: AppHandle) -> Result<Vec<ChatSession>> {
+    chats::list_sessions(&app)
+}
+
+#[tauri::command]
+pub fn chat_create_session(
+    app: AppHandle,
+    title: Option<String>,
+    ticker: Option<String>,
+) -> Result<ChatSession> {
+    chats::create_session(&app, title, ticker)
+}
+
+#[tauri::command]
+pub fn chat_rename_session(
+    app: AppHandle,
+    id: String,
+    title: String,
+) -> Result<Vec<ChatSession>> {
+    chats::rename_session(&app, &id, &title)
+}
+
+#[tauri::command]
+pub fn chat_delete_session(app: AppHandle, id: String) -> Result<Vec<ChatSession>> {
+    chats::delete_session(&app, &id)
+}
+
+#[tauri::command]
+pub fn chat_load_messages(app: AppHandle, session_id: String) -> Result<Vec<ChatMessage>> {
+    chats::load_messages(&app, &session_id)
+}
+
+#[tauri::command]
+pub fn chat_append_message(
+    app: AppHandle,
+    session_id: String,
+    role: String,
+    content: String,
+) -> Result<ChatMessage> {
+    chats::append_message(&app, &session_id, &role, &content)
 }
 
 /// 保存済みの分析結果を読み出す。無ければ null。

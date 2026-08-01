@@ -142,6 +142,22 @@ export default function AnalysisPanel({
         }
       />
 
+      {/* 何をもとに分析したかを常に見えるようにする */}
+      {!collapsed && run && run.basis.length > 0 && (
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/30 px-4 py-1.5">
+          <span className="shrink-0 text-[11px] text-slate-500">分析根拠:</span>
+          {run.basis.map((item) => (
+            <span
+              key={item}
+              title={item}
+              className="max-w-64 truncate rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[11px] text-slate-400"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      )}
+
       {collapsed ? null : (
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {!ticker ? (

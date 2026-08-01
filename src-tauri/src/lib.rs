@@ -4,6 +4,7 @@
 //! 「4.1 なぜ HTTP を Rust 側に置くのか」を参照。
 
 mod analyses;
+mod chats;
 mod commands;
 mod documents;
 mod edgar;
@@ -32,6 +33,12 @@ pub fn run() {
             commands::analysis_load,
             commands::analysis_list,
             commands::analysis_delete,
+            commands::chat_list_sessions,
+            commands::chat_create_session,
+            commands::chat_rename_session,
+            commands::chat_delete_session,
+            commands::chat_load_messages,
+            commands::chat_append_message,
             commands::documents_list,
             commands::documents_stage,
             commands::documents_read_text,

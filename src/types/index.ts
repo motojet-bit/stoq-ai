@@ -82,6 +82,8 @@ export interface SavedAnalysis {
   model: string | null;
   promptTokens: number;
   notes: string[];
+  /** 分析に使ったデータ元 */
+  basis: string[];
   savedAtMs: number;
 }
 
@@ -98,12 +100,22 @@ export interface SecFilingText {
   truncated: boolean;
 }
 
-/** 左サイドバーに並ぶ会話履歴の 1 件 */
+/** 左サイドバーに並ぶ会話履歴の 1 件（SQLite に保存される） */
 export interface ChatSession {
   id: string;
   title: string;
   ticker: string | null;
-  updatedLabel: string;
+  messageCount: number;
+  createdAtMs: number;
+  updatedAtMs: number;
+}
+
+/** 保存されたチャットメッセージ 1 件 */
+export interface StoredChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAtMs: number;
 }
 
 /** メインエリアのタブ */

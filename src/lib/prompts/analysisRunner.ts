@@ -28,6 +28,8 @@ export interface AnalysisRun {
   error: string | null;
   /** プロンプトの切り詰めなどの注記 */
   notes: string[];
+  /** 分析に使ったデータ元（例: "財務指標(YF)", "SEC開示書類 10-Q (2026-07-31)"） */
+  basis: string[];
   promptTokens: number;
   model: string | null;
   provider: string | null;
@@ -69,6 +71,7 @@ function blank(ticker: string): AnalysisRun {
     result: null,
     error: null,
     notes: [],
+    basis: [],
     promptTokens: 0,
     model: null,
     provider: null,
@@ -125,6 +128,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     result: null,
     error: null,
     notes: [],
+    basis: [],
     finishedAtMs: null,
     fromCache: false,
     savedAtMs: null,
@@ -175,9 +179,27 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       reserveForOutput: RESERVE_FOR_OUTPUT,
     });
 
+    // 何をもとに分析したかを記録し、UI に出す
+    const basis: string[] = [];
+    if (options.fundamentals) basis.push("財務指標(YF)");
+    if (options.quarterly && options.quarterly.quarters.length > 0) {
+      basis.push(`四半期推移 ${options.quarterly.quarters.length}Q`);
+    }
+    if (filing) basis.push(`SEC開示書類 ${filing.form} (${filing.filed})`);
+    if (documents.length > 0) {
+      const names = documents.map((d) => d.name);
+      basis.push(
+        documents.length === 1
+          ? `添付資料: ${names[0]}`
+          : `添付資料: ${names[0]} ほか (${documents.length}件)`,
+      );
+    }
+    if (basis.length === 0) basis.push("データ元なし");
+
     patch(ticker, {
       phase: "streaming",
       notes: prompt.notes,
+      basis,
       promptTokens: prompt.tokens,
     });
 
@@ -220,6 +242,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           model: current?.model ?? null,
           promptTokens: current?.promptTokens ?? 0,
           notes: current?.notes ?? [],
+          basis: current?.basis ?? [],
         });
         patch(ticker, { savedAtMs: saved.savedAtMs });
       } catch (e) {
@@ -280,6 +303,7 @@ export async function restoreAnalysis(rawTicker: string): Promise<void> {
       raw: saved.raw,
       result: parseAnalysis(saved.raw),
       notes: saved.notes,
+      basis: saved.basis,
       promptTokens: saved.promptTokens,
       provider: saved.provider,
       model: saved.model,

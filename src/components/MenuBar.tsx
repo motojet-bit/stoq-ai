@@ -92,8 +92,9 @@ export default function MenuBar({ onAction }: Props) {
       className="relative z-50 flex h-9 shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-2"
     >
       <div className="mr-2 flex items-center gap-2 pl-1 pr-3">
-        <span className="text-[13px] font-semibold tracking-tight text-emerald-400">
-          StockAnalyzer
+        <span className="text-[13px] font-semibold tracking-tight">
+          <span className="text-emerald-400">StoQ</span>
+          <span className="ml-1 text-slate-300">AI Analyzer</span>
         </span>
       </div>
 

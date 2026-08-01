@@ -1,5 +1,8 @@
+import { useState } from "react";
 import type { ChatSession } from "@/types";
-import { IconPanelLeft, IconPlus, IconMessage } from "@/components/Icons";
+import ChatHistoryItem from "@/components/ChatHistoryItem";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { IconPanelLeft, IconPlus } from "@/components/Icons";
 
 interface Props {
   collapsed: boolean;
@@ -7,6 +10,8 @@ interface Props {
   activeSessionId: string | null;
   onToggleCollapse: () => void;
   onSelectSession: (id: string) => void;
+  onRenameSession: (id: string, title: string) => void;
+  onDeleteSession: (id: string) => void;
   onNewChat: () => void;
 }
 
@@ -17,8 +22,12 @@ export default function Sidebar({
   activeSessionId,
   onToggleCollapse,
   onSelectSession,
+  onRenameSession,
+  onDeleteSession,
   onNewChat,
 }: Props) {
+  const [deleting, setDeleting] = useState<ChatSession | null>(null);
+
   if (collapsed) {
     return (
       <aside className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-slate-800 bg-slate-900 py-2">
@@ -33,7 +42,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onNewChat}
-          title="新規チャット (Ctrl+N)"
+          title="新規チャット"
           className="rounded p-2 text-slate-400 hover:bg-slate-800 hover:text-emerald-400"
         >
           <IconPlus className="h-4.5 w-4.5" />
@@ -63,8 +72,13 @@ export default function Sidebar({
         </button>
       </div>
 
-      <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-        履歴
+      <div className="flex items-center justify-between px-3 pb-1 pt-2">
+        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          履歴
+        </span>
+        {sessions.length > 0 && (
+          <span className="font-mono text-[11px] text-slate-600">{sessions.length}</span>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 pb-2">
@@ -72,50 +86,46 @@ export default function Sidebar({
           <p className="px-2 py-6 text-center text-[12px] leading-relaxed text-slate-600">
             まだ会話がありません。
             <br />
-            「新規チャット」から始めてください。
+            対話ウィンドウで質問すると、
+            <br />
+            自動でここに保存されます。
           </p>
         ) : (
           <ul className="space-y-0.5">
-            {sessions.map((s) => {
-              const active = s.id === activeSessionId;
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectSession(s.id)}
-                    className={`group flex w-full items-start gap-2 rounded-md px-2 py-2 text-left transition-colors ${
-                      active
-                        ? "bg-slate-800 text-slate-100"
-                        : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
-                    }`}
-                  >
-                    <IconMessage
-                      className={`mt-0.5 h-4 w-4 shrink-0 ${
-                        active ? "text-emerald-400" : "text-slate-600 group-hover:text-slate-500"
-                      }`}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] leading-snug">{s.title}</span>
-                      <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
-                        {s.ticker && (
-                          <span className="rounded bg-slate-700/70 px-1 font-mono text-[10px] text-slate-300">
-                            {s.ticker}
-                          </span>
-                        )}
-                        {s.updatedLabel}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {sessions.map((session) => (
+              <ChatHistoryItem
+                key={session.id}
+                session={session}
+                active={session.id === activeSessionId}
+                onSelect={() => onSelectSession(session.id)}
+                onRename={(title) => onRenameSession(session.id, title)}
+                onDelete={() => setDeleting(session)}
+              />
+            ))}
           </ul>
         )}
       </nav>
 
       <div className="shrink-0 border-t border-slate-800 px-3 py-2 text-[11px] text-slate-600">
-        Phase 1 — スケルトンUI
+        会話は自動保存されます
       </div>
+
+      <ConfirmDialog
+        open={deleting !== null}
+        title="このチャットを削除しますか？"
+        message={
+          `「${deleting?.title ?? ""}」と、その中の ${deleting?.messageCount ?? 0} 件のメッセージが削除されます。\n` +
+          "この操作は取り消せません。"
+        }
+        confirmLabel="削除する"
+        cancelLabel="もどる"
+        destructive
+        onConfirm={() => {
+          if (deleting) onDeleteSession(deleting.id);
+          setDeleting(null);
+        }}
+        onCancel={() => setDeleting(null)}
+      />
     </aside>
   );
 }

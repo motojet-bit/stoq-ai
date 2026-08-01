@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
-import type { ChatSession, WorkspaceTab } from "@/types";
-import { INITIAL_TABS, SAMPLE_SESSIONS } from "@/lib/sampleData";
+import type { WorkspaceTab } from "@/types";
+import { INITIAL_TABS } from "@/lib/sampleData";
+import {
+  createSession,
+  deleteSession,
+  loadChatSessions,
+  renameSession,
+  selectSession,
+  useActiveSessionId,
+  useChatSessions,
+} from "@/lib/chat/chatStore";
 import { loadSettings, useSettings, useSettingsError } from "@/lib/config/settingsStore";
 import { loadTicker, useAnalyses } from "@/lib/api/analysisStore";
 import {
@@ -29,15 +38,14 @@ import StatusBar from "@/components/StatusBar";
 import SettingsModal from "@/components/SettingsModal";
 import ToastHost from "@/components/ToastHost";
 import DocumentTray from "@/components/DocumentTray";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const newId = () => crypto.randomUUID();
 
 export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sessions, setSessions] = useState<ChatSession[]>(SAMPLE_SESSIONS);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(
-    SAMPLE_SESSIONS[0]?.id ?? null,
-  );
+  const sessions = useChatSessions();
+  const activeSessionId = useActiveSessionId();
 
   const [tabs, setTabs] = useState<WorkspaceTab[]>(INITIAL_TABS);
   const [activeTabId, setActiveTabId] = useState<string>(INITIAL_TABS[0].id);
@@ -49,6 +57,9 @@ export default function App() {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
+
+  // 一次資料が無い状態で分析を実行しようとしたときの確認
+  const [confirmingNoDocs, setConfirmingNoDocs] = useState(false);
 
   const settings = useSettings();
   const settingsError = useSettingsError();
@@ -64,7 +75,20 @@ export default function App() {
     ? providerReadiness(settings, settings.provider)
     : { ready: false, reason: "設定を読み込めていません。" };
 
+  /**
+   * 分析を開始する。
+   * 一次資料が 1 件も無いときは、より良い結果が得られる旨を伝えて確認する。
+   */
   const handleRunAnalysis = () => {
+    if (!activeTicker) return;
+    if (documents.length === 0) {
+      setConfirmingNoDocs(true);
+      return;
+    }
+    startAnalysis();
+  };
+
+  const startAnalysis = () => {
     if (!activeTicker) return;
     void runAnalysis({
       ticker: activeTicker,
@@ -81,6 +105,7 @@ export default function App() {
   useEffect(() => {
     void loadSettings();
     void loadStagedDocuments();
+    void loadChatSessions();
   }, []);
 
   // Ctrl+B でサイドバー開閉 / Ctrl+, で設定
@@ -110,14 +135,7 @@ export default function App() {
   };
 
   const handleNewChat = () => {
-    const session: ChatSession = {
-      id: newId(),
-      title: "新しいチャット",
-      ticker: null,
-      updatedLabel: "たった今",
-    };
-    setSessions((prev) => [session, ...prev]);
-    setActiveSessionId(session.id);
+    void createSession(activeTicker);
   };
 
   /** ティッカーが確定したら分析タブを開き、YF と SEC の取得を開始する */
@@ -191,7 +209,9 @@ export default function App() {
           sessions={sessions}
           activeSessionId={activeSessionId}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-          onSelectSession={setActiveSessionId}
+          onSelectSession={(id) => void selectSession(id)}
+          onRenameSession={(id, title) => void renameSession(id, title)}
+          onDeleteSession={(id) => void deleteSession(id)}
           onNewChat={handleNewChat}
         />
 
@@ -205,25 +225,23 @@ export default function App() {
           />
 
           {/*
-            3 ペイン構成。
-              上段: 左＝市場データ / 右＝20項目の分析結果（縦長）
-              下段: 対話ウィンドウ（左右いっぱいに横長）
+            2 カラム構造。左右の仕切りが画面最下部まで一直線に伸びる。
+              左カラム: 上＝市場データ / 下＝対話ウィンドウ
+              右カラム: 20項目の分析結果（縦長）
           */}
           <ResizableSplit
-            direction="vertical"
-            initialSecondSize={Math.round(window.innerHeight / 3)}
-            minFirstSize={160}
-            minSecondSize={120}
-            collapsed={chatCollapsed ? "second" : null}
+            direction="horizontal"
+            initialSecondSize={Math.round(window.innerWidth / 2)}
+            minFirstSize={280}
+            minSecondSize={320}
+            collapsed={leftCollapsed ? "first" : rightCollapsed ? "second" : null}
             first={
               <ResizableSplit
-                direction="horizontal"
-                initialSecondSize={Math.round(window.innerWidth / 2)}
-                minFirstSize={260}
-                minSecondSize={300}
-                collapsed={
-                  leftCollapsed ? "first" : rightCollapsed ? "second" : null
-                }
+                direction="vertical"
+                initialSecondSize={Math.round(window.innerHeight / 3)}
+                minFirstSize={160}
+                minSecondSize={120}
+                collapsed={chatCollapsed ? "second" : null}
                 first={
                   <WorkspacePanel
                     tab={activeTab}
@@ -237,20 +255,12 @@ export default function App() {
                   />
                 }
                 second={
-                  <div className="h-full border-l border-slate-800">
-                    <AnalysisPanel
+                  <div className="h-full border-t border-slate-800">
+                    <ChatPanel
+                      settings={settings}
                       ticker={activeTicker}
-                      run={activeRun}
-                      ready={llm.ready}
-                      readyReason={llm.reason}
-                      collapsed={rightCollapsed}
-                      onToggleCollapse={() => {
-                        setRightCollapsed((v) => !v);
-                        if (!rightCollapsed) setLeftCollapsed(false);
-                      }}
-                      onRun={handleRunAnalysis}
-                      onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
-                      onClear={() => activeTicker && void clearAnalysis(activeTicker)}
+                      collapsed={chatCollapsed}
+                      onToggleCollapse={() => setChatCollapsed((v) => !v)}
                       onOpenSettings={() => setSettingsOpen(true)}
                     />
                   </div>
@@ -258,11 +268,20 @@ export default function App() {
               />
             }
             second={
-              <div className="h-full border-t border-slate-800">
-                <ChatPanel
-                  settings={settings}
-                  collapsed={chatCollapsed}
-                  onToggleCollapse={() => setChatCollapsed((v) => !v)}
+              <div className="h-full border-l border-slate-800">
+                <AnalysisPanel
+                  ticker={activeTicker}
+                  run={activeRun}
+                  ready={llm.ready}
+                  readyReason={llm.reason}
+                  collapsed={rightCollapsed}
+                  onToggleCollapse={() => {
+                    setRightCollapsed((v) => !v);
+                    if (!rightCollapsed) setLeftCollapsed(false);
+                  }}
+                  onRun={handleRunAnalysis}
+                  onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
+                  onClear={() => activeTicker && void clearAnalysis(activeTicker)}
                   onOpenSettings={() => setSettingsOpen(true)}
                 />
               </div>
@@ -277,6 +296,24 @@ export default function App() {
         open={settingsOpen}
         settings={settings}
         onClose={() => setSettingsOpen(false)}
+      />
+
+      {/* 一次資料が無いまま分析しようとしたときの案内 */}
+      <ConfirmDialog
+        open={confirmingNoDocs}
+        title="一次資料が添付されていません"
+        message={
+          "現在分析のベースとなる情報は、1. 財務指標 2. SEC資料 のみです。\n" +
+          "他に一次資料（決算説明会資料など）があれば、読み込ませてから分析すると" +
+          "より詳細な分析結果が得られます。"
+        }
+        confirmLabel="このまま分析する"
+        cancelLabel="戻る"
+        onConfirm={() => {
+          setConfirmingNoDocs(false);
+          startAnalysis();
+        }}
+        onCancel={() => setConfirmingNoDocs(false)}
       />
 
       <ToastHost />
