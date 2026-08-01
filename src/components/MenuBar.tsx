@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
-/** メニュー項目。action は Phase 2 以降で実装する */
+/** メニュー項目。action が未設定のものは未実装。 */
 interface MenuItem {
   label: string;
   shortcut?: string;
   separatorBefore?: boolean;
+  /** 実装済みの動作。親へ通知される。 */
+  action?: MenuAction;
 }
+
+export type MenuAction = "open-settings";
 
 interface Menu {
   label: string;
@@ -19,7 +23,7 @@ const MENUS: Menu[] = [
       { label: "新規チャット", shortcut: "Ctrl+N" },
       { label: "PDFを開く…", shortcut: "Ctrl+O" },
       { label: "分析結果を書き出す…", separatorBefore: true },
-      { label: "設定…", shortcut: "Ctrl+," , separatorBefore: true },
+      { label: "設定…", shortcut: "Ctrl+,", separatorBefore: true, action: "open-settings" },
       { label: "終了", shortcut: "Alt+F4" },
     ],
   },
@@ -46,6 +50,7 @@ const MENUS: Menu[] = [
   {
     label: "ヘルプ",
     items: [
+      { label: "APIキーの設定…", action: "open-settings" },
       { label: "使い方" },
       { label: "キーボードショートカット", shortcut: "Ctrl+/" },
       { label: "StockAnalyzer について", separatorBefore: true },
@@ -53,8 +58,12 @@ const MENUS: Menu[] = [
   },
 ];
 
+interface Props {
+  onAction: (action: MenuAction) => void;
+}
+
 /** 最上部の水平機能メニューバー */
-export default function MenuBar() {
+export default function MenuBar({ onAction }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -110,8 +119,13 @@ export default function MenuBar() {
                   {item.separatorBefore && <div className="my-1 border-t border-slate-700" />}
                   <button
                     type="button"
-                    onClick={() => setOpenIndex(null)}
-                    className="flex w-full items-center justify-between gap-8 px-3 py-1.5 text-left text-[13px] text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+                    onClick={() => {
+                      setOpenIndex(null);
+                      if (item.action) onAction(item.action);
+                    }}
+                    className={`flex w-full items-center justify-between gap-8 px-3 py-1.5 text-left text-[13px] hover:bg-slate-700 hover:text-slate-100 ${
+                      item.action ? "text-slate-300" : "text-slate-500"
+                    }`}
                   >
                     <span>{item.label}</span>
                     {item.shortcut && (

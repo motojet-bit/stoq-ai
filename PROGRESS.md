@@ -7,114 +7,107 @@
 
 ## 現在のステータス
 
-**フェーズ: 1 — スケルトンUI ✅ 完了（Tauri ウィンドウでの起動確認済み）**
+**フェーズ: 2 — データパイプライン ＆ AI分析エンジン**
+**Step 1（APIキー設定画面 + LLM 接続基盤）✅ 完了**
 
-Tauri 2.0 + React 19 + TypeScript + Tailwind CSS v4 の構成でプロジェクトを構築し、
-画面の骨格（ガワ）を実装。`npm run tauri:dev` でデスクトップウィンドウが正常に起動することを確認した。
+Phase 2 の全体設計を `docs/設計.md` に記載。
+Step 1 として、設定モーダル・APIキーの安全な保存・4 プロバイダ対応の LLM 接続基盤・
+対話パネルからのストリーミング疎通確認までを実装した。
 
-### 開発環境（すべて導入済み）
+### Phase 2 のステップ
 
-| 必要なもの | バージョン |
-| --- | --- |
-| Node.js | ✅ 24.18.1 |
-| npm | ✅ 11.16.0 |
-| Rust (stable, MSVC) | ✅ 1.95.0 |
-| Visual Studio Build Tools 2022 (C++) | ✅ 17.14.37314.3 |
-| WebView2 Runtime | ✅ 150.0.4078.105 |
+| Step | 内容 | 状態 |
+| --- | --- | --- |
+| **Step 1** | APIキー設定画面（モーダル UI）と LLM 接続基盤 | ✅ 完了 |
+| Step 2 | Financial Data Fetcher（Yahoo Finance / SEC EDGAR）と UI 接続 | 🔶 SEC のみ先行実装（UI 未接続） |
+| Step 3 | PDF パーサ ＋ トークンカウンター ＋ オーバーフロー警告 | ⬜ |
+| Step 4 | Prompt Engine（20項目）とパイプライン | ⬜ |
+| Step 5 | 分析結果テーブルのパースとレンダリング | ⬜ |
 
-### 検証結果
-
-| 検証 | 結果 |
-| --- | --- |
-| `npm install` | ✅ 87 パッケージ |
-| `npm run typecheck` | ✅ エラーなし（TypeScript strict） |
-| `npm run build` | ✅ Vite 7.3.6 / 213.82 KB（gzip 67.36 KB） |
-| `npm run dev`（ブラウザ） | ✅ http://localhost:1420 で起動 |
-| `npm run tauri:dev`（Tauri ウィンドウ） | ✅ Rust ビルド 2分05秒 → ウィンドウ起動確認 |
-
-### 実装状況
+### Step 1 の実装内容
 
 | 項目 | 状態 |
 | --- | --- |
-| Git リポジトリ | ✅ 初期化済み（`main`） |
-| ドキュメント整備 | ✅ README / PROGRESS / 改修記録 / CLAUDE.md / docs |
-| Tauri 2.0 プロジェクト構成 | ✅ Cargo.toml / tauri.conf.json / lib.rs / commands.rs |
-| アプリアイコン | ✅ 生成済み（`src-tauri/icons/`） |
-| Vite + React + TS 構成 | ✅ package.json / vite.config.ts / tsconfig.json |
-| Tailwind CSS v4 | ✅ `@tailwindcss/vite` プラグイン方式 |
-| メニューバー（ファイル/表示/分析/ヘルプ） | ✅ ドロップダウン付き（項目の動作は未実装） |
-| ティッカー入力フォーム | ✅ 入力で分析タブが開く |
-| APIキー状態インジケーター | ✅ マスキング表示 |
-| PDFドロップゾーン | ✅ D&D / クリック選択、ファイル名の保持まで |
-| 左サイドバー（Chatbox風・折りたたみ） | ✅ 新規チャットボタン / Ctrl+B |
-| マルチタブ（Cursor風） | ✅ 追加・切替・クローズ |
-| 下部スプリット画面 | ✅ ドラッグでリサイズ、分析結果 / 対話 の枠 |
-| ステータスバー | ✅ |
+| 設定の永続化（OS のアプリ設定ディレクトリ） | ✅ `src-tauri/src/settings.rs` |
+| APIキーのマスク表示（生の値をフロントに渡さない） | ✅ |
+| 設定モーダル UI | ✅ `src/components/SettingsModal.tsx` |
+| プロバイダ選択（OpenAI / Anthropic / Gemini / Custom） | ✅ |
+| モデル名・Base URL・SEC User-Agent の設定 | ✅ |
+| LLM 共通インターフェース（4 プロバイダ） | ✅ `src-tauri/src/llm/` |
+| SSE ストリーミング → Tauri Channel | ✅ |
+| 対話パネルからの疎通確認 | ✅ `src/components/ChatPanel.tsx` |
+| メニュー「ファイル > 設定…」/「ヘルプ > APIキーの設定…」から起動 | ✅ |
+| APIキーインジケーターのクリックで起動 | ✅ |
+| `Ctrl+,` ショートカット | ✅ |
+
+### 重要な設計上の判断（詳細は `docs/設計.md`）
+
+1. **HTTP はすべて Rust 側から発行する。** CORS 回避、SEC が要求する User-Agent の指定、
+   APIキーの秘匿、Yahoo の Cookie 保持が理由。`src/lib/` は Tauri コマンドの薄いラッパ。
+2. **PDF は `pdf-parse` ではなく `pdfjs-dist` を使う。** `pdf-parse` は Node 専用で
+   WebView では動作しないため（Step 3 で実装）。
+3. **Anthropic には `temperature` を送らない。** Claude Opus 5 では `temperature` が
+   廃止されており、送ると HTTP 400 になる。深さの制御は `output_config.effort` で行う。
+   OpenAI / Gemini / Custom には設計どおり `temperature: 0.0` を送信。
+4. **`.env` の `VITE_*` によるキー読み取りは廃止。** Phase 1 の暫定実装を削除し、
+   Rust 側の設定ファイルへ移行した。
 
 ---
 
 ## 次にやること（TODO）
 
-### Phase 2 の入口
-- [ ] 正式な設計図・機能仕様を受け取り `docs/設計.md` に反映する
-- [ ] 実装の優先順位を決める（SEC / Yahoo Finance / PDF / LLM のどれから着手するか）
+### Step 2（次の作業）
+- [ ] Yahoo Finance クライアントを実装する（`src-tauri/src/yahoo.rs`）
+      — quoteSummary は Cookie + crumb の取得が必要
+- [ ] SEC クライアント（実装済み）を UI に接続する
+- [ ] 取得した指標を `WorkspacePanel` に表示する
+- [ ] `src/lib/api/` に Tauri コマンドのラッパを作る
 
-### Phase 2 — データ取得層
-- [ ] SEC EDGAR クライアント（Rust 側）— User-Agent 必須、10 req/s 制限に注意
-- [ ] Yahoo Finance からの株価・指標取得
-- [ ] 取得結果のキャッシュ方針を決める
-
-### Phase 3 — 一次資料の取り込み
-- [ ] PDF のテキスト抽出（Rust 側 or フロント側かを決定）
-- [ ] `PdfDropZone` を実ファイル読み込みに接続する
-
-### Phase 4 — LLM 分析エンジン
-- [ ] LLM プロバイダ抽象化（OpenAI / Claude / Gemini 切替）
-- [ ] APIキーを OS セキュアストレージへ移し、フロントから実キーを見えなくする
-      （現在は `.env` の `VITE_*` を読む暫定実装）
-- [ ] `AnalysisPanel` / `ChatPanel` を実データに接続する
-
-### Phase 5 — 永続化・スクリーニング
-- [ ] 会話履歴・タブ状態の永続化（`sampleData.ts` のダミーを置き換える）
-- [ ] スクリーニング条件の設定 UI
-
-### Phase 6
-- [ ] モバイル対応
-
-### 積み残し（小）
-- [ ] メニューバー各項目に実際の動作を割り当てる
-- [ ] `npm` の警告: esbuild の postinstall スクリプトが未承認（現状ビルドは成功）
+### Step 3 以降
+- [ ] `pdfjs-dist` を導入し `src/lib/parser/` を実装
+- [ ] トークン数の概算カウンターとオーバーフロー警告インジケーター
+- [ ] 20項目の評価基準を `src/lib/prompts/criteria.ts` に確定させる（**ユーザーの確認待ち**）
+- [ ] 統合プロンプトのパッキングと Markdown テーブルのパース
+- [ ] 会話履歴の永続化（現在 `sampleData.ts` のダミー）
 
 ---
 
 ## 作業履歴
 
+### 2026-08-01 — Phase 2 Step 1: 設定モーダルと LLM 接続基盤 ✅
+- `docs/設計.md` に Phase 2 の全体設計図を記載（モジュール構成・データフロー・
+  アーキテクチャ判断・Step 1 詳細設計・20項目の初期案）
+- Rust 側を実装
+  - `error.rs` — 共通エラー型（日本語メッセージでフロントへ返す）
+  - `http.rs` — Cookie ストア共有の HTTP クライアント
+  - `settings.rs` — 設定の永続化、APIキーのマスク処理
+  - `llm/mod.rs` — 共通インターフェース、SSE ポンプ、Channel 送出
+  - `llm/openai.rs` / `llm/anthropic.rs` / `llm/gemini.rs` — 3 実装（Custom は openai を再利用）
+  - `commands.rs` — `settings_load` / `settings_save` / `settings_set_key` / `llm_send`
+- フロントエンドを実装
+  - `src/lib/tauri.ts` — invoke / Channel のラッパと Tauri 環境判定
+  - `src/lib/config/providers.ts` — プロバイダのメタ情報
+  - `src/lib/config/settingsStore.ts` — `useSyncExternalStore` による設定ストア
+  - `src/lib/llm/client.ts` — `streamChat`（Channel を Promise + コールバックに変換）
+  - `src/components/SettingsModal.tsx` — 設定モーダル
+  - `ChatPanel` を実接続（ストリーミング表示、Enter 送信、エラー表示）
+  - `ApiKeyIndicator` / `CommandBar` / `MenuBar` / `App` を設定ストアに接続
+- `.env` ベースのキー読み取り（`apiKeyStatus.ts` / `maskSecret.ts`）を削除
+- `CLAUDE.md` に「秘密情報をフロントに渡さない」「HTTP は Rust 側」のルールを追記
+- **Step 2 の先行実装**: `edgar.rs`（SEC EDGAR）と `html.rs`（HTML→テキスト）を作成。
+  コマンド `sec_fetch_latest_filing` として登録済みだが **UI には未接続**
+- **次**: Step 2（Yahoo Finance クライアントと財務データの UI 接続）
+
 ### 2026-08-01 — Phase 1: スケルトンUI の構築と起動確認 ✅
 - 開発環境を調査。Rust 1.95 / VS Build Tools 2022 / WebView2 は導入済み、Node.js のみ未導入と判明
 - **Node.js 24.18.1 を winget でインストール**（ユーザー承認のうえ実行）
-- Tauri 2.0 プロジェクトを構成
-  - `src-tauri/`: `Cargo.toml` / `build.rs` / `tauri.conf.json` / `src/main.rs` / `src/lib.rs` / `src/commands.rs`
-  - 疎通確認用コマンド `app_info` を用意
-  - アプリアイコンを生成（Python の自作スクリプトで PNG / ICO を出力）
-- フロントエンドを構成
-  - `package.json` / `vite.config.ts` / `tsconfig.json` / `index.html`
-  - Tailwind CSS v4 を `@tailwindcss/vite` で導入、`@/` パスエイリアスを設定
+- Tauri 2.0 プロジェクトを構成（`Cargo.toml` / `tauri.conf.json` / `main.rs` / `lib.rs` / `commands.rs`）
+- アプリアイコンを生成（Python の自作スクリプトで PNG / ICO を出力）
+- フロントエンドを構成（Vite 7 / React 19 / TypeScript strict / Tailwind CSS v4 / `@/` エイリアス）
 - スケルトン UI を 1 機能 1 ファイルで実装（`src/components/` 配下 13 ファイル）
-  - `MenuBar` / `CommandBar` / `TickerInput` / `ApiKeyIndicator` / `PdfDropZone`
-  - `Sidebar` / `TabBar` / `WorkspacePanel` / `SplitPane` / `AnalysisPanel` / `ChatPanel` / `StatusBar`
-  - `Icons.tsx`（外部アイコンライブラリに依存しないインライン SVG）
-- ロジックを `src/lib/` に分離（`maskSecret` / `apiKeyStatus` / `sampleData`）
-- `CLAUDE.md` に「1機能1ファイル」「PROGRESS.md の読み込み・更新」ルールを明記
-- `README.md` にセットアップ手順とディレクトリ構成を記載
 - **動作確認**: typecheck ✅ / build ✅ / Vite dev ✅ / Tauri ウィンドウ起動 ✅
-- ロックファイル（`package-lock.json` / `Cargo.lock`）をコミットに追加
-- **次**: 正式な設計図を受け取り、Phase 2（データ取得層）の着手順を決める
 
 ### 2026-07-31 — プロジェクト初期セットアップ
 - Git リポジトリを初期化（ブランチ `main`）
-- `.gitignore` / `.gitattributes` を作成（秘密情報・ローカルデータの除外、改行コードの統一）
-- `README.md`（プロジェクト概要）を作成
-- `PROGRESS.md`（本ファイル）を作成
-- `改修記録.md`（改修記録テンプレート）を作成
-- `CLAUDE.md`（AI アシスタント向け作業ルール）を作成
+- `.gitignore` / `.gitattributes` / `README.md` / `PROGRESS.md` / `改修記録.md` / `CLAUDE.md` を作成
 - `docs/` ディレクトリと設計・API 調査のプレースホルダを作成

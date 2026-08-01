@@ -1,14 +1,15 @@
-import type { ApiKeyStatus, DroppedDocument } from "@/types";
+import type { AppSettings, DroppedDocument } from "@/types";
 import TickerInput from "@/components/TickerInput";
 import ApiKeyIndicator from "@/components/ApiKeyIndicator";
 import PdfDropZone from "@/components/PdfDropZone";
 
 interface Props {
-  apiKeys: ApiKeyStatus[];
+  settings: AppSettings | null;
   documents: DroppedDocument[];
   onTickerSubmit: (ticker: string) => void;
   onAddDocuments: (files: File[]) => void;
   onRemoveDocument: (id: string) => void;
+  onOpenSettings: () => void;
 }
 
 /**
@@ -16,11 +17,12 @@ interface Props {
  * ティッカー入力 / APIキー状態 / PDFドロップゾーン をまとめる。
  */
 export default function CommandBar({
-  apiKeys,
+  settings,
   documents,
   onTickerSubmit,
   onAddDocuments,
   onRemoveDocument,
+  onOpenSettings,
 }: Props) {
   return (
     <div className="flex h-12 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-900/60 px-3">
@@ -36,7 +38,7 @@ export default function CommandBar({
 
       <div className="h-6 w-px bg-slate-800" />
 
-      <ApiKeyIndicator statuses={apiKeys} />
+      <ApiKeyIndicator settings={settings} onOpenSettings={onOpenSettings} />
     </div>
   );
 }

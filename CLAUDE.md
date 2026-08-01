@@ -37,8 +37,12 @@
 
 ### 3.3 やらないこと
 
-- APIキーなどの秘密情報をコードにハードコードしない。`.env` 経由で読む。
-- 秘密情報を画面にそのまま表示しない。必ず `src/lib/maskSecret.ts` でマスクする。
+- APIキーなどの秘密情報をコードにハードコードしない。
+- **秘密情報をフロントエンド（WebView）に渡さない。** APIキーは Rust 側（`src-tauri/src/settings.rs`）で
+  OS のアプリ設定ディレクトリに保存し、フロントへはマスク済み文字列と `configured` フラグのみ返す。
+- マスク処理は `src-tauri/src/settings.rs` の `mask_secret` を使う。
+- 外部 API への HTTP は必ず Rust 側から発行する（CORS 回避・User-Agent 指定・キー秘匿のため）。
+  理由の詳細は `docs/設計.md` の「4.1 なぜ HTTP を Rust 側に置くのか」を参照。
 
 ## 4. Git
 
