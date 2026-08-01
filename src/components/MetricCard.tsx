@@ -1,5 +1,4 @@
 import type { MetricGroup } from "@/types";
-import { SCALE_CLASSES, useTextScale } from "@/lib/ui/textScale";
 import { IconChart } from "@/components/Icons";
 
 interface Props {
@@ -8,11 +7,9 @@ interface Props {
 
 /** 指標グループ 1 つ分のカード。 */
 export default function MetricCard({ group }: Props) {
-  const t = SCALE_CLASSES[useTextScale()];
-
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3.5">
-      <div className={`mb-2.5 flex items-center gap-2 ${t.heading} font-medium text-slate-400`}>
+      <div className="t-heading mb-2.5 flex items-center gap-2 font-medium text-slate-400">
         <IconChart className="h-3.5 w-3.5 shrink-0 text-slate-600" />
         {group.title}
       </div>
@@ -21,9 +18,9 @@ export default function MetricCard({ group }: Props) {
           const missing = m.raw === null && m.value === "—";
           return (
             <div key={m.label} className="flex items-baseline justify-between gap-3">
-              <dt className={`shrink-0 ${t.label} text-slate-500`}>{m.label}</dt>
+              <dt className="t-label min-w-0 truncate text-slate-500">{m.label}</dt>
               <dd
-                className={`selectable min-w-0 truncate text-right font-mono ${t.label} ${
+                className={`selectable t-label min-w-0 truncate text-right font-mono ${
                   missing ? "text-slate-700" : "text-slate-200"
                 }`}
                 title={m.value}

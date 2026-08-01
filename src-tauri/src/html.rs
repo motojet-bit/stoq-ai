@@ -24,7 +24,9 @@ pub fn to_text(html: &str) -> String {
             // ブロック要素の終わりは改行として扱う
             if is_block_tag(&tag_name) && !out.ends_with('\n') {
                 out.push('\n');
-            } else if !out.ends_with(' ') && !out.ends_with('\n') {
+            } else if !out.ends_with(' ') && !out.ends_with('\n') && !ends_with_cjk(&out) {
+                // インライン要素（<b> など）は英文の単語区切りとして空白を入れる。
+                // ただし日本語の直後には入れない（「売上高は 512億 ドル」になってしまう）
                 out.push(' ');
             }
 
@@ -55,6 +57,15 @@ pub fn to_text(html: &str) -> String {
     }
 
     collapse_blank_lines(&out)
+}
+
+/// 末尾が CJK 文字か。日本語の途中に空白を入れないための判定。
+fn ends_with_cjk(text: &str) -> bool {
+    text.chars().next_back().is_some_and(|c| {
+        matches!(c as u32,
+            0x3000..=0x30FF | 0x3400..=0x4DBF | 0x4E00..=0x9FFF
+            | 0xAC00..=0xD7AF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
+    })
 }
 
 fn read_tag_name(chars: &[char], start: usize) -> String {
@@ -167,4 +178,39 @@ fn collapse_blank_lines(text: &str) -> String {
         }
     }
     out.trim().to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn タグを除去して本文だけ残す() {
+        let text = to_text("<p>売上高は<b>512億</b>ドル</p>");
+        assert!(text.contains("売上高は512億ドル"), "{text}");
+    }
+
+    #[test]
+    fn スクリプトとスタイルは捨てる() {
+        let text = to_text("<style>p{color:red}</style><script>alert(1)</script><p>本文</p>");
+        assert!(!text.contains("color"));
+        assert!(!text.contains("alert"));
+        assert!(text.contains("本文"));
+    }
+
+    #[test]
+    fn 実体参照を復号する() {
+        let text = to_text("<p>A &amp; B &lt;C&gt; &#39;D&#39; &nbsp;E</p>");
+        assert!(text.contains("A & B <C> 'D'"), "{text}");
+    }
+
+    #[test]
+    fn 空文字でも落ちない() {
+        assert_eq!(to_text(""), "");
+    }
+
+    #[test]
+    fn 閉じていないタグでも落ちない() {
+        let _ = to_text("<p>途中で切れた<div class=");
+    }
 }

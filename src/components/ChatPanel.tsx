@@ -9,7 +9,7 @@ import {
   useChatLoading,
   useChatMessages,
 } from "@/lib/chat/chatStore";
-import { SCALE_CLASSES, useTextScale } from "@/lib/ui/textScale";
+import type { SlotId } from "@/lib/ui/layoutStore";
 import { IconMessage } from "@/components/Icons";
 import PanelHeader from "@/components/PanelHeader";
 
@@ -18,6 +18,7 @@ interface Props {
   /** 現在開いている銘柄。新規チャットに紐づける */
   ticker: string | null;
   collapsed: boolean;
+  slot?: SlotId;
   onToggleCollapse: () => void;
   onOpenSettings: () => void;
 }
@@ -28,11 +29,12 @@ const SYSTEM_PROMPT =
 
 const newId = () => crypto.randomUUID();
 
-/** 下段の対話パネル。会話は SQLite に保存され、サイドバーから復元できる。 */
+/** 対話パネル。会話は SQLite に保存され、サイドバーから復元できる。 */
 export default function ChatPanel({
   settings,
   ticker,
   collapsed,
+  slot,
   onToggleCollapse,
   onOpenSettings,
 }: Props) {
@@ -43,8 +45,9 @@ export default function ChatPanel({
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const scale = useTextScale();
-  const t = SCALE_CLASSES[scale];
+  // onDelta の中から最新の本文を参照するための保持
+  const messagesRef = useRef<DisplayMessage[]>(messages);
+  messagesRef.current = messages;
 
   const { ready, reason } = settings
     ? providerReadiness(settings, settings.provider)
@@ -99,10 +102,6 @@ export default function ChatPanel({
     }
   };
 
-  // onDelta の中で最新の messages を参照するための保持
-  const messagesRef = useRef<DisplayMessage[]>(messages);
-  messagesRef.current = messages;
-
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Enter で送信、Shift+Enter で改行
     if (e.key === "Enter" && !e.shiftKey) {
@@ -112,15 +111,16 @@ export default function ChatPanel({
   };
 
   return (
-    <section className="flex h-full min-w-0 flex-col bg-slate-950">
+    <section className="panel bg-slate-950">
       <PanelHeader
         icon={<IconMessage className="h-3.5 w-3.5" />}
         title="対話"
         collapsed={collapsed}
+        slot={slot}
         onToggleCollapse={onToggleCollapse}
         actions={
           settings && (
-            <span className="truncate font-mono text-[11.5px] text-slate-600">
+            <span className="t-label truncate font-mono text-slate-600">
               {providerLabel(settings, settings.provider)}
               {activeModel ? ` / ${activeModel}` : ""}
             </span>
@@ -130,7 +130,7 @@ export default function ChatPanel({
 
       {!collapsed && (
         <>
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+          <div ref={scrollRef} className="panel-scroll px-4 py-3">
             {loadingHistory ? (
               <div className="space-y-2">
                 {[0, 1, 2].map((i) => (
@@ -142,7 +142,7 @@ export default function ChatPanel({
                 ))}
               </div>
             ) : messages.length === 0 ? (
-              <div className={`space-y-2 ${t.body} ${t.leading} text-slate-500`}>
+              <div className="t-body space-y-2 text-slate-500">
                 <p>
                   銘柄や決算資料について質問すると、ここに会話が表示されます。
                   会話は自動で保存され、左のサイドバーから開き直せます。
@@ -163,20 +163,20 @@ export default function ChatPanel({
             ) : (
               <ul className="space-y-4">
                 {messages.map((m) => (
-                  <li key={m.id} className={`${t.body} ${t.leading}`}>
+                  <li key={m.id}>
                     <div
-                      className={`mb-1 ${t.label} font-medium ${
+                      className={`t-label mb-1 font-medium ${
                         m.role === "user" ? "text-slate-400" : "text-emerald-400"
                       }`}
                     >
                       {m.role === "user" ? "あなた" : "AI"}
                     </div>
                     {m.error ? (
-                      <p className="selectable rounded border border-red-900 bg-red-950/40 px-2.5 py-2 text-red-300">
+                      <p className="selectable t-body rounded border border-red-900 bg-red-950/40 px-2.5 py-2 text-red-300">
                         {m.error}
                       </p>
                     ) : (
-                      <p className="selectable whitespace-pre-wrap text-slate-300">
+                      <p className="selectable t-body whitespace-pre-wrap break-words text-slate-300">
                         {m.content}
                         {m.streaming && (
                           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-emerald-500 align-middle" />
@@ -189,9 +189,14 @@ export default function ChatPanel({
             )}
           </div>
 
-          <div className="shrink-0 border-t border-slate-800 p-2">
+          {/*
+            入力欄は shrink-0 で常に最下部に残す。
+            文字サイズを 20px にしても送信ボタンが埋もれないよう、
+            textarea 側に最大高さとスクロールを持たせている。
+          */}
+          <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2">
             {settings && !ready && (
-              <p className="mb-2 rounded border border-amber-900/70 bg-amber-950/40 px-2.5 py-1.5 text-[12px] leading-relaxed text-amber-300">
+              <p className="t-label mb-2 rounded border border-amber-900/70 bg-amber-950/40 px-2.5 py-1.5 text-amber-300">
                 選択中のプロバイダ「{providerLabel(settings, settings.provider)}」は
                 {reason ?? "設定が不足しています"}
                 <button
@@ -216,13 +221,13 @@ export default function ChatPanel({
                     ? "質問を入力（Enter で送信 / Shift+Enter で改行）"
                     : "APIキーを設定すると送信できます"
                 }
-                className={`selectable min-h-[42px] flex-1 resize-none rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 ${t.body} leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed`}
+                className="selectable t-body max-h-40 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed"
               />
               <button
                 type="button"
                 onClick={() => void send()}
                 disabled={sending || input.trim().length === 0}
-                className="h-9 shrink-0 rounded-md bg-emerald-600 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
+                className="h-11 w-20 shrink-0 rounded-md bg-emerald-600 text-[13px] font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
               >
                 {sending ? "送信中…" : "送信"}
               </button>

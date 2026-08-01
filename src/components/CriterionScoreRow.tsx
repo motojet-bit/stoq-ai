@@ -1,9 +1,7 @@
 import type { CriterionResult } from "@/lib/prompts/parseAnalysis";
-import { SCALE_CLASSES, type TextScale } from "@/lib/ui/textScale";
 
 interface Props {
   row: CriterionResult;
-  scale: TextScale;
 }
 
 /** スコアに応じた色。0（判定不能）はグレー。 */
@@ -16,18 +14,17 @@ function scoreStyle(score: number | null): { bar: string; text: string } {
 }
 
 /** 20項目評価テーブルの 1 行。 */
-export default function CriterionScoreRow({ row, scale }: Props) {
+export default function CriterionScoreRow({ row }: Props) {
   const style = scoreStyle(row.score);
   const filled = row.score ?? 0;
-  const t = SCALE_CLASSES[scale];
 
   return (
-    <div className="grid grid-cols-[1.75rem_minmax(9rem,13rem)_6rem_1fr] items-start gap-3 border-b border-slate-800/70 py-2.5 last:border-b-0">
-      <span className={`pt-0.5 text-right font-mono ${t.label} text-slate-600`}>{row.id}</span>
+    <div className="grid grid-cols-[1.75rem_minmax(8rem,12rem)_5.5rem_1fr] items-start gap-3 border-b border-slate-800/70 py-2.5 last:border-b-0">
+      <span className="t-label pt-0.5 text-right font-mono text-slate-600">{row.id}</span>
 
       <div className="min-w-0">
-        <div className={`${t.body} text-slate-200`}>{row.label}</div>
-        <div className={`${t.label} text-slate-600`}>{row.category}</div>
+        <div className="t-body text-slate-200">{row.label}</div>
+        <div className="t-label text-slate-600">{row.category}</div>
       </div>
 
       <div className="pt-0.5">
@@ -38,16 +35,18 @@ export default function CriterionScoreRow({ row, scale }: Props) {
           {[1, 2, 3, 4, 5].map((n) => (
             <span
               key={n}
-              className={`h-2 w-2 rounded-full ${n <= filled ? style.bar : "bg-slate-800"}`}
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                n <= filled ? style.bar : "bg-slate-800"
+              }`}
             />
           ))}
         </div>
-        <div className={`${t.label} ${style.text}`}>
+        <div className={`t-label ${style.text}`}>
           {row.score === 0 ? "判定不能" : row.verdict || "—"}
         </div>
       </div>
 
-      <p className={`selectable pt-0.5 ${t.body} ${t.leading} text-slate-300`}>{row.rationale}</p>
+      <p className="selectable t-body pt-0.5 text-slate-300">{row.rationale}</p>
     </div>
   );
 }

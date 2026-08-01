@@ -362,3 +362,71 @@ fn now_ms() -> u64 {
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn 日付を通日に変換できる() {
+        assert_eq!(days_from_epoch("1970-01-01"), Some(0));
+        assert_eq!(days_from_epoch("1970-01-02"), Some(1));
+        assert_eq!(days_from_epoch("2000-03-01"), Some(11017)); // 閏年の境
+        assert_eq!(days_between("2025-06-28", "2026-06-27"), Some(364));
+    }
+
+    #[test]
+    fn 壊れた日付はNoneを返す() {
+        for bad in ["", "2026", "2026-06", "abc-de-fg", "2026/06/27"] {
+            assert!(days_from_epoch(bad).is_none(), "{bad} は None のはず");
+        }
+    }
+
+    #[test]
+    fn 前年同期を期末日で突き合わせる() {
+        let series = vec![
+            XbrlQuarter { end_date: "2025-06-28".into(), revenue: 94_036_000_000.0 },
+            XbrlQuarter { end_date: "2025-03-29".into(), revenue: 95_359_000_000.0 },
+            XbrlQuarter { end_date: "2024-12-28".into(), revenue: 124_300_000_000.0 },
+        ];
+        // 2026-06-27 の 1 年前は 2025-06-28（差 364 日）
+        assert_eq!(find_year_ago(&series, "2026-06-27"), Some(94_036_000_000.0));
+        // ±25 日以内なら期末のズレを吸収する（2025-01-15 に対し 2024-12-28 は 18 日差）
+        assert_eq!(find_year_ago(&series, "2026-01-15"), Some(124_300_000_000.0));
+        // 25 日を超えて離れていれば一致させない
+        assert_eq!(find_year_ago(&series, "2027-06-27"), None);
+    }
+
+    #[test]
+    fn 空の系列でも落ちない() {
+        assert_eq!(find_year_ago(&[], "2026-06-27"), None);
+    }
+
+    #[test]
+    fn 金額の整形が単位付きになる() {
+        assert_eq!(money(Some(1.5e12), "USD"), "1.50兆 USD");
+        assert_eq!(money(Some(1.09417e11), "USD"), "1094.17億 USD");
+        assert_eq!(money(None, "USD"), "—");
+    }
+
+    #[test]
+    fn ゼロは未提供として扱う() {
+        let v: Value = serde_json::json!({ "grossProfit": { "raw": 0 }, "totalRevenue": { "raw": 100 } });
+        assert_eq!(raw(&v, "grossProfit"), None, "Yahoo は未提供を 0 で返すことがある");
+        assert_eq!(raw(&v, "totalRevenue"), Some(100.0));
+    }
+
+    #[test]
+    fn 前年同期比が無ければ加速判定をしない() {
+        let quarters = vec![Quarter {
+            label: "1Q".into(), end_date: "2026-03-31".into(),
+            revenue: Some(100.0), revenue_display: "100".into(),
+            net_income: Some(10.0), net_income_display: "10".into(),
+            net_margin: Some(10.0), revenue_qoq: None, revenue_yoy: None,
+            eps_actual: None, eps_estimate: None, eps_surprise_pct: None,
+        }];
+        let m = summarize(&quarters, false);
+        assert!(m.accelerating.is_none());
+        assert!(m.summary.contains("判定していません"));
+    }
+}

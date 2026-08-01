@@ -308,3 +308,49 @@ pub fn save(app: &AppHandle, settings: &Settings) -> Result<()> {
     std::fs::write(&path, serde_json::to_string_pretty(settings)?)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn 秘密情報をマスクする() {
+        assert_eq!(mask_secret("sk-proj-abcdefghijklmnop3f9a").as_deref(), Some("sk-proj-…3f9a"));
+        assert_eq!(mask_secret("sk-ant-api03-xxxxxxxxxxxx1234").as_deref(), Some("sk-ant-…1234"));
+    }
+
+    #[test]
+    fn 空や空白はNone() {
+        assert!(mask_secret("").is_none());
+        assert!(mask_secret("   ").is_none());
+    }
+
+    #[test]
+    fn 短いキーでも末尾だけ見せる() {
+        let masked = mask_secret("abc123").unwrap();
+        assert!(masked.ends_with("c123") || masked.ends_with("123"), "{masked}");
+        assert!(!masked.contains("abc123"), "全体が見えてはいけない");
+    }
+
+    #[test]
+    fn カスタムプロバイダを追加削除できる() {
+        let mut s = Settings::default();
+        let id = s.add_custom_provider(Some("DeepSeek".into()));
+        assert!(s.has_provider(&id));
+        assert_eq!(s.label_for(&id), "DeepSeek");
+
+        s.keys.insert(id.clone(), "sk-x".into());
+        s.provider = id.clone();
+        s.remove_custom_provider(&id).unwrap();
+
+        assert!(!s.has_provider(&id));
+        assert!(!s.keys.contains_key(&id), "キーも一緒に消える");
+        assert_eq!(s.provider, "anthropic", "選択中を消したら組み込みへ戻る");
+    }
+
+    #[test]
+    fn 存在しないプロバイダの削除はエラー() {
+        let mut s = Settings::default();
+        assert!(s.remove_custom_provider("missing").is_err());
+    }
+}

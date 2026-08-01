@@ -89,7 +89,7 @@ export default function QuarterlyTrend({ series, loading }: Props) {
   return (
     <div className="mb-4 rounded-lg border border-slate-800 bg-slate-900/60 p-3.5">
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="text-[12px] font-medium text-slate-300">四半期推移（直近4Q）</h2>
+        <h2 className="t-heading font-medium text-slate-300">四半期推移（直近4Q）</h2>
 
         <div className="flex gap-1">
           {METRICS.map((m) => (
@@ -97,7 +97,7 @@ export default function QuarterlyTrend({ series, loading }: Props) {
               key={m.key}
               type="button"
               onClick={() => setMetricKey(m.key)}
-              className={`rounded px-2 py-0.5 text-[11px] transition-colors ${
+              className={`rounded px-2 py-0.5 t-label transition-colors ${
                 m.key === metricKey
                   ? "bg-slate-700 text-slate-100"
                   : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
@@ -139,10 +139,10 @@ export default function QuarterlyTrend({ series, loading }: Props) {
                 />
               </div>
 
-              <div className="truncate text-center font-mono text-[11px] text-slate-200">
+              <div className="t-label truncate text-center font-mono text-slate-200">
                 {metric.display(q)}
               </div>
-              <div className="truncate text-center text-[10px] text-slate-500">{q.label}</div>
+              <div className="t-label truncate text-center text-slate-500">{q.label}</div>
 
               <div className="mt-1 flex justify-center gap-2 text-[10px]">
                 <Delta label="QoQ" value={q.revenueQoq} muted />
@@ -153,11 +153,11 @@ export default function QuarterlyTrend({ series, loading }: Props) {
         })}
       </div>
 
-      <p className="selectable mt-3 border-t border-slate-800 pt-2 text-[11px] leading-relaxed text-slate-400">
+      <p className="selectable t-body mt-3 border-t border-slate-800 pt-2 text-slate-400">
         {series.momentum.summary}
       </p>
       {series.note && (
-        <p className="selectable mt-1 text-[10px] leading-relaxed text-slate-600">
+        <p className="selectable t-label mt-1 text-slate-600">
           ※ {series.note}
         </p>
       )}

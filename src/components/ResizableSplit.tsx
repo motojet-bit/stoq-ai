@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { clampSecondSize } from "@/lib/ui/splitMath";
 
 export type SplitDirection = "vertical" | "horizontal";
 
@@ -40,11 +41,14 @@ export default function ResizableSplit({
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      const next = isVertical ? rect.bottom - e.clientY : rect.right - e.clientX;
-      const total = isVertical ? rect.height : rect.width;
-      const max = Math.max(total - minFirstSize, minSecondSize);
-
-      setSecondSize(Math.min(Math.max(next, minSecondSize), max));
+      setSecondSize(
+        clampSecondSize({
+          desired: isVertical ? rect.bottom - e.clientY : rect.right - e.clientX,
+          total: isVertical ? rect.height : rect.width,
+          minFirst: minFirstSize,
+          minSecond: minSecondSize,
+        }),
+      );
     },
     [isVertical, minFirstSize, minSecondSize],
   );
@@ -92,9 +96,13 @@ export default function ResizableSplit({
       <div
         role="separator"
         aria-orientation={isVertical ? "horizontal" : "vertical"}
-        onPointerDown={() => setDragging(true)}
-        className={`group relative shrink-0 bg-slate-800 ${
-          isVertical ? "h-px cursor-row-resize" : "w-px cursor-col-resize"
+        onPointerDown={(e) => {
+          // ドラッグ中にポインタを取りこぼさないよう捕捉する
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+          setDragging(true);
+        }}
+        className={`group relative z-10 shrink-0 bg-slate-800 ${
+          isVertical ? "h-1 cursor-row-resize" : "w-1 cursor-col-resize"
         } ${dragging ? "bg-emerald-500" : "hover:bg-emerald-600"}`}
       >
         {/* 掴みやすいように当たり判定を広げる */}

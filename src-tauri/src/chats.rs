@@ -49,7 +49,12 @@ fn db_path(app: &AppHandle) -> Result<PathBuf> {
 }
 
 fn open(app: &AppHandle) -> Result<Connection> {
-    let conn = Connection::open(db_path(app)?)
+    open_at(&db_path(app)?)
+}
+
+/// パスを指定して開く。Tauri なしで単体テストできるよう分けてある。
+fn open_at(path: &std::path::Path) -> Result<Connection> {
+    let conn = Connection::open(path)
         .map_err(|e| AppError::msg(format!("チャット履歴データベースを開けません: {e}")))?;
 
     conn.execute_batch(
@@ -79,7 +84,10 @@ fn open(app: &AppHandle) -> Result<Connection> {
 // ---------------------------------------------------------------- セッション
 
 pub fn list_sessions(app: &AppHandle) -> Result<Vec<ChatSession>> {
-    let conn = open(app)?;
+    list_sessions_in(&open(app)?)
+}
+
+fn list_sessions_in(conn: &Connection) -> Result<Vec<ChatSession>> {
     let mut stmt = conn
         .prepare(
             "SELECT s.id, s.title, s.ticker, s.created_at_ms, s.updated_at_ms,
@@ -110,6 +118,14 @@ pub fn create_session(
     title: Option<String>,
     ticker: Option<String>,
 ) -> Result<ChatSession> {
+    create_session_in(&open(app)?, title, ticker)
+}
+
+fn create_session_in(
+    conn: &Connection,
+    title: Option<String>,
+    ticker: Option<String>,
+) -> Result<ChatSession> {
     let now = now_ms();
     let session = ChatSession {
         id: new_id("chat"),
@@ -123,7 +139,7 @@ pub fn create_session(
         updated_at_ms: now,
     };
 
-    open(app)?
+    conn
         .execute(
             "INSERT INTO chat_sessions (id, title, ticker, created_at_ms, updated_at_ms)
              VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -141,12 +157,16 @@ pub fn create_session(
 }
 
 pub fn rename_session(app: &AppHandle, id: &str, title: &str) -> Result<Vec<ChatSession>> {
+    rename_session_in(&open(app)?, id, title)
+}
+
+fn rename_session_in(conn: &Connection, id: &str, title: &str) -> Result<Vec<ChatSession>> {
     let title = title.trim();
     if title.is_empty() {
         return Err(AppError::msg("タイトルを空にはできません。"));
     }
 
-    let changed = open(app)?
+    let changed = conn
         .execute(
             "UPDATE chat_sessions SET title = ?2 WHERE id = ?1",
             params![id, title],
@@ -156,11 +176,14 @@ pub fn rename_session(app: &AppHandle, id: &str, title: &str) -> Result<Vec<Chat
     if changed == 0 {
         return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
     }
-    list_sessions(app)
+    list_sessions_in(conn)
 }
 
 pub fn delete_session(app: &AppHandle, id: &str) -> Result<Vec<ChatSession>> {
-    let conn = open(app)?;
+    delete_session_in(&open(app)?, id)
+}
+
+fn delete_session_in(conn: &Connection, id: &str) -> Result<Vec<ChatSession>> {
     // 外部キーの CASCADE でメッセージも消える
     let changed = conn
         .execute("DELETE FROM chat_sessions WHERE id = ?1", params![id])
@@ -169,13 +192,16 @@ pub fn delete_session(app: &AppHandle, id: &str) -> Result<Vec<ChatSession>> {
     if changed == 0 {
         return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
     }
-    list_sessions(app)
+    list_sessions_in(conn)
 }
 
 // ---------------------------------------------------------------- メッセージ
 
 pub fn load_messages(app: &AppHandle, session_id: &str) -> Result<Vec<ChatMessage>> {
-    let conn = open(app)?;
+    load_messages_in(&open(app)?, session_id)
+}
+
+fn load_messages_in(conn: &Connection, session_id: &str) -> Result<Vec<ChatMessage>> {
     let mut stmt = conn
         .prepare(
             "SELECT id, role, content, created_at_ms
@@ -206,7 +232,15 @@ pub fn append_message(
     role: &str,
     content: &str,
 ) -> Result<ChatMessage> {
-    let conn = open(app)?;
+    append_message_in(&open(app)?, session_id, role, content)
+}
+
+fn append_message_in(
+    conn: &Connection,
+    session_id: &str,
+    role: &str,
+    content: &str,
+) -> Result<ChatMessage> {
     let now = now_ms();
 
     let exists: Option<String> = conn
@@ -268,11 +302,14 @@ fn summarize(content: &str) -> String {
 }
 
 fn new_id(prefix: &str) -> String {
+    // 時刻だけだと同一ナノ秒で衝突しうるので連番も足す
+    static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let seq = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    format!("{prefix}-{nanos}")
+    format!("{prefix}-{nanos}-{seq}")
 }
 
 fn now_ms() -> i64 {
@@ -280,4 +317,171 @@ fn now_ms() -> i64 {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis() as i64)
         .unwrap_or(0)
+}
+
+// ---------------------------------------------------------------- テスト
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// メモリ上の DB でスキーマだけ作る。
+    fn db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "PRAGMA foreign_keys = ON;
+             CREATE TABLE chat_sessions (
+                id TEXT PRIMARY KEY, title TEXT NOT NULL, ticker TEXT,
+                created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);
+             CREATE TABLE chat_messages (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+                role TEXT NOT NULL, content TEXT NOT NULL, created_at_ms INTEGER NOT NULL);",
+        )
+        .unwrap();
+        conn
+    }
+
+    #[test]
+    fn 作成すると一覧に出る() {
+        let conn = db();
+        let s = create_session_in(&conn, None, Some("AAPL".into())).unwrap();
+        assert_eq!(s.title, "新しいチャット");
+        assert_eq!(s.ticker.as_deref(), Some("AAPL"));
+
+        let list = list_sessions_in(&conn).unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].message_count, 0);
+    }
+
+    #[test]
+    fn 空文字のティッカーは無しとして扱う() {
+        let conn = db();
+        let s = create_session_in(&conn, None, Some("   ".into())).unwrap();
+        assert!(s.ticker.is_none());
+    }
+
+    #[test]
+    fn 最初のユーザー発言でタイトルが自動命名される() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        append_message_in(&conn, &s.id, "user", "NVDAの決算を要約して").unwrap();
+
+        let list = list_sessions_in(&conn).unwrap();
+        assert_eq!(list[0].title, "NVDAの決算を要約して");
+        assert_eq!(list[0].message_count, 1);
+    }
+
+    #[test]
+    fn 長い発言は四十文字で省略される() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        let long = "あ".repeat(100);
+        append_message_in(&conn, &s.id, "user", &long).unwrap();
+
+        let title = list_sessions_in(&conn).unwrap()[0].title.clone();
+        assert!(title.ends_with('…'), "省略記号が付くはず: {title}");
+        assert_eq!(title.chars().count(), 41);
+    }
+
+    #[test]
+    fn 命名済みのタイトルは上書きされない() {
+        let conn = db();
+        let s = create_session_in(&conn, Some("既存の名前".into()), None).unwrap();
+        append_message_in(&conn, &s.id, "user", "何か質問").unwrap();
+        assert_eq!(list_sessions_in(&conn).unwrap()[0].title, "既存の名前");
+    }
+
+    #[test]
+    fn アシスタント発言では自動命名しない() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        append_message_in(&conn, &s.id, "assistant", "こんにちは").unwrap();
+        assert_eq!(list_sessions_in(&conn).unwrap()[0].title, "新しいチャット");
+    }
+
+    #[test]
+    fn メッセージは投入順に復元される() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        for (role, text) in [("user", "質問1"), ("assistant", "回答1"), ("user", "質問2")] {
+            append_message_in(&conn, &s.id, role, text).unwrap();
+        }
+        let msgs = load_messages_in(&conn, &s.id).unwrap();
+        assert_eq!(msgs.len(), 3);
+        assert_eq!(msgs[0].role, "user");
+        assert_eq!(msgs[2].content, "質問2");
+    }
+
+    #[test]
+    fn 削除するとメッセージも消える() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        append_message_in(&conn, &s.id, "user", "質問").unwrap();
+
+        let left = delete_session_in(&conn, &s.id).unwrap();
+        assert!(left.is_empty());
+
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM chat_messages", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 0, "CASCADE でメッセージも消えるはず");
+    }
+
+    #[test]
+    fn リネームできる() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        let list = rename_session_in(&conn, &s.id, "  新しい名前  ").unwrap();
+        assert_eq!(list[0].title, "新しい名前", "前後の空白は落とす");
+    }
+
+    // --- エッジケース ---
+
+    #[test]
+    fn 空のタイトルへのリネームは拒否される() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        assert!(rename_session_in(&conn, &s.id, "   ").is_err());
+    }
+
+    #[test]
+    fn 存在しないセッションの操作はエラーになる() {
+        let conn = db();
+        assert!(rename_session_in(&conn, "missing", "x").is_err());
+        assert!(delete_session_in(&conn, "missing").is_err());
+        assert!(append_message_in(&conn, "missing", "user", "x").is_err());
+    }
+
+    #[test]
+    fn 存在しないセッションのメッセージ読み出しは空になる() {
+        let conn = db();
+        assert!(load_messages_in(&conn, "missing").unwrap().is_empty());
+    }
+
+    #[test]
+    fn 一覧は更新の新しい順に並ぶ() {
+        let conn = db();
+        let a = create_session_in(&conn, Some("A".into()), None).unwrap();
+        let b = create_session_in(&conn, Some("B".into()), None).unwrap();
+        // A を更新して先頭に来ることを確かめる
+        conn.execute(
+            "UPDATE chat_sessions SET updated_at_ms = ?2 WHERE id = ?1",
+            params![a.id, i64::MAX],
+        )
+        .unwrap();
+
+        let list = list_sessions_in(&conn).unwrap();
+        assert_eq!(list[0].id, a.id);
+        assert_eq!(list[1].id, b.id);
+    }
+
+    #[test]
+    fn 改行や空行だけの発言でも命名で落ちない() {
+        let conn = db();
+        let s = create_session_in(&conn, None, None).unwrap();
+        append_message_in(&conn, &s.id, "user", "\n\n  \n").unwrap();
+        let title = list_sessions_in(&conn).unwrap()[0].title.clone();
+        assert_eq!(title, "新しいチャット");
+    }
 }

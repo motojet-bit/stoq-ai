@@ -4,6 +4,7 @@ import MetricCardSkeleton from "@/components/MetricCardSkeleton";
 import FilingStatusBadge from "@/components/FilingStatusBadge";
 import QuarterlyTrend from "@/components/QuarterlyTrend";
 import PanelHeader from "@/components/PanelHeader";
+import type { SlotId } from "@/lib/ui/layoutStore";
 import { IconChart } from "@/components/Icons";
 
 interface Props {
@@ -11,25 +12,28 @@ interface Props {
   /** アクティブなタブの銘柄の取得状態。銘柄タブ以外では undefined */
   analysis: TickerAnalysis | undefined;
   collapsed: boolean;
+  slot?: SlotId;
   onToggleCollapse: () => void;
   onRetry: (ticker: string) => void;
 }
 
-/** 左ペイン: 財務指標・四半期モメンタム・SEC 情報 */
+/** 財務指標・四半期モメンタム・SEC 情報のパネル */
 export default function WorkspacePanel({
   tab,
   analysis,
   collapsed,
+  slot,
   onToggleCollapse,
   onRetry,
 }: Props) {
   return (
-    <section className="flex h-full min-w-0 flex-col bg-slate-950">
+    <section className="panel bg-slate-950">
       <PanelHeader
         icon={<IconChart className="h-3.5 w-3.5" />}
         title="市場データ"
         subtitle={tab?.ticker ?? undefined}
         collapsed={collapsed}
+        slot={slot}
         onToggleCollapse={onToggleCollapse}
       />
       {!collapsed && <PanelBody tab={tab} analysis={analysis} onRetry={onRetry} />}
@@ -75,7 +79,7 @@ function PanelBody({
   const change = fundamentals?.changePercent ?? null;
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto p-4">
+    <div className="panel-scroll p-4">
       <header className="mb-4">
         <div className="mb-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-lg font-semibold text-slate-100">

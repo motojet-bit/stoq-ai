@@ -95,6 +95,18 @@ export const IconStop = (p: IconProps) => (
   </Svg>
 );
 
+/** ドラッグ用のつまみ */
+export const IconGrip = (p: IconProps) => (
+  <Svg {...p} strokeWidth={2.2}>
+    <circle cx="9" cy="6" r="0.6" />
+    <circle cx="9" cy="12" r="0.6" />
+    <circle cx="9" cy="18" r="0.6" />
+    <circle cx="15" cy="6" r="0.6" />
+    <circle cx="15" cy="12" r="0.6" />
+    <circle cx="15" cy="18" r="0.6" />
+  </Svg>
+);
+
 /** 最小化（_）。ヘッダーの折りたたみボタンに使う */
 export const IconMinimize = (p: IconProps) => (
   <Svg {...p}>

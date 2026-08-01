@@ -25,6 +25,8 @@ import {
   useAnalysisRuns,
 } from "@/lib/prompts/analysisRunner";
 import { providerReadiness } from "@/lib/config/providers";
+import { initFontSize } from "@/lib/ui/fontStore";
+import { useSlots, type PanelId, type SlotId } from "@/lib/ui/layoutStore";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
 import CommandBar from "@/components/CommandBar";
@@ -53,10 +55,23 @@ export default function App() {
   const [currentTicker, setCurrentTicker] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // 3 ペインの折りたたみ状態。左右は同時に畳めない（片方は必ず表示する）
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [chatCollapsed, setChatCollapsed] = useState(false);
+  // 枠ごとの折りたたみ状態。左上と右は同時に畳めない（片方は必ず表示する）
+  const slots = useSlots();
+  const [collapsedSlots, setCollapsedSlots] = useState<Record<SlotId, boolean>>({
+    leftTop: false,
+    leftBottom: false,
+    right: false,
+  });
+
+  const toggleSlot = (slot: SlotId) => {
+    setCollapsedSlots((prev) => {
+      const next = { ...prev, [slot]: !prev[slot] };
+      // 左上と右を同時に畳むと本文が消えるので、片方を開く
+      if (slot === "leftTop" && next.leftTop) next.right = false;
+      if (slot === "right" && next.right) next.leftTop = false;
+      return next;
+    });
+  };
 
   // 一次資料が無い状態で分析を実行しようとしたときの確認
   const [confirmingNoDocs, setConfirmingNoDocs] = useState(false);
@@ -103,10 +118,59 @@ export default function App() {
 
   // 起動時に Rust 側から設定と一時保存中の資料を読み込む
   useEffect(() => {
+    initFontSize();
     void loadSettings();
     void loadStagedDocuments();
     void loadChatSessions();
   }, []);
+
+  /** 枠に入っているパネルを描画する。ドラッグで入れ替えられる。 */
+  const renderPanel = (slot: SlotId) => {
+    const panel: PanelId = slots[slot];
+    const collapsed = collapsedSlots[slot];
+    const onToggleCollapse = () => toggleSlot(slot);
+
+    switch (panel) {
+      case "market":
+        return (
+          <WorkspacePanel
+            tab={activeTab}
+            analysis={activeAnalysis}
+            collapsed={collapsed}
+            slot={slot}
+            onToggleCollapse={onToggleCollapse}
+            onRetry={(ticker) => void loadTicker(ticker)}
+          />
+        );
+      case "analysis":
+        return (
+          <AnalysisPanel
+            ticker={activeTicker}
+            run={activeRun}
+            ready={llm.ready}
+            readyReason={llm.reason}
+            collapsed={collapsed}
+            slot={slot}
+            onToggleCollapse={onToggleCollapse}
+            onRun={handleRunAnalysis}
+            onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
+            onClear={() => activeTicker && void clearAnalysis(activeTicker)}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
+        );
+      case "chat":
+        return (
+          <ChatPanel
+            settings={settings}
+            ticker={activeTicker}
+            collapsed={collapsed}
+            slot={slot}
+            onToggleCollapse={onToggleCollapse}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
+        );
+    }
+  };
 
   // Ctrl+B でサイドバー開閉 / Ctrl+, で設定
   useEffect(() => {
@@ -234,57 +298,36 @@ export default function App() {
             initialSecondSize={Math.round(window.innerWidth / 2)}
             minFirstSize={280}
             minSecondSize={320}
-            collapsed={leftCollapsed ? "first" : rightCollapsed ? "second" : null}
+            collapsed={
+              collapsedSlots.leftTop && collapsedSlots.leftBottom
+                ? "first"
+                : collapsedSlots.right
+                  ? "second"
+                  : null
+            }
             first={
               <ResizableSplit
                 direction="vertical"
                 initialSecondSize={Math.round(window.innerHeight / 3)}
-                minFirstSize={160}
-                minSecondSize={120}
-                collapsed={chatCollapsed ? "second" : null}
-                first={
-                  <WorkspacePanel
-                    tab={activeTab}
-                    analysis={activeAnalysis}
-                    collapsed={leftCollapsed}
-                    onToggleCollapse={() => {
-                      setLeftCollapsed((v) => !v);
-                      if (!leftCollapsed) setRightCollapsed(false);
-                    }}
-                    onRetry={(ticker) => void loadTicker(ticker)}
-                  />
+                minFirstSize={140}
+                minSecondSize={140}
+                collapsed={
+                  collapsedSlots.leftTop
+                    ? "first"
+                    : collapsedSlots.leftBottom
+                      ? "second"
+                      : null
                 }
+                first={renderPanel("leftTop")}
                 second={
                   <div className="h-full border-t border-slate-800">
-                    <ChatPanel
-                      settings={settings}
-                      ticker={activeTicker}
-                      collapsed={chatCollapsed}
-                      onToggleCollapse={() => setChatCollapsed((v) => !v)}
-                      onOpenSettings={() => setSettingsOpen(true)}
-                    />
+                    {renderPanel("leftBottom")}
                   </div>
                 }
               />
             }
             second={
-              <div className="h-full border-l border-slate-800">
-                <AnalysisPanel
-                  ticker={activeTicker}
-                  run={activeRun}
-                  ready={llm.ready}
-                  readyReason={llm.reason}
-                  collapsed={rightCollapsed}
-                  onToggleCollapse={() => {
-                    setRightCollapsed((v) => !v);
-                    if (!rightCollapsed) setLeftCollapsed(false);
-                  }}
-                  onRun={handleRunAnalysis}
-                  onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
-                  onClear={() => activeTicker && void clearAnalysis(activeTicker)}
-                  onOpenSettings={() => setSettingsOpen(true)}
-                />
-              </div>
+              <div className="h-full border-l border-slate-800">{renderPanel("right")}</div>
             }
           />
         </main>

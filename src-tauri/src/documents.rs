@@ -205,3 +205,29 @@ fn now_ms() -> u64 {
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn 空文字は0トークン() {
+        assert_eq!(estimate_tokens(""), 0);
+    }
+
+    #[test]
+    fn 日本語は一文字一トークン() {
+        assert_eq!(estimate_tokens("日本語のテキスト"), 8);
+    }
+
+    #[test]
+    fn 英数字は四文字一トークン() {
+        assert_eq!(estimate_tokens("abcd"), 1);
+        assert_eq!(estimate_tokens("abcde"), 2);
+    }
+
+    #[test]
+    fn 混在でも合算できる() {
+        assert_eq!(estimate_tokens("日本abcd"), 3);
+    }
+}

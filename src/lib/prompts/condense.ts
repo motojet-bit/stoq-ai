@@ -328,8 +328,10 @@ export function condenseDocument(
     .sort((a, b) => b.score - a.score);
 
   for (const s of dataSections) {
-    // 予算を食い尽くさない範囲で確保する
-    if (s.tokens <= remaining * 0.6) {
+    // 予算を食い尽くさない範囲で確保する。
+    // 数値明細は分析価値が高いので、他のセクションより優先度を上げてある
+    // （0.75 = 残り予算の 3/4 まで 1 セクションに割り当てる）。
+    if (s.tokens <= remaining * 0.75) {
       allocations.set(s, s.tokens);
       remaining -= s.tokens;
     }

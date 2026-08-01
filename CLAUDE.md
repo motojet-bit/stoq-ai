@@ -15,6 +15,9 @@
   - 次に何をするか
 - `改修記録.md` の先頭に、その改修の記録を追記する（書式はファイル冒頭を参照）。
 - Git にコミットし、コミットハッシュを `改修記録.md` に記入する。
+- **コミット前に `npm run verify`（typecheck → test → build）と
+  `cargo test --manifest-path src-tauri\Cargo.toml --lib` を通すこと。**
+  純粋なロジックを足したらテストも足す（UI から切り離して書けるようにする）。
 
 ## 2.1 ドキュメントのローテーション
 

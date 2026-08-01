@@ -7,10 +7,65 @@
   --font-mono: "JetBrains Mono", "Cascadia Mono", "Consolas", monospace;
 }
 
+/*
+ * 基準フォントサイズ。fontStore が `--fs-base` を 10〜20px の範囲で書き換え、
+ * 派生サイズと行間はここで計算する。全パネルが同じ変数を参照する。
+ */
+:root {
+  --fs-base: 13px;
+  --fs-body: var(--fs-base);
+  --fs-label: max(10px, calc(var(--fs-base) - 1px));
+  --fs-heading: max(10px, calc(var(--fs-base) - 1px));
+  --fs-mono: max(10px, calc(var(--fs-base) - 0.5px));
+  --lh-body: 1.85;
+}
+
+.t-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+.t-label {
+  font-size: var(--fs-label);
+  line-height: 1.6;
+}
+.t-heading {
+  font-size: var(--fs-heading);
+  line-height: 1.5;
+}
+.t-mono {
+  font-size: var(--fs-mono);
+  line-height: 1.6;
+}
+
 html,
 body,
 #root {
   height: 100%;
+}
+
+/*
+ * パネルの共通骨格。
+ * min-height: 0 を入れないと、Flex 子要素が内容の高さを主張して
+ * スクロールせずに枠外へ突き抜ける。
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.panel-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* パネルをドラッグして入れ替えているとき */
+.panel-drop-target {
+  outline: 2px dashed var(--color-emerald-500);
+  outline-offset: -2px;
 }
 
 body {
