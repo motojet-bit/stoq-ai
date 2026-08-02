@@ -853,6 +853,54 @@
       <!-- ========================================================== ダウンロード -->
       <section id="download" class="border-t border-slate-900 py-20 sm:py-24">
         <div class="mx-auto max-w-3xl px-5 text-center">
+          <!--
+            **ダウンロードボタンの手前に置く。** 落としてから制限を知るのがいちばん悪い順番。
+            解錠されたあと何が起きるか（永続・無制限）まで同じ枠に書く。
+            制限だけを読ませると「試用版の押し売り」に見える。
+          -->
+          <div
+            class="mb-12 rounded-2xl border border-emerald-700/60 bg-emerald-950/20 p-6 text-left shadow-lg shadow-emerald-950/20 sm:p-7"
+          >
+            <p class="flex items-center gap-2.5 text-sm font-bold text-emerald-300">
+              <span aria-hidden="true">&#128712;</span>
+              <span data-en>How the free trial works &mdash; and how to upgrade</span>
+              <span data-ja>【無料トライアルの仕様とアップグレードについて】</span>
+            </p>
+            <ul class="mt-4 space-y-3 text-sm leading-relaxed text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-en>
+                  Free for <strong class="text-white">10 tickers</strong> and
+                  <strong class="text-white">3 weeks from first launch</strong>.
+                </span>
+                <span data-ja>
+                  <strong class="text-white">10 銘柄</strong>、および
+                  <strong class="text-white">初回起動から 3 週間</strong>まで無料でお試しいただけます。
+                </span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="mt-0.5 shrink-0 text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-en>
+                  Once the period ends, or once you pass 10 tickers, adding new tickers is locked.
+                </span>
+                <span data-ja>
+                  無料期間の終了後、または 10 銘柄を超過した後は、新規銘柄の追加がロックされます。
+                </span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true">&#128273;</span>
+                <span data-en>
+                  Entering the activation key issued after purchase unlocks it, and from then on
+                  there is no limit and no expiry.
+                </span>
+                <span data-ja>
+                  購入後に発行されるアクティベーションキーをアプリに入力することでロックが解除され、
+                  以降は永続的に無制限でご利用いただけるようになります。
+                </span>
+              </li>
+            </ul>
+          </div>
+
           <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             <span data-en>Download and start in a few minutes</span>
             <span data-ja>数分ではじめられます</span>
