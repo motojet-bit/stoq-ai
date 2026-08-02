@@ -155,16 +155,23 @@
             <span data-ja>Windows デスクトップアプリ &middot; APIキー持ち込み型</span>
           </p>
 
+          <!--
+            **日本語は明示的に改行を入れる。** 自動折り返しは読点を無視するので、
+            意味の切れ目でないところで行が変わる。
+            文が長いぶん 6xl だと 4 行に割れて圧が出るため、上限は 5xl に留める。
+          -->
           <h1
-            class="text-balance text-4xl font-bold leading-[1.15] tracking-tight text-white sm:text-6xl"
+            class="text-balance text-3xl font-bold leading-[1.2] tracking-tight text-white sm:text-5xl"
           >
             <span data-en>
-              Read the filings.<br />
-              <span class="text-emerald-400">Not the hype.</span>
+              Graduate from the paid stock school.<br />
+              <span class="text-emerald-400">Your own AI.<br />Your own &ldquo;why&rdquo;.</span>
             </span>
             <span data-ja>
-              熱狂に飛び乗らない。<br />
-              <span class="text-emerald-400">数字に基づく、<br />確かな銘柄選び。</span>
+              スクール頼みの投資は、もう卒業。<br />
+              <span class="text-emerald-400"
+                >専属 AI と『なぜ』を突き詰める、<br />自立型・決算アナライザー。</span
+              >
             </span>
           </h1>
 
@@ -172,14 +179,16 @@
             class="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-slate-400 sm:text-lg"
           >
             <span data-en>
-              StoQ pulls financial metrics, quarterly momentum and SEC filings, adds the
-              earnings decks you drop in, and hands the whole thing to an LLM — returning a
-              structured 20-point fundamental assessment you can compare across quarters.
+              You do not need an expensive seminar to run the kind of root-cause questioning
+              professionals do — the whole method fits on the PC in your own room. Dig into the
+              real reasons behind the numbers with an AI that answers to you alone, for as long
+              as it takes.
             </span>
             <span data-ja>
-              財務指標・四半期モメンタム・SEC 提出書類に、あなたが読み込ませた決算資料を加えて
-              AI が読み解き、20 項目のファンダメンタル評価を根拠つきで返します。
-              拠りどころは数字と原文だけ。決算期をまたいだ比較も、ひとつの画面で。
+              高額なセミナーに通わなくても、プロが実践する本格的な『なぜなぜ分析』は
+              自室の PC で再現できる。
+              決算書の数字の裏にある本当の理由を、あなた専用の AI と納得いくまで
+              深掘りしませんか？
             </span>
           </p>
 
@@ -202,6 +211,136 @@
           <p class="mt-4 text-xs text-slate-500">
             <span data-en>3 weeks &middot; 10 tickers &middot; every feature unlocked &middot; no card required</span>
             <span data-ja>3 週間 &middot; 10 銘柄 &middot; 全機能を開放 &middot; クレジットカード不要</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- ========================================================== お悩み・課題 -->
+      <!--
+        ヒーローの直後、Core Value の**手前**に置く。
+        「何をしなくてよくなるか」を見せる前に、**読み手が自分の詰まりを言語化できる**
+        場所を作る。ここで頷けた人だけが、以降の機能説明を自分ごととして読む。
+
+        **他社・他者を名指しで批判しない。** 主語は常に読み手側の状態に置き、
+        「スクールが悪い」ではなく「ハードルが高い」と書く。
+        色も警告色を使わず本文と同じ寒色に留める（煽ると知的なトーンが崩れる）。
+      -->
+      <section id="pains" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-5xl px-5">
+          <h2 class="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>Hitting any of these walls?</span>
+            <span data-ja>こんな壁を感じていませんか？</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+            <span data-en>
+              None of these are a matter of talent. They are a matter of not having the method
+              — and a place to practise it.
+            </span>
+            <span data-ja>
+              どれもセンスの問題ではありません。深掘りの「型」と、それを試す場が
+              手元になかっただけです。
+            </span>
+          </p>
+
+          <div class="mt-14 grid gap-5 md:grid-cols-2">
+            <!-- ① 情報の表層 -->
+            <article class="flex gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+              <span
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-800/80 ring-1 ring-slate-700"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.6 2.6 0 015 .9c0 1.7-2.5 2.1-2.5 3.6" /><path d="M12 17h.01" />
+                </svg>
+              </span>
+              <p class="text-sm leading-relaxed text-slate-300">
+                <span data-en>
+                  News headlines and social feeds only take you so far — none of it adds up to a
+                  judgement you could defend.
+                </span>
+                <span data-ja>
+                  表面的なニュースや SNS の情報だけでは、根拠を持った投資判断ができない。
+                </span>
+              </p>
+            </article>
+
+            <!-- ② スクールのハードル -->
+            <article class="flex gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+              <span
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-800/80 ring-1 ring-slate-700"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 9L12 4 2 9l10 5 10-5z" /><path d="M6 11.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5.5" />
+                </svg>
+              </span>
+              <p class="text-sm leading-relaxed text-slate-300">
+                <span data-en>
+                  You want the root-cause questioning professionals use, but signing up for an
+                  expensive investing school is a high bar to clear.
+                </span>
+                <span data-ja>
+                  プロが行う「なぜなぜ分析（深掘り）」を身につけたいが、
+                  高額な投資スクールに通うのはハードルが高い。
+                </span>
+              </p>
+            </article>
+
+            <!-- ③ 1人だと思考が止まる -->
+            <article class="flex gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+              <span
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-800/80 ring-1 ring-slate-700"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /><path d="M9 15.5h4" />
+                </svg>
+              </span>
+              <p class="text-sm leading-relaxed text-slate-300">
+                <span data-en>
+                  Alone with a set of filings, the thought &ldquo;why did revenue grow?&rdquo;
+                  runs out of road after one or two steps.
+                </span>
+                <span data-ja>
+                  1 人で決算書を開いても「なぜ売上が伸びたのか？」の思考が行き詰まってしまう。
+                </span>
+              </p>
+            </article>
+
+            <!-- ④ 推奨銘柄からの脱却 -->
+            <article class="flex gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+              <span
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-800/80 ring-1 ring-slate-700"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 17l5-6 4 4 5-8" /><path d="M3 21h18" />
+                </svg>
+              </span>
+              <p class="text-sm leading-relaxed text-slate-300">
+                <span data-en>
+                  You want out of riding someone else's picks, and into names you hold with your
+                  own conviction.
+                </span>
+                <span data-ja>
+                  誰かの推奨銘柄に乗り直す投資から脱却し、
+                  自分の力で確信を持てる銘柄を見つけたい。
+                </span>
+              </p>
+            </article>
+          </div>
+
+          <p
+            class="mx-auto mt-10 max-w-2xl rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-5 py-3.5 text-center text-sm leading-relaxed text-emerald-200/90"
+          >
+            <span data-en>
+              StoQ hands you the method itself — the questioning, not the answer sheet — and a
+              desk to practise it on, alone, as often as you like.
+            </span>
+            <span data-ja>
+              StoQ が渡すのは答えではなく、深掘りの「型」そのもの。
+              そしてそれを、1 人で何度でも試せる机です。
+            </span>
           </p>
         </div>
       </section>
@@ -336,7 +475,94 @@
             </span>
           </p>
 
-          <div class="mt-14 grid gap-6 md:grid-cols-3">
+          <!--
+            **クロスディベートは 3 枚のカードに混ぜず、単独で先頭に置く。**
+            ここが「1 人でプロの深掘りを体験する」という主張の核なので、
+            他の機能と同じ大きさに並べると埋もれる。
+          -->
+          <article
+            class="mt-14 rounded-2xl border border-emerald-800/50 bg-gradient-to-b from-emerald-950/30 to-slate-900/40 p-7 sm:p-9"
+          >
+            <div class="flex flex-wrap items-center gap-3">
+              <span
+                class="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/25"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-5 w-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 10h7" /><path d="M8 14h4" />
+                  <path d="M3 5h13a2 2 0 012 2v6a2 2 0 01-2 2H8l-5 4z" />
+                  <path d="M18 9h3a2 2 0 012 2v6l-3-2" />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold text-white sm:text-xl">
+                <span data-en>AI cross-debate &mdash; professional-grade questioning, on your own</span>
+                <span data-ja>AI クロスディベート &mdash; プロの「なぜなぜ分析」を 1 人で体験</span>
+              </h3>
+            </div>
+
+            <p class="mt-5 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-base">
+              <span data-en>
+                Two AIs argue it out in front of you — one making the bull case, one taking the
+                cautious side. Why is this number what it is? What risk has been left
+                unchecked? The analysis gets stress-tested from both directions, so the depth
+                you could never reach alone is one click away.
+              </span>
+              <span data-ja>
+                強気派（Bull）と慎重派（Bear）の 2 つの AI が目の前で議論を展開。
+                なぜこの数値なのか？ 見落としているリスクはないか？ を双方の視点から
+                多角的に検証し、1 人では到達できなかったプロレベルの深掘り分析を
+                即座に体験できます。
+              </span>
+            </p>
+
+            <div class="mt-7 grid gap-4 sm:grid-cols-2">
+              <div class="rounded-xl border border-slate-800 bg-slate-950/60 px-5 py-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                  <span data-en>Bull &middot; the case for</span>
+                  <span data-ja>強気派（Bull）&middot; 主張する側</span>
+                </p>
+                <p class="mt-2 text-xs leading-relaxed text-slate-400">
+                  <span data-en>
+                    Lays out why the numbers hold up, and answers each challenge — conceding on
+                    the record where the challenge lands.
+                  </span>
+                  <span data-ja>
+                    その数値が成り立つ理由を示し、指摘の一つひとつに応答。
+                    的を射た指摘には、どこをどう修正するかを明示して認めます。
+                  </span>
+                </p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-950/60 px-5 py-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                  <span data-en>Bear &middot; the case against</span>
+                  <span data-ja>慎重派（Bear）&middot; 検証する側</span>
+                </p>
+                <p class="mt-2 text-xs leading-relaxed text-slate-400">
+                  <span data-en>
+                    Hunts for unsupported figures, flattering framing and the paired metric that
+                    went missing — the questions a professional would actually ask.
+                  </span>
+                  <span data-ja>
+                    裏づけのない数字、都合のよい切り取り、対になるはずの指標の欠落を洗い出す。
+                    プロが実際に投げる問いを、そのままぶつけます。
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <p class="mt-5 text-xs leading-relaxed text-slate-500">
+              <span data-en>
+                You can point the debate at a different provider from the one that wrote the
+                analysis — the same model tends to carry the same blind spots into the review.
+              </span>
+              <span data-ja>
+                検証役には、分析を書いた AI とは別のプロバイダを指定できます。
+                同じモデルだと、同じ思い込みがそのまま検証にも残るためです。
+              </span>
+            </p>
+          </article>
+
+          <div class="mt-6 grid gap-6 md:grid-cols-3">
             <!-- ① -->
             <article
               class="rounded-2xl border border-slate-800 bg-slate-900/40 p-7 transition-colors hover:border-slate-700"
@@ -416,20 +642,28 @@
                 </svg>
               </span>
               <h3 class="mt-5 text-lg font-semibold text-white">
-                <span data-en>Your key, your machine, your data</span>
-                <span data-ja>BYOK &mdash; 鍵もデータも、あなたの手元に</span>
+                <span data-en>Fully local, bought once &mdash; your own pace</span>
+                <span data-ja>完全ローカル・買い切り &mdash; 自分だけのペースで</span>
               </h3>
               <p class="mt-3 text-sm leading-relaxed text-slate-400">
                 <span data-en>
                   You contract directly with OpenAI, Anthropic or Google, so we take no cut and add
                   no subscription. Your API key is stored in your OS config directory and never sent
                   to us. Analyses, chats and portfolios live in local SQLite files.
+                  <span class="mt-2 block text-emerald-300/80">
+                    No recurring fee to justify, no community to keep up with. Just a desk of your
+                    own, where you can take as long as a company deserves.
+                  </span>
                 </span>
                 <span data-ja>
                   OpenAI / Anthropic / Google と直接契約する方式なので、当方は中間マージンを取らず、
                   月額の上乗せもありません。APIキーは OS の設定ディレクトリにのみ保存され、
                   当方のサーバーへ送信されることはありません。分析結果・対話・ポートフォリオは
                   すべて手元の SQLite に保存されます。
+                  <span class="mt-2 block text-emerald-300/80">
+                    高額な月額費用も、コミュニティに気を使う必要もなし。
+                    自分だけのペースで、納得いくまで 1 銘柄に向き合える環境です。
+                  </span>
                 </span>
               </p>
             </article>
@@ -693,8 +927,14 @@
             <span data-ja>まず試して、買うのは一度だけ。</span>
           </h2>
           <p class="mx-auto mt-4 max-w-2xl text-center text-slate-400">
-            <span data-en>No subscription. The license is tied to you, not to a billing cycle.</span>
-            <span data-ja>サブスクリプションはありません。買い切りです。</span>
+            <span data-en>
+              No subscription. The license is tied to you, not to a billing cycle — nothing to
+              renew, nothing to cancel, no one to answer to.
+            </span>
+            <span data-ja>
+              サブスクリプションはありません。買い切りです。
+              更新も退会の手続きもなく、誰かに合わせる必要もありません。
+            </span>
           </p>
 
           <div class="mt-14 grid gap-6 md:grid-cols-2">
