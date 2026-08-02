@@ -1,7 +1,10 @@
+import { t } from "@/lib/i18n/i18n";
 import type { Fundamentals, QuarterlySeries } from "@/types";
 import { parseAnalysis } from "@/lib/prompts/parseAnalysis";
 import {
+  blockLabel,
   cashRunway,
+  metricLabel,
   evPerGrossProfit,
   revenueGrowth,
   SCORE_BLOCKS,
@@ -104,15 +107,15 @@ export function statusOf(averageScore: number | null): {
   statusLabel: string;
 } {
   if (averageScore === null) {
-    return { status: "red", statusIcon: "🔴", statusLabel: "判定不能" };
+    return { status: "red", statusIcon: "🔴", statusLabel: t("status.undecidable") };
   }
   if (averageScore >= 4) {
-    return { status: "green", statusIcon: "🟢", statusLabel: "良好" };
+    return { status: "green", statusIcon: "🟢", statusLabel: t("status.good") };
   }
   if (averageScore >= 3) {
-    return { status: "yellow", statusIcon: "🟡", statusLabel: "中立" };
+    return { status: "yellow", statusIcon: "🟡", statusLabel: t("status.neutral") };
   }
-  return { status: "red", statusIcon: "🔴", statusLabel: "懸念" };
+  return { status: "red", statusIcon: "🔴", statusLabel: t("status.concern") };
 }
 
 /** 5 点満点の平均を 100 点満点へ換算する。 */
@@ -131,12 +134,18 @@ export interface RecordSource {
   savedAtMs: number;
 }
 
+/**
+ * Yahoo の指標から 1 件引く。
+ *
+ * **`sourceLabel` は Rust 側が返す指標名との突き合わせに使う内部キー**なので、
+ * 訳してはいけない。表示名は `key` から辞書で引く。
+ */
 function metric(
   fundamentals: Fundamentals | null,
   key: string,
-  label: string,
   sourceLabel: string,
 ): KeyMetric {
+  const label = metricLabel(key);
   for (const group of fundamentals?.groups ?? []) {
     const hit = group.metrics.find((m) => m.label === sourceLabel);
     if (hit) return { key, label, value: hit.value, raw: hit.raw };
@@ -151,7 +160,7 @@ function metric(
  * 枠だけ用意し、値は「—」にしておく（列が消えると CSV の形が変わるため）。
  */
 function dilutionMetric(): KeyMetric {
-  return { key: "dilution", label: "希薄化率", value: "—", raw: null };
+  return { key: "dilution", label: metricLabel("dilution"), value: "—", raw: null };
 }
 
 /** 分析結果を標準フォーマットに組み立てる。 */
@@ -190,7 +199,7 @@ export function buildAnalysisRecord(source: RecordSource): AnalysisRecord {
         .filter((v): v is number => typeof v === "number" && v > 0);
       return {
         id: block.id,
-        label: block.label,
+        label: blockLabel(block.id),
         score:
           values.length === 0
             ? null
@@ -200,19 +209,24 @@ export function buildAnalysisRecord(source: RecordSource): AnalysisRecord {
     keyMetrics: [
       {
         key: "price",
-        label: "株価",
+        label: metricLabel("price"),
         value: source.fundamentals?.priceDisplay ?? "—",
         raw: source.fundamentals?.price ?? null,
       },
-      metric(source.fundamentals, "marketCap", "時価総額", "時価総額"),
-      { key: "revenueGrowth", label: "売上成長率（YoY）", value: growth.display, raw: growth.raw },
+      metric(source.fundamentals, "marketCap", "時価総額"),
+      {
+        key: "revenueGrowth",
+        label: metricLabel("revenueGrowth"),
+        value: growth.display,
+        raw: growth.raw,
+      },
       cashRunwayMetric(source.fundamentals),
-      metric(source.fundamentals, "grossMargin", "粗利率", "粗利率"),
+      metric(source.fundamentals, "grossMargin", "粗利率"),
       dilutionMetric(),
       evGrossProfitMetric(source.fundamentals),
-      metric(source.fundamentals, "per", "PER（実績）", "PER（実績）"),
-      metric(source.fundamentals, "roe", "ROE", "ROE"),
-      metric(source.fundamentals, "debtToEquity", "負債比率 (D/E)", "負債比率 (D/E)"),
+      metric(source.fundamentals, "per", "PER（実績）"),
+      metric(source.fundamentals, "roe", "ROE"),
+      metric(source.fundamentals, "debtToEquity", "負債比率 (D/E)"),
     ],
     evaluations: {
       strengths: parsed.strengths.slice(0, MAX_EVALUATIONS),
@@ -233,7 +247,12 @@ function cashRunwayMetric(fundamentals: Fundamentals | null): KeyMetric {
 
 function evGrossProfitMetric(fundamentals: Fundamentals | null): KeyMetric {
   const cell = evPerGrossProfit(fundamentals);
-  return { key: "evGrossProfit", label: "EV / 粗利", value: cell.display, raw: cell.raw };
+  return {
+    key: "evGrossProfit",
+    label: metricLabel("evGrossProfit"),
+    value: cell.display,
+    raw: cell.raw,
+  };
 }
 
 /**
@@ -258,7 +277,7 @@ export function parseAnalysisRecord(json: string): AnalysisRecord | null {
         totalScore: null,
         status: "red",
         statusIcon: "🔴",
-        statusLabel: "判定不能",
+        statusLabel: t("status.undecidable"),
         averageScore: null,
         scoredCount: 0,
       },

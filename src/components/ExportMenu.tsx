@@ -71,7 +71,7 @@ export default function ExportMenu({ records, label = tr("analysis.export"), dis
             onClick={() => void run(format.id)}
             className="block w-full px-3 py-2 text-left text-slate-300 transition-colors hover:bg-slate-700"
           >
-            <span className="block font-medium">{format.label}</span>
+            <span className="block font-medium">{t(format.labelKey)}</span>
             <span className="block text-[11px] text-slate-500">.{format.extension}</span>
           </button>
         ))}

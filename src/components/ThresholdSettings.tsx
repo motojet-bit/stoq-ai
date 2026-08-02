@@ -8,6 +8,9 @@ import {
   formatRule,
   mergeThresholds,
   THRESHOLDS,
+  thresholdHint,
+  thresholdLabel,
+  thresholdUnit,
   type ThresholdValues,
 } from "@/lib/prompts/thresholds";
 import { thresholdPreview } from "@/lib/prompts/analystRoleStore";
@@ -123,7 +126,7 @@ export default function ThresholdSettings({ settings }: Props) {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
-                    <span className="t-body font-medium text-slate-200">{def.label}</span>
+                    <span className="t-body font-medium text-slate-200">{thresholdLabel(def)}</span>
                     <span
                       className={`shrink-0 rounded px-1.5 font-mono t-label ${
                         isChanged
@@ -132,10 +135,10 @@ export default function ThresholdSettings({ settings }: Props) {
                       }`}
                     >
                       {def.direction === "min" ? "≧" : "≦"} {value}
-                      {def.unit}
+                      {thresholdUnit(def)}
                     </span>
                   </span>
-                  <span className="mt-0.5 block t-label text-slate-500">{def.hint}</span>
+                  <span className="mt-0.5 block t-label text-slate-500">{thresholdHint(def)}</span>
                 </span>
 
                 <span className="flex shrink-0 items-center gap-2">
@@ -147,7 +150,7 @@ export default function ThresholdSettings({ settings }: Props) {
                     value={value}
                     disabled={busy}
                     onChange={(e) => update(def.id, Number(e.target.value))}
-                    aria-label={t("thresholds.sliderAria", { label: def.label })}
+                    aria-label={t("thresholds.sliderAria", { label: thresholdLabel(def) })}
                     className="h-1 w-40 cursor-pointer accent-emerald-500"
                   />
                   <input
@@ -158,7 +161,7 @@ export default function ThresholdSettings({ settings }: Props) {
                     value={value}
                     disabled={busy}
                     onChange={(e) => update(def.id, Number(e.target.value))}
-                    aria-label={t("thresholds.numberAria", { label: def.label })}
+                    aria-label={t("thresholds.numberAria", { label: thresholdLabel(def) })}
                     className="selectable min-h-7 w-20 rounded-md border border-slate-700 bg-slate-950 px-2 text-right font-mono t-label text-slate-100 focus:border-emerald-500 focus:outline-none"
                   />
                 </span>

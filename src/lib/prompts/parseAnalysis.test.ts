@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { parseAnalysis } from "@/lib/prompts/parseAnalysis";
 import { CRITERIA } from "@/lib/prompts/criteria";
+import { criterionLabel } from "@/lib/prompts/criteria";
+import { setLocale } from "@/lib/i18n/i18n";
+
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 function tableRows(count: number): string {
   return CRITERIA.slice(0, count)
-    .map((c) => `| ${c.id} | ${c.label} | ${(c.id % 5) + 1} | 良好 | 根拠${c.id}。 |`)
+    .map((c) => `| ${c.id} | ${criterionLabel(c.id)} | ${(c.id % 5) + 1} | 良好 | 根拠${c.id}。 |`)
     .join("\n");
 }
 

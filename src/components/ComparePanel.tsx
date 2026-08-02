@@ -7,6 +7,7 @@ import {
   buildComparison,
   COMPARE_METRICS,
   MAX_COMPARE,
+  metricLabel,
   type CompareSource,
 } from "@/lib/compare/compareData";
 import { IconChart, IconWarning } from "@/components/Icons";
@@ -180,7 +181,7 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
                     className="border-b border-slate-800/70 last:border-0 odd:bg-slate-900/30"
                   >
                     <th className="sticky left-0 z-10 whitespace-nowrap bg-slate-950 px-3 py-1.5 text-left t-label font-normal text-slate-400">
-                      {row.label}
+                      {metricLabel(row.key)}
                     </th>
                     {view.columns.map((column) => {
                       const value = column.metrics[row.key];

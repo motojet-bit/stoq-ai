@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   customInstructionHint,
   customInstructionError,
@@ -9,8 +9,12 @@ import {
 } from "@/lib/prompts/customInstruction";
 import { setLocale } from "@/lib/i18n/i18n";
 
-// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
-beforeAll(() => setLocale("ja"));
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf-8");
 

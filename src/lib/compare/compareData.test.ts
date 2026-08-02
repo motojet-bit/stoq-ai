@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Fundamentals, QuarterlySeries, SavedAnalysis } from "@/types";
 import { CRITERIA } from "@/lib/prompts/criteria";
+import { criterionLabel } from "@/lib/prompts/criteria";
 import {
   bestTickerFor,
   buildBlocks,
@@ -11,9 +12,18 @@ import {
   evPerGrossProfit,
   MAX_COMPARE,
   revenueGrowth,
+  blockLabel,
   SCORE_BLOCKS,
   type CompareSource,
 } from "@/lib/compare/compareData";
+import { setLocale } from "@/lib/i18n/i18n";
+
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 // ---------------------------------------------------------------- 素材
 
@@ -72,7 +82,7 @@ function fundamentals(over: Partial<Fundamentals> = {}): Fundamentals {
 /** 20項目すべてに同じスコアを入れた分析結果テキスト */
 function analysisMarkdown(scoreOf: (id: number) => number): string {
   const rows = CRITERIA.map(
-    (c) => `| ${c.id} | ${c.label} | ${scoreOf(c.id)} | 良好 | 根拠 |`,
+    (c) => `| ${c.id} | ${criterionLabel(c.id)} | ${scoreOf(c.id)} | 良好 | 根拠 |`,
   ).join("\n");
 
   return `## 評価テーブル
@@ -136,7 +146,7 @@ describe("スコアブロックの定義", () => {
   });
 
   it("指定された 5 ブロックがそろっている", () => {
-    expect(SCORE_BLOCKS.map((b) => b.label)).toEqual([
+    expect(SCORE_BLOCKS.map((b) => blockLabel(b.id))).toEqual([
       "成長性",
       "財務生存性",
       "経済性",

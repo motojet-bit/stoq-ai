@@ -1,4 +1,4 @@
-import { CRITERIA, criterionById } from "@/lib/prompts/criteria";
+import { CRITERIA, criterionById, criterionLabel } from "@/lib/prompts/criteria";
 import { SECTION_HEADINGS } from "@/lib/prompts/sections";
 
 /** 20項目の評価 1 行 */
@@ -70,7 +70,7 @@ function parseTable(markdown: string): CriterionResult[] {
 
     results.set(id, {
       id,
-      label: criterion.label,
+      label: criterionLabel(id),
       category: criterion.category,
       score: parseScore(cells[2]),
       verdict: cells[3],

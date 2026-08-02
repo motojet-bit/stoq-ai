@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Portfolio } from "@/types";
 import {
   buildSavePlan,
@@ -9,8 +9,12 @@ import {
 } from "@/lib/portfolio/saveTarget";
 import { setLocale } from "@/lib/i18n/i18n";
 
-// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
-beforeAll(() => setLocale("ja"));
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 function portfolio(id: string, name: string, tickers: string[]): Portfolio {
   return { id, name, tickers, createdAtMs: 0, updatedAtMs: 0 };

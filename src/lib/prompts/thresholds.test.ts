@@ -7,6 +7,14 @@ import {
   mergeThresholds,
   THRESHOLDS,
 } from "@/lib/prompts/thresholds";
+import { setLocale } from "@/lib/i18n/i18n";
+
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 describe("閾値の定義", () => {
   it("ID が重複していない", () => {

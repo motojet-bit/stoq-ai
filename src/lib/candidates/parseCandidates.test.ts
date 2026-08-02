@@ -1,9 +1,13 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { parseCandidates } from "@/lib/candidates/parseCandidates";
 import { setLocale } from "@/lib/i18n/i18n";
 
-// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
-beforeAll(() => setLocale("ja"));
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 describe("parseCandidates（正常系）", () => {
   it("複数行をティッカー・社名・ジャンルに分解する", () => {

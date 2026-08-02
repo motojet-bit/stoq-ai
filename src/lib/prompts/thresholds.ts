@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n/i18n";
+
 /**
  * AI の合否判定に使う可変閾値の **UI 用メタ情報**。
  *
@@ -16,129 +18,107 @@
 export type ThresholdDirection = "min" | "max";
 
 export interface ThresholdDefinition {
+  /** **内部キー。** Rust 側の閾値 ID と一致させる（表示名とは無関係） */
   id: string;
-  label: string;
-  /** 単位（`%` `倍` など） */
-  unit: string;
+  /** 単位の辞書キー（`unit.percent` など） */
+  unitKey: string;
   direction: ThresholdDirection;
   defaultValue: number;
   min: number;
   max: number;
   step: number;
-  /** 何を見る指標かの補足 */
-  hint: string;
 }
 
 export const THRESHOLDS: ThresholdDefinition[] = [
   {
     id: "revenueGrowth",
-    label: "売上高成長率（YoY）",
-    unit: "%",
+    unitKey: "unit.percent",
     direction: "min",
     defaultValue: 15,
     min: -20,
     max: 100,
     step: 1,
-    hint: "直近四半期の前年同期比。成長株を探すなら高め、安定株なら低めに",
   },
   {
     id: "operatingMargin",
-    label: "営業利益率",
-    unit: "%",
+    unitKey: "unit.percent",
     direction: "min",
     defaultValue: 15,
     min: -20,
     max: 60,
     step: 1,
-    hint: "本業の稼ぐ力。業種によって水準が大きく違う",
   },
   {
     id: "roe",
-    label: "ROE（自己資本利益率）",
-    unit: "%",
+    unitKey: "unit.percent",
     direction: "min",
     defaultValue: 15,
     min: 0,
     max: 60,
     step: 1,
-    hint: "株主資本をどれだけ効率よく利益に変えているか",
   },
   {
     id: "cashRunwayMonths",
-    label: "キャッシュランウェイ",
-    unit: "か月",
+    unitKey: "unit.months",
     direction: "min",
     defaultValue: 24,
     min: 0,
     max: 60,
     step: 1,
-    hint: "手元現金でバーンレートを何か月まかなえるか。赤字先行の中小型株で重要",
   },
   {
     id: "fcfMargin",
-    label: "FCF マージン",
-    unit: "%",
+    unitKey: "unit.percent",
     direction: "min",
     defaultValue: 10,
     min: -30,
     max: 60,
     step: 1,
-    hint: "フリーCF ÷ 売上高。会計上の利益より現金の創出力を見る",
   },
   {
     id: "per",
-    label: "PER（株価収益率）",
-    unit: "倍",
+    unitKey: "unit.times",
     direction: "max",
     defaultValue: 30,
     min: 5,
     max: 120,
     step: 1,
-    hint: "割高さの目安。成長率とセットで見る",
   },
   {
     id: "pbr",
-    label: "PBR（株価純資産倍率）",
-    unit: "倍",
+    unitKey: "unit.times",
     direction: "max",
     defaultValue: 5,
     min: 0.5,
     max: 30,
     step: 0.5,
-    hint: "資産面からの割高さ。資産の軽い業種では高くなりやすい",
   },
   {
     id: "debtToEquity",
-    label: "D/E（負債資本倍率）",
-    unit: "倍",
+    unitKey: "unit.times",
     direction: "max",
     defaultValue: 1.5,
     min: 0,
     max: 10,
     step: 0.1,
-    hint: "財務の安全性。高いほど借入依存",
   },
   {
     id: "dividendYield",
-    label: "配当利回り",
-    unit: "%",
+    unitKey: "unit.percent",
     direction: "min",
     defaultValue: 0,
     min: 0,
     max: 15,
     step: 0.1,
-    hint: "インカム重視なら引き上げる。0 のままなら判定に使わない",
   },
   {
     id: "payoutRatio",
-    label: "配当性向",
-    unit: "%",
+    unitKey: "unit.percent",
     direction: "max",
     defaultValue: 70,
     min: 0,
     max: 150,
     step: 5,
-    hint: "利益に対する配当の割合。高いほど減配余地が小さい",
   },
 ];
 
@@ -186,5 +166,20 @@ export function customizedIds(values: ThresholdValues): string[] {
 /** 1 項目ぶんの判定条件を文にする（例: `売上高成長率（YoY） > 15%`）。 */
 export function formatRule(def: ThresholdDefinition, value: number): string {
   const comparator = def.direction === "min" ? ">=" : "<=";
-  return `${def.label} ${comparator} ${value}${def.unit}`;
+  return `${thresholdLabel(def)} ${comparator} ${value}${thresholdUnit(def)}`;
+}
+
+/** 表示名。**内部キーとは分離**しているので、訳を変えても保存値に影響しない。 */
+export function thresholdLabel(def: ThresholdDefinition): string {
+  return t(`threshold.${def.id}`);
+}
+
+/** 単位。 */
+export function thresholdUnit(def: ThresholdDefinition): string {
+  return t(def.unitKey);
+}
+
+/** 何を見る指標かの補足。 */
+export function thresholdHint(def: ThresholdDefinition): string {
+  return t(`threshold.${def.id}.hint`);
 }

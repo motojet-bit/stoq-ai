@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Fundamentals } from "@/types";
 import { CRITERIA } from "@/lib/prompts/criteria";
+import { criterionLabel } from "@/lib/prompts/criteria";
 import {
   buildAnalysisRecord,
   fiscalQuarterOf,
@@ -20,6 +21,14 @@ import {
   toJson,
   toMarkdown,
 } from "@/lib/export/exportAnalysis";
+import { setLocale } from "@/lib/i18n/i18n";
+
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 // ---------------------------------------------------------------- 素材
 
@@ -64,7 +73,7 @@ function fundamentals(): Fundamentals {
 }
 
 function markdown(score = 4): string {
-  const rows = CRITERIA.map((c) => `| ${c.id} | ${c.label} | ${score} | 良好 | 根拠 |`).join("\n");
+  const rows = CRITERIA.map((c) => `| ${c.id} | ${criterionLabel(c.id)} | ${score} | 良好 | 根拠 |`).join("\n");
   return `## 評価テーブル
 
 | # | 項目 | スコア | 評価 | 根拠 |

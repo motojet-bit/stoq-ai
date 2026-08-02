@@ -69,8 +69,8 @@ describe("プロンプトの秘匿", () => {
 
     const mod = await import("@/lib/prompts/criteria");
     expect(mod.CRITERIA).toHaveLength(20);
-    // 描画とパースに要る項目だけ
-    expect(Object.keys(mod.CRITERIA[0]).sort()).toEqual(["category", "id", "label"]);
+    // **内部キーだけを持つ。** 表示名は辞書から引くので、ここには残さない
+    expect(Object.keys(mod.CRITERIA[0]).sort()).toEqual(["category", "id"]);
   });
 
   it("組み立て済みシステムプロンプトを受け取る型が存在しない", async () => {

@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 import type { AnalysisRecord } from "@/lib/export/analysisRecord";
 
 /**
@@ -9,10 +10,10 @@ import type { AnalysisRecord } from "@/lib/export/analysisRecord";
 
 export type ExportFormat = "csv" | "md" | "json";
 
-export const EXPORT_FORMATS: { id: ExportFormat; label: string; extension: string }[] = [
-  { id: "csv", label: "CSV（表計算ソフト用）", extension: "csv" },
-  { id: "md", label: "Markdown（レポート）", extension: "md" },
-  { id: "json", label: "JSON（他ツール連携・AI再読込）", extension: "json" },
+export const EXPORT_FORMATS: { id: ExportFormat; labelKey: string; extension: string }[] = [
+  { id: "csv", labelKey: "export.format.csv", extension: "csv" },
+  { id: "md", labelKey: "export.format.md", extension: "md" },
+  { id: "json", labelKey: "export.format.json", extension: "json" },
 ];
 
 // ---------------------------------------------------------------- CSV
@@ -68,18 +69,18 @@ export function toCsv(records: AnalysisRecord[]): string {
   }
 
   const header = [
-    "ティッカー",
-    "銘柄名",
-    "決算期",
-    "総合スコア(100点)",
-    "総合ステータス",
-    "平均スコア(5点)",
-    ...blockIds.map((id) => `${blockLabels.get(id)}(5点)`),
+    t("csv.ticker"),
+    t("csv.companyName"),
+    t("csv.fiscalQuarter"),
+    t("csv.totalScore"),
+    t("csv.status"),
+    t("csv.averageScore"),
+    ...blockIds.map((id) => t("csv.blockScore", { label: blockLabels.get(id) ?? id })),
     ...metricKeys.map((key) => metricLabels.get(key) ?? key),
-    ...Array.from({ length: 5 }, (_, i) => `強み${i + 1}`),
-    ...Array.from({ length: 5 }, (_, i) => `リスク${i + 1}`),
-    "分析日時",
-    "モデル",
+    ...Array.from({ length: 5 }, (_, i) => t("csv.strength", { n: i + 1 })),
+    ...Array.from({ length: 5 }, (_, i) => t("csv.risk", { n: i + 1 })),
+    t("csv.savedAt"),
+    t("csv.model"),
   ];
 
   const rows = records.map((record) => {
@@ -130,44 +131,50 @@ function markdownFor(record: AnalysisRecord): string {
     .join("\n");
 
   const bullets = (items: string[]) =>
-    items.length === 0 ? "- （該当なし）" : items.map((i) => `- ${i}`).join("\n");
+    items.length === 0 ? t("md.none") : items.map((i) => `- ${i}`).join("\n");
+
+  const savedAt =
+    record.savedAtMs > 0 ? new Date(record.savedAtMs).toLocaleString() : "—";
 
   return `# ${title}（${record.fiscalQuarter}）
 
-**総合スコア: ${record.summary.totalScore ?? "—"} / 100　${record.summary.statusIcon} ${record.summary.statusLabel}**
+${t("md.totalScore", {
+    score: record.summary.totalScore ?? "—",
+    icon: record.summary.statusIcon,
+    status: record.summary.statusLabel,
+  })}
 
-分析日時: ${record.savedAtMs > 0 ? new Date(record.savedAtMs).toLocaleString("ja-JP") : "—"}${
-    record.model ? ` ／ モデル: ${record.model}` : ""
+${t("md.savedAt", { when: savedAt })}${
+    record.model ? t("md.model", { model: record.model }) : ""
   }
 
-## ブロック別スコア
+${t("md.blockScores")}
 
-| ブロック | スコア |
+${t("md.blockHeader")}
 | --- | --- |
 ${blocks}
 
-## 主要指標
+${t("md.keyMetrics")}
 
-| 指標 | 値 |
+${t("md.metricHeader")}
 | --- | --- |
 ${metrics}
 
-## 適合・強み
+${t("md.strengths")}
 
 ${bullets(record.evaluations.strengths)}
 
-## 基準未達・リスク
+${t("md.risks")}
 
 ${bullets(record.evaluations.risks)}
 
-## 生成テキスト（全文）
+${t("md.rawOutput")}
 
 ${record.rawMarkdownOutput}
 
 ---
 
-> 本レポートは情報提供のみを目的としており、投資助言ではありません。
-> AI の生成物には誤りが含まれる可能性があります。投資判断は自己責任で行ってください。`;
+${t("md.disclaimer")}`;
 }
 
 // ---------------------------------------------------------------- JSON
@@ -223,7 +230,7 @@ export function exportFileName(
       ? "stoq-analysis"
       : records.length === 1
         ? `${records[0].ticker}_${records[0].fiscalQuarter}`
-        : `stoq-compare_${records.length}銘柄`;
+        : t("export.compareName", { count: records.length });
 
   return `${sanitizeFileName(base)}_${stamp}.${extension}`;
 }

@@ -104,15 +104,62 @@ const LOCALIZED = [
   "src/lib/prompts/analystRoleStore.ts",
   "src/lib/prompts/customInstruction.ts",
   "src/lib/ui/shortcutStore.ts",
+
+  // --- C: 分析ドメインのラベル（内部キーは英語 ID のまま保持） ---
+  "src/lib/prompts/criteria.ts",
+  "src/lib/compare/compareData.ts",
+  "src/lib/prompts/thresholds.ts",
+  "src/lib/export/analysisRecord.ts",
+  "src/lib/export/exportAnalysis.ts",
+  "src/lib/config/modelCatalog.ts",
+  "src/lib/prompts/parseAnalysis.ts",
 ];
+
+/**
+ * **内部キーとして残してよい日本語。**
+ *
+ * Rust 側が返す指標名との突き合わせに使う文字列で、表示用ではない。
+ * 訳すと `findMetric` がヒットしなくなり、値が全部「—」になる。
+ */
+const INTERNAL_KEYS: Record<string, string[]> = {
+  "src/lib/compare/compareData.ts": [
+    "現金・同等物",
+    "営業CF",
+    "EV / 売上高",
+    "粗利率",
+    "売上成長率（YoY）",
+    "時価総額",
+    "営業利益率",
+    "PER（実績）",
+    "負債比率 (D/E)",
+  ],
+  "src/lib/export/analysisRecord.ts": [
+    "時価総額",
+    "粗利率",
+    "PER（実績）",
+    "負債比率 (D/E)",
+  ],
+};
 
 const CJK = /[぀-ヿ一-鿿]/;
 
-/** コメントを空白に潰す。文字列の中の `//` は残す。 */
+/** 正規表現リテラルが始まる位置か（直前のトークンで判断する）。 */
+function startsRegex(before: string): boolean {
+  const prev = before.replace(/\s+$/, "").slice(-1);
+  return prev === "" || "(,=:[!&|?{};+".includes(prev);
+}
+
+/**
+ * コメントと正規表現リテラルを空白に潰す。文字列の中の `//` は残す。
+ *
+ * **正規表現も飛ばすのが要点。** `/[",
+]/` のような文字クラスに引用符が
+ * 入っていると、そこから文字列が始まったと誤読して以降を丸ごと拾ってしまう。
+ */
 function stripComments(text: string): string {
   let out = "";
   let i = 0;
-  let state: "code" | "line" | "block" | "str" = "code";
+  let state: "code" | "line" | "block" | "str" | "regex" = "code";
   let quote = "";
 
   while (i < text.length) {
@@ -133,8 +180,26 @@ function stripComments(text: string): string {
       if (c === "'" || c === '"' || c === "`") {
         state = "str";
         quote = c;
+        out += c;
+        i += 1;
+        continue;
+      }
+      if (c === "/" && startsRegex(out)) {
+        state = "regex";
+        i += 1;
+        continue;
       }
       out += c;
+      i += 1;
+      continue;
+    }
+
+    if (state === "regex") {
+      if (c === "\\") {
+        i += 2;
+        continue;
+      }
+      if (c === "/" || c === "\n") state = "code";
       i += 1;
       continue;
     }
@@ -203,7 +268,18 @@ describe("既定言語", () => {
 
 describe("辞書化が済んだファイル", () => {
   it.each(LOCALIZED)("%s に日本語の直書きが残っていない", (path) => {
-    expect(japaneseLiterals(read(path))).toEqual([]);
+    const allowed = new Set(INTERNAL_KEYS[path] ?? []);
+    const found = japaneseLiterals(read(path)).filter((v) => !allowed.has(v));
+    expect(found).toEqual([]);
+  });
+
+  it("**内部キーの許可リストが実際に使われている**（免罪符として空振りしない）", () => {
+    for (const [path, keys] of Object.entries(INTERNAL_KEYS)) {
+      const found = new Set(japaneseLiterals(read(path)));
+      for (const key of keys) {
+        expect(found.has(key), `${path} の「${key}」はもう存在しない`).toBe(true);
+      }
+    }
   });
 
   it("走査が空振りしていない（検出器が壊れたら気づける）", () => {

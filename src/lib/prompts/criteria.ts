@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n/i18n";
+
 /**
  * 20項目のファンダメンタル評価軸の**見出しだけ**。
  *
@@ -9,118 +11,122 @@
  * 項目の順序と `id`、`label` は Rust 側の一覧と一致していること。
  */
 
-export type CriterionCategory = "事業" | "成長" | "収益性" | "財務" | "経営" | "リスク" | "総合";
+/**
+ * 分類の**内部キー**。表示名は辞書（`criterion.cat.*`）から引く。
+ * **この値は保存データにも入る**ので、英語 ID のまま変えないこと。
+ */
+export type CriterionCategory =
+  | "business"
+  | "growth"
+  | "profitability"
+  | "financial"
+  | "management"
+  | "risk"
+  | "overall";
 
 export interface Criterion {
-  /** 1 始まりの通し番号。プロンプトと結果テーブルで対応づける */
+  /** 1 始まりの通し番号。**プロンプトと結果テーブルの対応づけに使う内部キー** */
   id: number;
+  /** 分類の内部キー */
   category: CriterionCategory;
-  label: string;
 }
 
 export const CRITERIA: Criterion[] = [
   {
     id: 1,
-    category: "事業",
-    label: "事業モデルの明瞭さ",
+    category: "business",
   },
   {
     id: 2,
-    category: "事業",
-    label: "競争優位（モート）",
+    category: "business",
   },
   {
     id: 3,
-    category: "成長",
-    label: "TAM と成長余地",
+    category: "growth",
   },
   {
     id: 4,
-    category: "成長",
-    label: "売上成長のモメンタム",
+    category: "growth",
   },
   {
     id: 5,
-    category: "収益性",
-    label: "粗利率の水準と推移",
+    category: "profitability",
   },
   {
     id: 6,
-    category: "収益性",
-    label: "営業レバレッジ・利益率の推移",
+    category: "profitability",
   },
   {
     id: 7,
-    category: "収益性",
-    label: "フリーキャッシュフロー創出力",
+    category: "profitability",
   },
   {
     id: 8,
-    category: "財務",
-    label: "バランスシートの健全性",
+    category: "financial",
   },
   {
     id: 9,
-    category: "財務",
-    label: "ROIC / ROE の質",
+    category: "financial",
   },
   {
     id: 10,
-    category: "財務",
-    label: "設備投資の効率",
+    category: "financial",
   },
   {
     id: 11,
-    category: "経営",
-    label: "資本配分の巧拙",
+    category: "management",
   },
   {
     id: 12,
-    category: "経営",
-    label: "経営陣の質・実行力",
+    category: "management",
   },
   {
     id: 13,
-    category: "経営",
-    label: "ガイダンスの信頼性",
+    category: "management",
   },
   {
     id: 14,
-    category: "事業",
-    label: "セグメント別トレンド",
+    category: "business",
   },
   {
     id: 15,
-    category: "リスク",
-    label: "顧客・取引先の集中リスク",
+    category: "risk",
   },
   {
     id: 16,
-    category: "リスク",
-    label: "規制・訴訟リスク",
+    category: "risk",
   },
   {
     id: 17,
-    category: "リスク",
-    label: "景気感応度",
+    category: "risk",
   },
   {
     id: 18,
-    category: "総合",
-    label: "バリュエーションの妥当性",
+    category: "overall",
   },
   {
     id: 19,
-    category: "総合",
-    label: "短期カタリスト",
+    category: "overall",
   },
   {
     id: 20,
-    category: "総合",
-    label: "総合投資判断",
+    category: "overall",
   },
 ];
 
 export function criterionById(id: number): Criterion | undefined {
   return CRITERIA.find((c) => c.id === id);
+}
+
+/**
+ * 表示名を引く。**内部キー（`id`）とは完全に分離**しているので、
+ * 訳を変えても保存データや AI 出力の突き合わせには影響しない。
+ */
+export function criterionLabel(id: number): string {
+  return t(`criterion.${id}`);
+}
+
+/** 分類の表示名。 */
+export function categoryLabel(category: CriterionCategory): string {
+  return t(`criterion.cat.${category}`);
 }

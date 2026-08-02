@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   evaluateAccess,
   FREE_TICKER_LIMIT,
@@ -12,8 +12,12 @@ import {
 import { keptOnLock, lockBody, lockHint, lockTitle } from "@/lib/license/lockMessages";
 import { setLocale } from "@/lib/i18n/i18n";
 
-// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
-beforeAll(() => setLocale("ja"));
+/*
+ * 文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** モジュール直下で組み立てられる定数が
+ * あるため、`beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 const free = (usedTickers: string[], ticker: string, trialExpired = false) =>
   evaluateAccess({ activated: false, usedTickers, ticker, trialExpired });

@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 import type { Fundamentals, Metric, QuarterlySeries, SavedAnalysis } from "@/types";
 import { parseAnalysis } from "@/lib/prompts/parseAnalysis";
 
@@ -53,18 +54,29 @@ export interface ComparisonView {
 }
 
 /** サマリー比較テーブルの行。上から重要な順。 */
+/**
+ * サマリー比較テーブルの行。上から重要な順。
+ *
+ * **`key` が内部キー**で、表示名は辞書（`metric.*`）から引く。
+ * 保存済みデータや Yahoo の指標名との突き合わせはすべて `key` 側で行う。
+ */
 export const COMPARE_METRICS = [
-  { key: "price", label: "株価" },
-  { key: "marketCap", label: "時価総額" },
-  { key: "revenueGrowth", label: "売上成長率（YoY）" },
-  { key: "grossMargin", label: "粗利率" },
-  { key: "operatingMargin", label: "営業利益率" },
-  { key: "roe", label: "ROE" },
-  { key: "cashRunway", label: "Cash Runway" },
-  { key: "evGrossProfit", label: "EV / 粗利" },
-  { key: "per", label: "PER（実績）" },
-  { key: "debtToEquity", label: "負債比率 (D/E)" },
+  { key: "price" },
+  { key: "marketCap" },
+  { key: "revenueGrowth" },
+  { key: "grossMargin" },
+  { key: "operatingMargin" },
+  { key: "roe" },
+  { key: "cashRunway" },
+  { key: "evGrossProfit" },
+  { key: "per" },
+  { key: "debtToEquity" },
 ] as const;
+
+/** 指標の表示名。 */
+export function metricLabel(key: string): string {
+  return t(`metric.${key}`);
+}
 
 /**
  * 20項目のスコアを 5 ブロックにまとめる対応表。
@@ -72,13 +84,18 @@ export const COMPARE_METRICS = [
  * **20項目すべてをどれかに割り当てる。** 一部を捨てると
  * 「評価したのに比較に出てこない」項目が生まれて混乱するため。
  */
-export const SCORE_BLOCKS: { id: string; label: string; criteria: number[] }[] = [
-  { id: "growth", label: "成長性", criteria: [3, 4, 14, 19] },
-  { id: "solvency", label: "財務生存性", criteria: [7, 8, 10, 17] },
-  { id: "profitability", label: "経済性", criteria: [5, 6, 9] },
-  { id: "moat", label: "競争優位性", criteria: [1, 2, 12, 13, 15, 16] },
-  { id: "valuation", label: "バリュエーション", criteria: [11, 18, 20] },
+export const SCORE_BLOCKS: { id: string; criteria: number[] }[] = [
+  { id: "growth", criteria: [3, 4, 14, 19] },
+  { id: "solvency", criteria: [7, 8, 10, 17] },
+  { id: "profitability", criteria: [5, 6, 9] },
+  { id: "moat", criteria: [1, 2, 12, 13, 15, 16] },
+  { id: "valuation", criteria: [11, 18, 20] },
 ];
+
+/** ブロックの表示名。 */
+export function blockLabel(id: string): string {
+  return t(`block.${id}`);
+}
 
 const EMPTY: CompareCell = { display: "—", raw: null };
 
@@ -107,13 +124,13 @@ export function cashRunway(fundamentals: Fundamentals | null): CompareCell {
   const cash = findMetric(fundamentals, "現金・同等物")?.raw ?? null;
   const operatingCf = findMetric(fundamentals, "営業CF")?.raw ?? null;
   if (cash === null || operatingCf === null) return EMPTY;
-  if (operatingCf >= 0) return { display: "営業CF黒字", raw: null };
+  if (operatingCf >= 0) return { display: t("compare.cashPositive"), raw: null };
 
   const monthlyBurn = Math.abs(operatingCf) / 12;
   if (monthlyBurn === 0) return EMPTY;
 
   const months = cash / monthlyBurn;
-  return { display: `${months.toFixed(1)} か月`, raw: months };
+  return { display: t("compare.months", { value: months.toFixed(1) }), raw: months };
 }
 
 /**
@@ -128,7 +145,7 @@ export function evPerGrossProfit(fundamentals: Fundamentals | null): CompareCell
   if (evToSales === null || grossMarginPct === null || grossMarginPct <= 0) return EMPTY;
 
   const value = evToSales / (grossMarginPct / 100);
-  return { display: `${value.toFixed(1)} 倍`, raw: value };
+  return { display: t("compare.times", { value: value.toFixed(1) }), raw: value };
 }
 
 /** 売上成長率。四半期の YoY があればそちらを優先する（より新しいため）。 */
@@ -173,7 +190,7 @@ export function buildBlocks(scores: Map<number, number>): ScoreBlock[] {
 
     return {
       id: block.id,
-      label: block.label,
+      label: blockLabel(block.id),
       score:
         values.length === 0
           ? null
@@ -183,7 +200,7 @@ export function buildBlocks(scores: Map<number, number>): ScoreBlock[] {
 }
 
 function emptyBlocks(): ScoreBlock[] {
-  return SCORE_BLOCKS.map((b) => ({ id: b.id, label: b.label, score: null }));
+  return SCORE_BLOCKS.map((b) => ({ id: b.id, label: blockLabel(b.id), score: null }));
 }
 
 /** 1 銘柄ぶんの列を組み立てる。 */
@@ -195,7 +212,7 @@ export function buildColumn(source: CompareSource): CompareColumn {
       ticker: source.ticker,
       name,
       analyzed: false,
-      notice: `${name} の分析データが未作成です。先に単体分析を実行してください`,
+      notice: t("compare.notAnalyzed", { name }),
       savedAtMs: null,
       metrics: buildMetrics(source),
       blocks: emptyBlocks(),
