@@ -27,8 +27,14 @@ export interface LocaleDefinition {
   dictionary: Dictionary;
 }
 
-/** 既定の言語。訳が無いキーはここへフォールバックする。 */
-export const DEFAULT_LOCALE = "ja";
+/**
+ * 既定の言語。訳が無いキーはここへフォールバックする。
+ *
+ * **英語を原文（Source of Truth）とする。**
+ * 訳し漏れたキーが日本語で出ると、海外の利用者には読めない文字が
+ * 突然現れることになる。英語へ落とせば、少なくとも意味は伝わる。
+ */
+export const DEFAULT_LOCALE = "en";
 
 export const LOCALES: LocaleDefinition[] = [
   {

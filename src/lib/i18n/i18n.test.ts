@@ -19,15 +19,16 @@ import {
 describe("辞書の登録簿", () => {
   it("日本語と英語がそろっている", () => {
     expect(LOCALES.map((l) => l.code)).toEqual(["ja", "en"]);
-    expect(DEFAULT_LOCALE).toBe("ja");
+    // 英語を原文とし、訳し漏れは英語で出す
+    expect(DEFAULT_LOCALE).toBe("en");
   });
 
   it("**すべての言語が同じキーを持つ**（訳し忘れを見つける）", () => {
-    const base = Object.keys(localeDefinition("ja")!.dictionary).sort();
+    const base = Object.keys(localeDefinition(DEFAULT_LOCALE)!.dictionary).sort();
 
     for (const locale of LOCALES) {
       const keys = Object.keys(locale.dictionary).sort();
-      expect(keys, `${locale.code} のキーが日本語と違う`).toEqual(base);
+      expect(keys, `${locale.code} のキーが原文（${DEFAULT_LOCALE}）と違う`).toEqual(base);
     }
   });
 
@@ -61,28 +62,29 @@ describe("normalizeLocale", () => {
     expect(normalizeLocale("ja-JP")).toBe("ja");
   });
 
-  it("知らない言語は既定へ落ちる", () => {
-    expect(normalizeLocale("fr")).toBe("ja");
-    expect(normalizeLocale("")).toBe("ja");
-    expect(normalizeLocale(null)).toBe("ja");
-    expect(normalizeLocale(42)).toBe("ja");
+  it("知らない言語は既定（英語）へ落ちる", () => {
+    expect(normalizeLocale("fr")).toBe("en");
+    expect(normalizeLocale("")).toBe("en");
+    expect(normalizeLocale(null)).toBe("en");
+    expect(normalizeLocale(42)).toBe("en");
   });
 });
 
 describe("translate", () => {
-  const ja = { greet: "こんにちは", only: "日本語だけ" };
-  const en = { greet: "Hello" };
+  const en = { greet: "Hello", only: "English only" };
+  const ja = { greet: "こんにちは" };
 
   it("その言語の訳を返す", () => {
-    expect(translate(en, ja, "greet")).toBe("Hello");
+    expect(translate(ja, en, "greet")).toBe("こんにちは");
   });
 
-  it("**訳が無ければ既定言語へフォールバックする**", () => {
-    expect(translate(en, ja, "only")).toBe("日本語だけ");
+  it("**訳が無ければ英語へフォールバックする**", () => {
+    // 読めない文字を出すより、英語で意味を伝える
+    expect(translate(ja, en, "only")).toBe("English only");
   });
 
   it("どこにも無ければキーをそのまま返す（画面から文字が消えない）", () => {
-    expect(translate(en, ja, "missing.key")).toBe("missing.key");
+    expect(translate(ja, en, "missing.key")).toBe("missing.key");
   });
 });
 
@@ -124,9 +126,9 @@ describe("言語の切り替え", () => {
     expect(document.documentElement.lang).toBe("en");
   });
 
-  it("知らない言語を渡しても既定へ落ちる", () => {
+  it("知らない言語を渡しても既定（英語）へ落ちる", () => {
     setLocale("klingon");
-    expect(getLocale()).toBe("ja");
+    expect(getLocale()).toBe("en");
   });
 
   it("**同じ言語を選び直しても通知しない**（無駄な再描画を出さない）", () => {
@@ -167,6 +169,7 @@ describe("AI へ渡す言語名", () => {
   });
 
   it("知らない言語でも落ちない", () => {
-    expect(promptLanguageName("klingon")).toBe("Japanese");
+    // 原文が英語なので、判定できないときも英語で答えさせる
+    expect(promptLanguageName("klingon")).toBe("English");
   });
 });

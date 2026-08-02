@@ -155,5 +155,5 @@ export function localeOptions(): { code: string; label: string }[] {
 
 /** AI に「この言語で答えて」と伝えるための名前。 */
 export function promptLanguageName(code: string = locale): string {
-  return localeDefinition(normalizeLocale(code))?.promptName ?? "Japanese";
+  return localeDefinition(normalizeLocale(code))?.promptName ?? "English";
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import ModalShell from "@/components/ModalShell";
 import { IconHelp } from "@/components/Icons";
 import { appName } from "@/lib/ui/appMeta";
-import { useLocale } from "@/lib/i18n/i18n";
+import { useT, type TranslateVars } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -12,61 +12,31 @@ interface Props {
 }
 
 interface Step {
-  title: string;
-  body: string;
+  titleKey: string;
+  bodyKey: string;
   /** この手順で押すボタンがあれば */
-  action?: { label: string; kind: "settings" | "help" };
+  action?: { labelKey: string; kind: "settings" | "help" };
 }
 
 /**
- * 手順を組み立てる。
- *
- * **定数にしない。** 読み込み時に一度だけ評価すると、
- * 言語を切り替えても見出しのアプリ名が古いまま残る。
+ * 手順の並び。**本文は辞書に置く**ので、ここはキーだけを持つ。
+ * 定数に文面を焼くと、言語を切り替えても古い言語のまま残る。
  */
-function buildSteps(): Step[] {
-  return [
+const STEPS: Step[] = [
+  { titleKey: "tour.welcome.title", bodyKey: "tour.welcome.body" },
   {
-    title: `ようこそ、${appName()} へ`,
-    body:
-      "米国株・グローバル株のファンダメンタル分析を、AI と一緒に進めるためのアプリです。\n\n" +
-      "取得した財務データと、あなたが読み込ませた決算資料をまとめて AI に渡し、\n" +
-      "20 項目の評価を作ります。まずは 4 ステップだけ確認しましょう。",
+    titleKey: "tour.keys.title",
+    bodyKey: "tour.keys.body",
+    action: { labelKey: "tour.openSettings", kind: "settings" },
   },
+  { titleKey: "tour.ticker.title", bodyKey: "tour.ticker.body" },
+  { titleKey: "tour.documents.title", bodyKey: "tour.documents.body" },
   {
-    title: "1. まず APIキーを登録する",
-    body:
-      "AI を動かすには、OpenAI / Anthropic / Gemini のいずれかの APIキーが必要です。\n" +
-      "上部の「AI設定」ボタンから登録してください。\n\n" +
-      "キーは OS のアプリ設定ディレクトリに保存され、画面にはマスク済みの文字列しか出ません。\n" +
-      "SEC EDGAR を使うには「アプリ名 メールアドレス」形式の User-Agent も必要です。",
-    action: { label: "設定を開く", kind: "settings" },
+    titleKey: "tour.analyze.title",
+    bodyKey: "tour.analyze.body",
+    action: { labelKey: "tour.openHelp", kind: "help" },
   },
-  {
-    title: "2. 銘柄を調べる",
-    body:
-      "上部の入力欄にティッカー（例: NVDA、7203.T）を入れて「分析」を押すと、\n" +
-      "株価・財務指標・四半期推移・SEC の提出状況を取得します。\n\n" +
-      "左サイドバー下部の「検討中銘柄」には、\n" +
-      "AAPL|Apple|Phone のような一覧をそのまま貼り付けて一括登録できます。",
-  },
-  {
-    title: "3. 一次資料を読み込ませる",
-    body:
-      "決算説明会資料や 10-K の PDF / DOCX / PPTX をドロップゾーンに入れてください。\n" +
-      "資料があるほど分析の精度が上がります。\n\n" +
-      "長い資料は自動で圧縮されますが、要約ではなく原文抽出なので事実の改変は起きません。",
-  },
-  {
-    title: "4. 分析して、迷ったら聞く",
-    body:
-      "分析結果パネルの「AI分析を実行」で 20 項目の評価が生成されます。\n" +
-      "合格ラインの数値は設定の「分析ルール・閾値」タブで自由に変えられます。\n\n" +
-      "操作で迷ったら、画面右下の「? ヘルプ」からいつでも AI に質問できます。",
-    action: { label: "ヘルプを開く", kind: "help" },
-  },
-  ];
-}
+];
 
 /**
  * 初回起動時のチュートリアル。
@@ -76,11 +46,12 @@ function buildSteps(): Step[] {
  */
 export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp }: Props) {
   const [index, setIndex] = useState(0);
-  // 言語が変わったら見出しも追従させる
-  useLocale();
-  const steps = buildSteps();
-  const step = steps[Math.min(index, steps.length - 1)];
-  const isLast = index >= steps.length - 1;
+  const t = useT();
+
+  const step = STEPS[Math.min(index, STEPS.length - 1)];
+  const isLast = index >= STEPS.length - 1;
+  // アプリ名は言語で変わるので、見出しへ差し込む
+  const vars: TranslateVars = { app: appName() };
 
   const close = () => {
     setIndex(0);
@@ -90,14 +61,14 @@ export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp 
   return (
     <ModalShell
       open={open}
-      title="はじめかた"
+      title={t("tour.title")}
       icon={<IconHelp className="h-4 w-4 text-emerald-400" />}
       maxWidthClass="max-w-xl"
       onClose={close}
       footer={
         <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
           <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-            {steps.map((_, i) => (
+            {STEPS.map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
@@ -113,7 +84,7 @@ export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp 
               onClick={close}
               className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
             >
-              スキップ
+              {t("tour.skip")}
             </button>
             {index > 0 && (
               <button
@@ -121,7 +92,7 @@ export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp 
                 onClick={() => setIndex((i) => i - 1)}
                 className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
               >
-                戻る
+                {t("tour.back")}
               </button>
             )}
             <button
@@ -129,16 +100,18 @@ export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp 
               onClick={() => (isLast ? close() : setIndex((i) => i + 1))}
               className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500"
             >
-              {isLast ? "はじめる" : "次へ"}
+              {isLast ? t("tour.start") : t("tour.next")}
             </button>
           </div>
         </footer>
       }
     >
       <div className="px-6 py-6">
-        <h3 className="t-body text-[15px] font-semibold text-slate-50">{step.title}</h3>
+        <h3 className="t-body text-[15px] font-semibold text-slate-50">
+          {t(step.titleKey, vars)}
+        </h3>
         <p className="selectable mt-3 whitespace-pre-wrap t-body leading-relaxed text-slate-300">
-          {step.body}
+          {t(step.bodyKey, vars)}
         </p>
 
         {step.action && (
@@ -151,7 +124,7 @@ export default function WelcomeTour({ open, onClose, onOpenSettings, onOpenHelp 
             }}
             className="mt-4 min-h-8 rounded-md border border-emerald-700 bg-emerald-950/40 px-3.5 t-body text-emerald-300 transition-colors hover:bg-emerald-900/40"
           >
-            {step.action.label}
+            {t(step.action.labelKey)}
           </button>
         )}
       </div>

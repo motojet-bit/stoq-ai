@@ -17,6 +17,7 @@ import {
 } from "@/lib/cloud/cloudBackup";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { IconBadge } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 type Busy = "connect" | "backup" | "restore" | "clientId" | null;
 
@@ -32,6 +33,7 @@ export default function CloudSyncSettings() {
   const [busy, setBusy] = useState<Busy>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
+  const t = useT();
   const now = Date.now();
 
   useEffect(() => {
@@ -59,7 +61,10 @@ export default function CloudSyncSettings() {
       const result = await backup();
       if (result) {
         setLastResult(
-          `${result.included.join(" / ")} を ${formatBytes(result.sizeBytes)} でアップロードしました。`,
+          t("cloud.result.backup", {
+            files: result.included.join(" / "),
+            size: formatBytes(result.sizeBytes),
+          }),
         );
       }
     });
@@ -69,7 +74,7 @@ export default function CloudSyncSettings() {
       const result = await restore();
       if (result) {
         setLastResult(
-          `${result.restored.join(" / ")} を復元しました。反映するにはアプリを再起動してください。`,
+          t("cloud.result.restore", { files: result.restored.join(" / ") }),
         );
       }
     });
@@ -92,7 +97,7 @@ export default function CloudSyncSettings() {
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
             <span className="t-body font-medium text-slate-100">
-              {status.connected ? "Google Drive と連携中" : "未連携"}
+              {status.connected ? t("cloud.status.connected") : t("cloud.status.disconnected")}
             </span>
             {status.clientIdMasked && (
               <span className="shrink-0 rounded bg-slate-800 px-1.5 font-mono t-label text-slate-300">
@@ -101,11 +106,11 @@ export default function CloudSyncSettings() {
             )}
           </span>
           <span className="mt-0.5 block t-label leading-relaxed text-slate-500">
-            最終バックアップ: {formatLastBackup(status.lastBackupMs, now)}
+            {t("cloud.status.lastBackup", {
+              when: formatLastBackup(status.lastBackupMs, now),
+            })}
             {isBackupStale(status.lastBackupMs, now) && (
-              <span className="ml-1 text-amber-400">
-                （しばらく更新されていません）
-              </span>
+              <span className="ml-1 text-amber-400">{t("cloud.status.stale")}</span>
             )}
           </span>
         </span>
@@ -113,33 +118,23 @@ export default function CloudSyncSettings() {
 
       {/* ------------------------------------------------ 触れる範囲の明示 */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5">
-        <p className="mb-1 t-label font-medium text-slate-300">
-          🔒 アクセスする範囲
-        </p>
-        <p className="t-label leading-relaxed text-slate-500">
-          このアプリが要求するのは
-          <span className="mx-1 font-mono text-slate-400">drive.appdata</span>
-          のみです。これは Google Drive 内の
-          <span className="text-slate-300">アプリ専用の隠し領域</span>
-          に限った権限で、あなたの写真・書類・他のファイルは
-          <span className="text-slate-300">一覧することすらできません</span>。
+        <p className="mb-1 t-label font-medium text-slate-300">{t("cloud.scope.title")}</p>
+        <p className="selectable t-label leading-relaxed text-slate-500">
+          {t("cloud.scope.body")}
           <br />
-          バックアップに含めるのは分析結果・対話履歴・ポートフォリオのデータベースだけです。
-          <span className="text-slate-300">APIキーとライセンスキーは送信しません。</span>
+          {t("cloud.scope.contents")}
         </p>
       </div>
 
       {/* ------------------------------------------------ クライアント ID */}
       <label className="block">
         <span className="mb-1 flex items-center justify-between gap-2 t-label text-slate-500">
-          <span className="min-w-0 truncate">
-            Google OAuth クライアント ID（デスクトップアプリ）
-          </span>
+          <span className="min-w-0 truncate">{t("cloud.clientId.label")}</span>
           <span className="shrink-0 whitespace-nowrap">
             {status.clientIdConfigured ? (
-              <span className="text-emerald-400">設定済み</span>
+              <span className="text-emerald-400">{t("settings.key.configured")}</span>
             ) : (
-              <span className="text-slate-600">未設定</span>
+              <span className="text-slate-600">{t("settings.key.unset")}</span>
             )}
           </span>
         </span>
@@ -152,7 +147,7 @@ export default function CloudSyncSettings() {
             autoComplete="off"
             placeholder={
               status.clientIdConfigured
-                ? "変更する場合のみ入力"
+                ? t("settings.key.changeOnly")
                 : "000000000000-xxxxxxxx.apps.googleusercontent.com"
             }
             className="selectable min-h-9 min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono t-label text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
@@ -163,17 +158,14 @@ export default function CloudSyncSettings() {
             disabled={busy !== null || clientId.trim() === "" || idError !== null}
             className="min-h-9 shrink-0 whitespace-nowrap rounded-md border border-slate-700 px-3 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600"
           >
-            {busy === "clientId" ? "保存中…" : "保存"}
+            {busy === "clientId" ? t("settings.saving") : t("settings.save")}
           </button>
         </div>
         {idError && (
           <p className="selectable mt-1 t-label leading-relaxed text-amber-400">{idError}</p>
         )}
-        <p className="mt-1 t-label leading-relaxed text-slate-600">
-          Google Cloud Console →「APIとサービス」→「認証情報」→
-          OAuth クライアント ID を作成（種類は「デスクトップアプリ」）し、
-          Google Drive API を有効化してください。
-          クライアント シークレットは不要です（PKCE を使用）。
+        <p className="mt-1 selectable t-label leading-relaxed text-slate-600">
+          {t("cloud.clientId.help")}
         </p>
       </label>
 
@@ -186,7 +178,7 @@ export default function CloudSyncSettings() {
             disabled={busy !== null}
             className="min-h-9 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-red-800 hover:text-red-300 disabled:cursor-not-allowed"
           >
-            連携を解除
+            {t("cloud.disconnect")}
           </button>
         ) : (
           <button
@@ -195,7 +187,7 @@ export default function CloudSyncSettings() {
             disabled={busy !== null || !status.clientIdConfigured}
             className="min-h-9 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
           >
-            {busy === "connect" ? "ブラウザで許可してください…" : "🌐 Google アカウントで連携"}
+            {busy === "connect" ? t("cloud.connecting") : t("cloud.connect")}
           </button>
         )}
 
@@ -205,7 +197,7 @@ export default function CloudSyncSettings() {
           disabled={busy !== null || !status.connected}
           className="min-h-9 rounded-md border border-emerald-800 bg-emerald-950/40 px-3.5 t-body text-emerald-300 transition-colors hover:bg-emerald-900/40 disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-transparent disabled:text-slate-600"
         >
-          {busy === "backup" ? "アップロード中…" : "☁️ クラウドへバックアップ"}
+          {busy === "backup" ? t("cloud.backingUp") : t("cloud.backup")}
         </button>
 
         <button
@@ -214,7 +206,7 @@ export default function CloudSyncSettings() {
           disabled={busy !== null || !status.connected}
           className="min-h-9 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600"
         >
-          {busy === "restore" ? "復元中…" : "🔄 クラウドから復元"}
+          {busy === "restore" ? t("cloud.restoring") : t("cloud.restore")}
         </button>
       </div>
 
@@ -228,10 +220,9 @@ export default function CloudSyncSettings() {
           className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-500 disabled:opacity-40"
         />
         <span className="min-w-0">
-          <span className="block t-body text-slate-200">起動時に自動バックアップ</span>
-          <span className="mt-0.5 block t-label leading-relaxed text-slate-500">
-            アプリを起動したときに、その時点のデータを自動でアップロードします。
-            失敗しても起動は妨げません。古い世代は 10 件を超えたぶんから順に整理されます。
+          <span className="block t-body text-slate-200">{t("cloud.autoBackup")}</span>
+          <span className="selectable mt-0.5 block t-label leading-relaxed text-slate-500">
+            {t("cloud.autoBackup.hint")}
           </span>
         </span>
       </label>
@@ -245,10 +236,10 @@ export default function CloudSyncSettings() {
       {/* 復元は手元のデータを上書きするので確認を挟む */}
       <ConfirmDialog
         open={confirmRestore}
-        title="クラウドから復元"
-        message="クラウド上のいちばん新しいバックアップで、このパソコンのデータを置き換えます。現在のデータは復元前に同じフォルダへ退避されます。実行しますか？"
-        confirmLabel="復元する"
-        cancelLabel="キャンセル"
+        title={t("cloud.restore.confirmTitle")}
+        message={t("cloud.restore.confirmBody")}
+        confirmLabel={t("cloud.restore.confirmLabel")}
+        cancelLabel={t("common.cancel")}
         destructive
         onConfirm={() => {
           setConfirmRestore(false);
