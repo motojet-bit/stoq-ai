@@ -122,7 +122,7 @@ export default function ChatHistoryItem({
             )}
             <span>{relativeTime(session.updatedAtMs)}</span>
             <span className="text-slate-600">·</span>
-            <span>{session.messageCount} 件</span>
+            <span>{t("chat.messageCount", { count: session.messageCount })}</span>
           </div>
         </div>
 

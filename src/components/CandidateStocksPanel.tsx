@@ -240,12 +240,12 @@ export default function CandidateStocksPanel({
             onClick={() => onCompare(picked)}
             className="flex min-h-7 w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-2 t-label font-medium text-white transition-colors hover:bg-emerald-500"
           >
-            📊 選択した銘柄を横並び比較（最大{MAX_COMPARE}社）
+            📊 {t("candidates.compareButton", { max: MAX_COMPARE })}
             <span className="font-mono">{picked.length}</span>
           </button>
           {atLimit && (
             <p className="mt-1 t-label text-slate-500">
-              最大 {MAX_COMPARE} 社まで。さらに選ぶと古い選択が外れます。
+              {t("candidates.compareLimit", { max: MAX_COMPARE })}
             </p>
           )}
         </div>

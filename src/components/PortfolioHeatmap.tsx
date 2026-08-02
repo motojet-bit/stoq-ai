@@ -77,7 +77,9 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
                     className="flex items-center gap-1.5 font-mono t-label font-medium text-emerald-300 transition-colors hover:text-emerald-200 hover:underline"
                   >
                     {row.ticker}
-                    <span className="font-normal text-slate-600">{row.count}期</span>
+                    <span className="font-normal text-slate-600">
+                      {t("heatmap.periodCount", { count: row.count })}
+                    </span>
                   </button>
                 </th>
 

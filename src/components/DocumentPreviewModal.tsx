@@ -53,12 +53,18 @@ export default function DocumentPreviewModal({ doc, onClose }: Props) {
       onClose={onClose}
     >
         <div className="sticky top-0 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 bg-slate-900 px-4 py-2 t-label text-slate-500">
-          <span>元ファイル: {doc?.originalName}</span>
-          <span>{((doc?.sizeBytes ?? 0) / 1024).toFixed(0)} KB</span>
-          <span>{(doc?.charCount ?? 0).toLocaleString()} 文字</span>
-          <span>概算 {(doc?.tokenEstimate ?? 0).toLocaleString()} トークン</span>
+          <span>{tr("doc.originalName", { name: doc?.originalName ?? "" })}</span>
+          <span>{tr("doc.sizeKb", { size: ((doc?.sizeBytes ?? 0) / 1024).toFixed(0) })}</span>
+          <span>{tr("doc.charCount", { count: (doc?.charCount ?? 0).toLocaleString() })}</span>
           <span>
-            取り込み: {doc ? new Date(doc.savedAtMs).toLocaleString("ja-JP") : tr("common.none")}
+            {tr("doc.tokenEstimate", {
+              count: (doc?.tokenEstimate ?? 0).toLocaleString(),
+            })}
+          </span>
+          <span>
+            {tr("doc.importedAt", {
+              when: doc ? new Date(doc.savedAtMs).toLocaleString() : tr("common.none"),
+            })}
           </span>
         </div>
 

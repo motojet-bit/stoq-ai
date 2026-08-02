@@ -91,7 +91,7 @@ export default function CandidateImportModal({ open, onClose }: Props) {
             <div className="mt-4 space-y-3">
               <div>
                 <h3 className="mb-1.5 t-label font-medium uppercase tracking-wider text-slate-500">
-                  取り込む銘柄（{result.items.length} 件）
+                  {t("import.pickedHeading", { count: result.items.length })}
                 </h3>
                 {result.items.length === 0 ? (
                   <p className="t-label text-slate-600">{t("import.nothing")}</p>
@@ -118,7 +118,7 @@ export default function CandidateImportModal({ open, onClose }: Props) {
 
               {result.duplicates.length > 0 && (
                 <p className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 t-label text-slate-400">
-                  入力内で重複していたため、後の行を採用しました:{" "}
+                  {t("import.duplicateNote")}{" "}
                   <span className="font-mono text-slate-200">
                     {result.duplicates.join(", ")}
                   </span>
@@ -128,12 +128,12 @@ export default function CandidateImportModal({ open, onClose }: Props) {
               {result.errors.length > 0 && (
                 <div className="rounded-md border border-amber-900/60 bg-amber-950/30 px-3 py-2">
                   <p className="mb-1 t-label font-medium text-amber-300">
-                    取り込めない行が {result.errors.length} 件あります
+                    {t("import.errorCount", { count: result.errors.length })}
                   </p>
                   <ul className="space-y-0.5">
                     {result.errors.map((err) => (
                       <li key={err.line} className="selectable t-label text-amber-200/90">
-                        {err.line} 行目: {err.reason}
+                        {t("import.errorLine", { line: err.line, reason: err.reason })}
                         <span className="ml-1 font-mono text-amber-200/60">「{err.text}」</span>
                       </li>
                     ))}

@@ -21,6 +21,7 @@ const LOCALIZED = [
   "src/components/CandidateStocksPanel.tsx",
   "src/components/ChatHistoryItem.tsx",
   "src/components/ChatPanel.tsx",
+  "src/components/CloudSyncGuide.tsx",
   "src/components/CloudSyncSettings.tsx",
   "src/components/CommandBar.tsx",
   "src/components/ComparePanel.tsx",
@@ -274,6 +275,15 @@ function japaneseLiterals(source: string): string[] {
     if (CJK.test(m[1])) found.push(m[1].trim());
   }
 
+  /*
+   * **`{式}` の直後に続く地の文も拾う。**
+   * 上の正規表現は `{` `}` を含む区間を弾くので、
+   * `{count} 期分` のような「値のあとに単位を書き足した」形を素通りさせていた。
+   */
+  for (const m of code.matchAll(/\}([^<>{}]*)</g)) {
+    if (CJK.test(m[1])) found.push(m[1].trim());
+  }
+
   return found;
 }
 
@@ -307,6 +317,11 @@ describe("辞書化が済んだファイル", () => {
     // わざと日本語を含むソースを食わせて、拾えることを確かめる
     const sample = `const a = "日本語"; // コメントは無視\n<div>本文</div>`;
     expect(japaneseLiterals(sample)).toEqual(["日本語", "本文"]);
+  });
+
+  it("**`{式}` の直後に続く地の文も拾う**（単位の書き足しを見逃さない）", () => {
+    // 値のあとに単位だけ足す書き方は、辞書化の抜けとして最も残りやすい
+    expect(japaneseLiterals(`<span>{n} 期分</span>`)).toEqual(["期分"]);
   });
 
   it("コメントの日本語は数えない（識別子は英語・コメントは日本語の方針）", () => {

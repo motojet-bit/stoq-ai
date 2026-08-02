@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
-import { loadArchive, useArchive, useArchiveLoading } from "@/lib/portfolio/portfolioStore";
+import {
+  loadArchive,
+  removeArchiveEntry,
+  useArchive,
+  useArchiveLoading,
+} from "@/lib/portfolio/portfolioStore";
 import { groupByTicker, periodLabelOf } from "@/lib/portfolio/archive";
 import { buildTransferText } from "@/lib/portfolio/heatmap";
 import {
@@ -14,11 +19,13 @@ import { toastError, toastSuccess } from "@/lib/ui/toastStore";
 import PanelHeader from "@/components/PanelHeader";
 import PortfolioHeatmap from "@/components/PortfolioHeatmap";
 import ExportMenu from "@/components/ExportMenu";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   IconChart,
   IconLayoutColumns,
   IconLayoutRows,
   IconMessage,
+  IconTrash,
 } from "@/components/Icons";
 import { useT } from "@/lib/i18n/i18n";
 
@@ -51,6 +58,12 @@ export default function PortfolioHistoryPanel({
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [body, setBody] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
+  // 削除の確認待ち（対象の 1 件）
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    ticker: string;
+    label: string;
+  } | null>(null);
 
   useEffect(() => {
     void loadArchive();
@@ -133,6 +146,20 @@ export default function PortfolioHistoryPanel({
     }
   };
 
+  const confirmDelete = async () => {
+    const target = pendingDelete;
+    setPendingDelete(null);
+    if (!target) return;
+    // 開いていた本文が消した行のものなら畳む（消えた記録を読ませない）
+    if (openEntry === target.id) {
+      setOpenEntry(null);
+      setBody(null);
+    }
+    if (await removeArchiveEntry(target.id)) {
+      toastSuccess(t("history.deleted", { ticker: target.ticker, label: target.label }));
+    }
+  };
+
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -208,7 +235,7 @@ export default function PortfolioHistoryPanel({
                 {selected?.ticker ?? t("common.none")}
               </span>
               <span className="t-label text-slate-500">
-                {selected?.entries.length ?? 0} 期分
+                {t("history.periodCount", { count: selected?.entries.length ?? 0 })}
               </span>
 
               <span className="ml-auto flex shrink-0 items-center gap-1.5">
@@ -255,11 +282,12 @@ export default function PortfolioHistoryPanel({
                       key={entry.id}
                       className="rounded-lg border border-slate-800 bg-slate-900/40"
                     >
+                      <div className="flex items-stretch">
                       <button
                         type="button"
                         onClick={() => void openLog(entry.id)}
                         aria-expanded={expanded}
-                        className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left"
+                        className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-1.5 text-left"
                       >
                         <span className="shrink-0 font-mono t-label text-slate-400">
                           {label}
@@ -280,6 +308,27 @@ export default function PortfolioHistoryPanel({
                           {expanded ? t("settings.close") : t("history.open")}
                         </span>
                       </button>
+
+                      {/*
+                        **開く操作とは別のボタンにする。** 同じ行の中に入れても、
+                        親が「開く」ボタンだと押し分けられない。
+                        既定色は目立たせず、狙って押したときだけ赤くする。
+                      */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingDelete({ id: entry.id, ticker: selected.ticker, label })
+                        }
+                        title={t("history.delete")}
+                        aria-label={t("history.deleteAria", {
+                          ticker: selected.ticker,
+                          label,
+                        })}
+                        className="shrink-0 px-2 text-slate-600 transition-colors hover:text-red-400"
+                      >
+                        <IconTrash className="h-3.5 w-3.5" />
+                      </button>
+                      </div>
 
                       {expanded && (
                         <div className="border-t border-slate-800 px-2.5 py-2">
@@ -404,6 +453,28 @@ export default function PortfolioHistoryPanel({
           </>
         )}
       </div>
+
+      {/*
+        **消す前に必ず一度止める。** 分析は作り直すのに API 費用と時間がかかる。
+        どの銘柄のどの期かを本文へ書いて、取り違えたまま消させない。
+      */}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={t("history.deleteConfirmTitle")}
+        message={
+          pendingDelete
+            ? t("history.deleteConfirmBody", {
+                ticker: pendingDelete.ticker,
+                label: pendingDelete.label,
+              })
+            : ""
+        }
+        confirmLabel={t("history.delete")}
+        cancelLabel={t("common.cancel")}
+        destructive
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setPendingDelete(null)}
+      />
     </section>
   );
 }

@@ -269,7 +269,9 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
                   </ul>
                   {column.savedAtMs !== null && (
                     <p className="mt-2 t-label text-slate-600">
-                      {new Date(column.savedAtMs).toLocaleString("ja-JP")} に保存
+                      {t("compare.savedAt", {
+                        when: new Date(column.savedAtMs).toLocaleString(),
+                      })}
                     </p>
                   )}
                 </>
@@ -283,7 +285,7 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
                     onClick={() => onOpenTicker(column.ticker)}
                     className="min-h-7 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
                   >
-                    {column.ticker} を分析する
+                    {t("compare.analyzeTicker", { ticker: column.ticker })}
                   </button>
                 </div>
               )}

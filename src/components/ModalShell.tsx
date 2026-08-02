@@ -132,13 +132,19 @@ export default function ModalShell({
      * 閉じるのは ✕ / キャンセル / Esc だけ。
      * 背後の操作は塞ぐ（クリックが裏側へ抜けると意図しない状態になるため）。
      */
+    /*
+     * 余白を vw / vh で取るのが要点。
+     * **窓を小さくしても本体が 90vw × 85vh を超えない。**
+     * `max-w-[90vw]` を直接足すと `maxWidthClass` と max-width が二重になり、
+     * どちらが勝つかが CSS の並び順まかせになる。余白側で決めれば必ず効く。
+     */
     <div
-      className={`fixed inset-0 z-100 flex items-center justify-center p-6 ${MODAL_OVERLAY_CLASS}`}
+      className={`fixed inset-0 z-100 flex items-center justify-center px-[5vw] py-[7.5vh] ${MODAL_OVERLAY_CLASS}`}
     >
       <div
         ref={cardRef}
         style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
-        className={`flex max-h-full w-full ${maxWidthClass} flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60 ring-1 ring-white/5`}
+        className={`flex max-h-[85vh] w-full ${maxWidthClass} flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60 ring-1 ring-white/5`}
       >
         <header
           onPointerDown={startDrag}
@@ -178,7 +184,11 @@ export default function ModalShell({
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        {/*
+          **横にも溢れさせない。** 窓が細いときに中身が圧縮されて崩れるより、
+          横スクロールで元の形のまま読ませたほうが操作できる。
+        */}
+        <div className="min-h-0 flex-1 overflow-auto">{children}</div>
 
         {footer}
       </div>

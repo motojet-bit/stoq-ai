@@ -15,6 +15,7 @@ import {
   formatLastBackup,
   isBackupStale,
 } from "@/lib/cloud/cloudBackup";
+import CloudSyncGuide from "@/components/CloudSyncGuide";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { IconBadge } from "@/components/Icons";
 import { useT } from "@/lib/i18n/i18n";
@@ -115,6 +116,9 @@ export default function CloudSyncSettings() {
           </span>
         </span>
       </div>
+
+      {/* ------------------------------------------------ 手順ガイド */}
+      <CloudSyncGuide />
 
       {/* ------------------------------------------------ 触れる範囲の明示 */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5">

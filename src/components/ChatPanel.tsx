@@ -366,10 +366,7 @@ ${draft.text}`));
             )}
 
             <p className="t-label mt-1 flex flex-wrap items-center justify-between gap-2 text-slate-600">
-              <span>
-                📎 の資料は**この会話でのみ**使われ、送信後に破棄されます（最大
-                {MAX_CHAT_ATTACHMENTS} 件）
-              </span>
+              <span>{t("chat.attachmentNote", { max: MAX_CHAT_ATTACHMENTS })}</span>
               <span>{t("chat.sendHint", { key: sendKeyLabel })}</span>
             </p>
           </div>

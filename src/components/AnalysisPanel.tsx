@@ -220,15 +220,11 @@ export default function AnalysisPanel({
       <div ref={scrollRef} className="panel-scroll px-4 py-3">
           {!ticker ? (
             <p className="t-body text-slate-500">
-              上部にティッカーを入力して「分析」を押すと、この銘柄の
-              {CRITERIA.length}項目評価を実行できます。
+              {t("analysis.emptyHint", { count: CRITERIA.length })}
             </p>
           ) : !run || run.phase === "idle" ? (
             <div className="t-body space-y-2 text-slate-500">
-              <p>
-                「AI分析を実行」を押すと、財務指標・四半期推移・SEC提出書類・一時保存中の資料を
-                統合して{CRITERIA.length}項目の評価を生成します。
-              </p>
+              <p>{t("analysis.idleHint", { count: CRITERIA.length })}</p>
               {!ready && (
                 <p className="text-amber-500/90">
                   {readyReason}
@@ -272,7 +268,10 @@ export default function AnalysisPanel({
                   <h3 className="t-heading mb-2 flex items-baseline gap-2 font-medium uppercase tracking-wider text-slate-500">
                     {t("analysis.scoreTable")}
                     <span className="t-label font-mono normal-case text-slate-600">
-                      {result.rows.length} / {CRITERIA.length} 項目
+                      {t("analysis.rowCount", {
+                        done: result.rows.length,
+                        total: CRITERIA.length,
+                      })}
                     </span>
                   </h3>
                   <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-1">
@@ -299,7 +298,9 @@ export default function AnalysisPanel({
               {streaming && (
                 <p className="t-label mt-2 flex items-center gap-2 text-slate-600">
                   <span className="inline-block h-3 w-1.5 animate-pulse bg-emerald-500" />
-                  生成中…（{run.raw.length.toLocaleString()} 文字）
+                  {t("analysis.streamingChars", {
+                    chars: run.raw.length.toLocaleString(),
+                  })}
                 </p>
               )}
 

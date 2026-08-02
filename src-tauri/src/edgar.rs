@@ -100,12 +100,28 @@ async fn throttle() {
     }
 }
 
-fn validate_user_agent(user_agent: &str) -> Result<&str> {
+/// メールだけ書かれていたときに前置きする名前。
+///
+/// SEC は「連絡の取れる名前 ＋ メール」を求めている。
+const UA_PREFIX: &str = "StoQ-App";
+
+/// SEC へ送る User-Agent を組み立てる。
+///
+/// **メールアドレスだけ入力された場合は名前を補う。**
+/// SEC の要求（識別できる名前と連絡先）を満たさないと 403 で弾かれるが、
+/// 設定画面でそこまで読み取れる人は多くない。落とすより補ったほうがよい。
+///
+/// 既に空白を含む（＝名前が書かれている）ものはそのまま通す。
+/// 勝手に前置きすると `StoQ-App StoQ v1 a@b.c` のように二重になる。
+fn normalize_user_agent(user_agent: &str) -> Result<String> {
     let ua = user_agent.trim();
     if ua.is_empty() || !ua.contains('@') {
         return Err(AppError::code(code::SEC_USER_AGENT_MISSING));
     }
-    Ok(ua)
+    if ua.split_whitespace().count() > 1 {
+        return Ok(ua.to_string());
+    }
+    Ok(format!("{UA_PREFIX} {ua}"))
 }
 
 async fn get_text(url: &str, user_agent: &str) -> Result<String> {
@@ -162,7 +178,7 @@ async fn resolve_cik(ticker: &str, user_agent: &str) -> Result<(String, String)>
 /// 「EDGAR に無い」「User-Agent 未設定」は**エラーではなく状態として**返す。
 /// 非米国上場銘柄（例: 7203.T）でも Yahoo の指標表示を止めないため。
 pub async fn fetch_status(ticker: &str, user_agent: &str) -> Result<FilingStatus> {
-    let ua = match validate_user_agent(user_agent) {
+    let ua = match normalize_user_agent(user_agent) {
         Ok(ua) => ua,
         Err(e) => {
             return Ok(FilingStatus::unavailable(
@@ -172,6 +188,7 @@ pub async fn fetch_status(ticker: &str, user_agent: &str) -> Result<FilingStatus
             ))
         }
     };
+    let ua = ua.as_str();
 
     let (cik, company) = match resolve_cik(ticker, ua).await {
         Ok(v) => v,
@@ -265,9 +282,10 @@ pub async fn fetch_quarterly_revenue(
     ticker: &str,
     user_agent: &str,
 ) -> Vec<crate::quarterly::XbrlQuarter> {
-    let Ok(ua) = validate_user_agent(user_agent) else {
+    let Ok(ua) = normalize_user_agent(user_agent) else {
         return Vec::new();
     };
+    let ua = ua.as_str();
     let Ok((cik, _)) = resolve_cik(ticker, ua).await else {
         return Vec::new();
     };
@@ -337,7 +355,8 @@ pub async fn fetch_latest_filing(
     user_agent: &str,
     max_chars: usize,
 ) -> Result<SecFiling> {
-    let ua = validate_user_agent(user_agent)?;
+    let ua = normalize_user_agent(user_agent)?;
+    let ua = ua.as_str();
     let (cik, company) = resolve_cik(ticker, ua).await?;
 
     let submissions_url = format!("https://data.sec.gov/submissions/CIK{cik}.json");
@@ -413,4 +432,49 @@ fn str_array(value: &serde_json::Value, key: &str) -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn メールだけなら名前を補う() {
+        assert_eq!(
+            normalize_user_agent("test@example.com").unwrap(),
+            "StoQ-App test@example.com"
+        );
+    }
+
+    #[test]
+    fn 前後の空白は落としてから補う() {
+        assert_eq!(
+            normalize_user_agent("  test@example.com \n").unwrap(),
+            "StoQ-App test@example.com"
+        );
+    }
+
+    /// 名前が書かれているものへ重ねて前置きすると `StoQ-App StoQ v1 a@b.c` になる。
+    #[test]
+    fn 名前入りはそのまま通す() {
+        assert_eq!(
+            normalize_user_agent("StoQ Analyzer contact@example.com").unwrap(),
+            "StoQ Analyzer contact@example.com"
+        );
+    }
+
+    #[test]
+    fn 空とメール無しは従来どおり弾く() {
+        assert!(normalize_user_agent("").is_err());
+        assert!(normalize_user_agent("   ").is_err());
+        assert!(normalize_user_agent("StoQ Analyzer").is_err());
+    }
+
+    /// 補完後も「名前 ＋ @ を含む連絡先」という SEC の要求を満たしている。
+    #[test]
+    fn 補完後も名前とメールの両方を含む() {
+        let ua = normalize_user_agent("a@b.co").unwrap();
+        assert!(ua.contains('@'));
+        assert!(ua.split_whitespace().count() >= 2);
+    }
 }

@@ -86,6 +86,29 @@ export async function loadArchive(): Promise<void> {
   }
 }
 
+/**
+ * 分析履歴を 1 件消す。
+ *
+ * **消えたことを画面へ即座に反映する。** 再読み込みを待つと、
+ * 消したはずの行が数百 ms 残り、押し損ねたと思って二度押しされる。
+ * 削除に失敗したときは読み直して元の一覧へ戻す。
+ */
+export async function removeArchiveEntry(id: string): Promise<boolean> {
+  if (!isTauri()) return false;
+  const before = archive;
+  archive = archive.filter((entry) => entry.id !== id);
+  emit();
+  try {
+    await invoke("analysis_history_delete", { id });
+    return true;
+  } catch (e) {
+    archive = before;
+    emit();
+    toastError(t("toast.portfolio.historyDeleteFailed"), e);
+    return false;
+  }
+}
+
 export async function createPortfolio(name?: string): Promise<void> {
   try {
     replace(await invoke<Portfolio[]>("portfolios_create", { name: name ?? null }));

@@ -159,7 +159,7 @@ export default function MarketProviderSettings({ settings }: Props) {
                 <div className="flex items-end gap-2">
                   <label className="min-w-0 flex-1">
                     <span className="mb-1 block t-label text-slate-500">
-                      {status.label} APIキー
+                      {t("settings.market.apiKeyLabel", { provider: status.label })}
                     </span>
                     <input
                       type="password"

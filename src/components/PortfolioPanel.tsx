@@ -357,7 +357,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
             onClick={() => onCompare(selected)}
             className="flex min-h-7 w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-2 t-label font-medium text-white transition-colors hover:bg-emerald-500"
           >
-            📊 選択した銘柄を横並び比較（最大{MAX_COMPARE}社）
+            📊 {t("candidates.compareButton", { max: MAX_COMPARE })}
             <span className="font-mono">{selected.length}</span>
           </button>
         </div>

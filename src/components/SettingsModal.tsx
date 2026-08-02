@@ -223,7 +223,12 @@ export default function SettingsModal({
         </footer>
       }
     >
-      <div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-slate-800 bg-slate-900 px-4">
+      {/*
+        タブ名は折り返さない（`whitespace-nowrap`）。
+        **単語の途中で改行されると、どのタブか読み取れなくなる。**
+        入りきらないときは横スクロールで送る。
+      */}
+      <div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-800 bg-slate-900 px-4">
         {(
           [
             ["providers", t("settings.tab.providers")],
@@ -240,7 +245,7 @@ export default function SettingsModal({
             type="button"
             onClick={() => setTab(id)}
             aria-pressed={tab === id}
-            className={`-mb-px border-b-2 px-3 py-2 t-body transition-colors ${
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2 t-body transition-colors ${
               tab === id
                 ? "border-emerald-500 font-medium text-emerald-300"
                 : "border-transparent text-slate-400 hover:text-slate-200"

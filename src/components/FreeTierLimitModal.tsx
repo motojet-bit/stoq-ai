@@ -94,7 +94,7 @@ export default function FreeTierLimitModal({
           </div>
           <ul className="mt-2 space-y-0.5 t-label leading-relaxed text-slate-500">
             {keptOnLock().map((item: string) => (
-              <li key={item}>✓ {item}は制限なく続けられます</li>
+              <li key={item}>✓ {t("lock.keptItem", { item })}</li>
             ))}
           </ul>
         </div>
