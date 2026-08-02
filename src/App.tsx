@@ -62,6 +62,8 @@ import HelpAssistant from "@/components/HelpAssistant";
 import WelcomeTour from "@/components/WelcomeTour";
 import LegalDisclaimerModal from "@/components/LegalDisclaimerModal";
 import EulaModal from "@/components/EulaModal";
+import UpdateModal from "@/components/UpdateModal";
+import { checkForUpdate } from "@/lib/update/updateStore";
 import DisclaimerTicker from "@/components/DisclaimerTicker";
 import ComparePanel from "@/components/ComparePanel";
 import PortfolioHistoryPanel from "@/components/PortfolioHistoryPanel";
@@ -202,6 +204,8 @@ export default function App() {
     void loadPortfolios();
     void loadArchive();
     void loadLicense();
+    // 起動時の更新確認。**見つからなければ何も出さない**（毎回の通知は邪魔になる）
+    void checkForUpdate();
 
     try {
       if (localStorage.getItem(TOUR_SEEN_KEY) !== "1") setTourOpen(true);
@@ -666,6 +670,8 @@ export default function App() {
 
       {/* 同意するまで操作を塞ぐ。すべての上に出すため最後に置く */}
       <EulaModal />
+
+      <UpdateModal />
 
       <ToastHost />
     </div>

@@ -119,6 +119,12 @@ const LOCALIZED = [
   "src/lib/ui/tooltipText.ts",
   "src/lib/errors/errorMessage.ts",
   "src/lib/ui/toastStore.ts",
+
+  // --- 自動更新 ---
+  "src/components/UpdateModal.tsx",
+  "src/components/UpdateSettings.tsx",
+  "src/lib/update/updateStore.ts",
+  "src/lib/update/updateVersion.ts",
 ];
 
 /**

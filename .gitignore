@@ -55,3 +55,7 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# === 更新の配信物 ===
+# latest.json とインストーラーは GitHub Releases へ上げるもの。リポジトリには置かない
+dist-release/

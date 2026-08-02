@@ -37,6 +37,8 @@ reqwest = { version = "0.12", default-features = false, features = [
 sha2 = "0.10.9"
 base64 = "0.23.0"
 getrandom = "0.3.4"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [dev-dependencies]
 # 非同期のコマンド層をテストするため（本体には不要）

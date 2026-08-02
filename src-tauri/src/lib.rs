@@ -31,6 +31,13 @@ mod yahoo;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        /*
+         * 更新の確認・適用は公式プラグインに任せる。
+         * 署名の検証（`tauri.conf.json` の `pubkey`）もプラグイン側で行われるので、
+         * **署名の無い配布物は適用されない**。
+         */
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             // 起動時の自動バックアップ。**失敗しても起動は止めない**
             let handle = app.handle().clone();

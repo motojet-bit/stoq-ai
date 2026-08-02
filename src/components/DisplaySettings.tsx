@@ -1,5 +1,6 @@
 import { setShowTooltips, useShowTooltips } from "@/lib/ui/displayPrefs";
 import EulaSettings from "@/components/EulaSettings";
+import UpdateSettings from "@/components/UpdateSettings";
 import { localeOptions, setLocale, useLocale, useT } from "@/lib/i18n/i18n";
 import {
   MAX_FONT_SIZE,
@@ -82,6 +83,9 @@ export default function DisplaySettings() {
           {t("general.resetLayoutButton")}
         </button>
       </Row>
+
+      {/* アプリの更新 */}
+      <UpdateSettings />
 
       {/* 同意内容の確認と撤回 */}
       <EulaSettings />

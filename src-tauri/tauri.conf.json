@@ -37,6 +37,18 @@
       "icons/128x128@2x.png",
       "icons/icon.png",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/motojet-bit/stoq-releases/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJBNTg1NjIxMkE3RjRFNzkKUldSNVRuOHFJVlpZdXBMZkFyNk1mdlJsMno4aGU0Tys3YlRBcHcvdEZQRUYwV01LSXdVUWJIOG8K",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
