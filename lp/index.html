@@ -39,11 +39,15 @@
       html[lang="ja"] [data-en] { display: none; }
       /*
        * ヒーローの背景。**画像は下に敷き、文字は必ず上に置く。**
-       * 画像を差し替えても読めなくならないよう、暗いオーバーレイを重ねている。
-       * GIF や写真に差し替えるときは --hero-image の URL だけを変えればよい。
+       *
+       * 絵は lp/hero.svg（ローソク足のみ。移動平均線は入れない）。
+       * 差し替えるときは --hero-image の URL だけを変えればよい。
+       *
+       * **ぼかしはかけない。** ローソク足だと分かる粒度で見せたいので、
+       * 読みやすさは上に重ねる暗いオーバーレイ側で確保する。
        */
       .hero {
-        --hero-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDkwMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgc2xpY2UiPiA8ZGVmcz4gPGZpbHRlciBpZD0iYiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMTQiLz48L2ZpbHRlcj4gPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjEiIHgyPSIxIiB5Mj0iMCI+IDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAyMmMyMiIvPjxzdG9wIG9mZnNldD0iMC41NSIgc3RvcC1jb2xvcj0iIzA2NGUzYiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzBmMTcyYSIvPiA8L2xpbmVhckdyYWRpZW50PiA8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIwIiB5MT0iMSIgeDI9IjAiIHkyPSIwIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMTBiOTgxIiBzdG9wLW9wYWNpdHk9IjAiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMxMGI5ODEiIHN0b3Atb3BhY2l0eT0iMC41NSIvPiA8L2xpbmVhckdyYWRpZW50PiA8L2RlZnM+IDxyZWN0IHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjkwMCIgZmlsbD0idXJsKCNnKSIvPiA8ZyBmaWx0ZXI9InVybCgjYikiIHRyYW5zZm9ybT0ibWF0cml4KDEsLTAuMjIsMC40MiwwLjkyLC0xMjAsMTkwKSI+IDxwYXRoIGQ9Ik0wIDcwMCBMMTUwIDY0MCBMMzAwIDY2NSBMNDUwIDU0NSBMNjAwIDU4NSBMNzUwIDQzMCBMOTAwIDQ3MCBMMTA1MCAzMzAgTDEyMDAgMzc1IEwxMzUwIDIxNSBMMTUwMCAyNjAgTDE2NTAgMTIwIEwxNjUwIDkwMCBMMCA5MDAgWiIgZmlsbD0idXJsKCNhKSIvPiA8cGF0aCBkPSJNMCA3MDAgTDE1MCA2NDAgTDMwMCA2NjUgTDQ1MCA1NDUgTDYwMCA1ODUgTDc1MCA0MzAgTDkwMCA0NzAgTDEwNTAgMzMwIEwxMjAwIDM3NSBMMTM1MCAyMTUgTDE1MDAgMjYwIEwxNjUwIDEyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzRkMzk5IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4gPGcgZmlsbD0iIzM0ZDM5OSIgb3BhY2l0eT0iMC4zMCI+IDxyZWN0IHg9IjEyMCIgeT0iNTYwIiB3aWR0aD0iMjYiIGhlaWdodD0iMTUwIi8+PHJlY3QgeD0iMzMwIiB5PSI2MDAiIHdpZHRoPSIyNiIgaGVpZ2h0PSIxMTAiLz4gPHJlY3QgeD0iNTQwIiB5PSI0ODAiIHdpZHRoPSIyNiIgaGVpZ2h0PSIyMzAiLz48cmVjdCB4PSI3NjAiIHk9IjUyMCIgd2lkdGg9IjI2IiBoZWlnaHQ9IjE5MCIvPiA8cmVjdCB4PSI5ODAiIHk9IjM4MCIgd2lkdGg9IjI2IiBoZWlnaHQ9IjMzMCIvPjxyZWN0IHg9IjEyMDAiIHk9IjMwMCIgd2lkdGg9IjI2IiBoZWlnaHQ9IjQxMCIvPiA8cmVjdCB4PSIxNDIwIiB5PSIyNDAiIHdpZHRoPSIyNiIgaGVpZ2h0PSI0NzAiLz4gPC9nPiA8ZyBzdHJva2U9IiMwZjc2NmUiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC41Ij4gPHBhdGggZD0iTTAgMjUwIEgxNjUwIi8+PHBhdGggZD0iTTAgNDIwIEgxNjUwIi8+PHBhdGggZD0iTTAgNTkwIEgxNjUwIi8+PHBhdGggZD0iTTAgNzYwIEgxNjUwIi8+IDwvZz4gPC9nPiA8L3N2Zz4=");
+        --hero-image: url("./hero.svg");
         position: relative;
         isolation: isolate;
       }
@@ -55,20 +59,24 @@
         background-image: var(--hero-image);
         background-size: cover;
         background-position: center;
-        filter: blur(2px) saturate(0.9);
-        transform: scale(1.06);
+        filter: saturate(0.95);
       }
       .hero::after {
         content: "";
         position: absolute;
         inset: 0;
         z-index: -1;
+        /*
+         * 下端はページ本体（slate-950）へ寄せて、セクションの境目が線に見えないようにする。
+         */
         background:
-          radial-gradient(60rem 30rem at 50% -10%, rgba(16, 185, 129, 0.22), transparent 70%),
-          linear-gradient(to bottom, rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.94) 60%, rgb(2, 6, 23));
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .hero::before { filter: none; transform: none; }
+          radial-gradient(60rem 30rem at 50% -10%, rgba(0, 230, 118, 0.13), transparent 70%),
+          linear-gradient(
+            to bottom,
+            rgba(13, 17, 23, 0.85),
+            rgba(13, 17, 23, 0.9) 55%,
+            rgb(2, 6, 23)
+          );
       }
     </style>
   </head>
