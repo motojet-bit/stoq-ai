@@ -19,7 +19,7 @@ export default function DisplaySettings() {
   return (
     <div className="space-y-3">
       <p className="t-label leading-relaxed text-slate-500">
-        表示に関する設定です。変更は即座に画面へ反映され、この端末に保存されます。
+        {t("general.intro")}
       </p>
 
       {/* 言語は AI の応答にも連動するので先頭に置く */}
@@ -51,7 +51,7 @@ export default function DisplaySettings() {
 
       <Row
         title={t("general.fontSize")}
-        description={`本文・パネル・サイドバーの文字サイズ（${MIN_FONT_SIZE}〜${MAX_FONT_SIZE}px）。メニューバー右端でも変更できます。`}
+        description={t("general.fontSizeHint", { min: MIN_FONT_SIZE, max: MAX_FONT_SIZE })}
       >
         <span className="flex shrink-0 items-center gap-2">
           <input
@@ -72,7 +72,7 @@ export default function DisplaySettings() {
 
       <Row
         title={t("general.resetLayout")}
-        description="市場データ・分析結果・対話の配置を、既定の並びに戻します。"
+        description={t("general.resetLayoutHint")}
       >
         <button
           type="button"

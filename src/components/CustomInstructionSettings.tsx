@@ -9,6 +9,7 @@ import {
 } from "@/lib/prompts/customInstruction";
 import Tooltip from "@/components/Tooltip";
 import { IconHelp } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   settings: AppSettings | null;
@@ -22,6 +23,7 @@ interface Props {
  * 画面にもフロントのコードにも、基本プロンプトの本文は現れない。
  */
 export default function CustomInstructionSettings({ settings }: Props) {
+  const t = useT();
   const [draft, setDraft] = useState(settings?.customInstruction ?? "");
   const [busy, setBusy] = useState(false);
 
@@ -38,9 +40,9 @@ export default function CustomInstructionSettings({ settings }: Props) {
     setBusy(true);
     try {
       await saveSettings({ customInstruction: draft });
-      toastSuccess("カスタム指示を保存しました");
+      toastSuccess(t("customInstruction.saved"));
     } catch (e) {
-      toastError("カスタム指示を保存できませんでした", e);
+      toastError(t("customInstruction.saveFailed"), e);
     } finally {
       setBusy(false);
     }
@@ -50,7 +52,7 @@ export default function CustomInstructionSettings({ settings }: Props) {
     <section className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-1.5">
-          <h3 className="t-body font-medium text-slate-200">カスタム指示（自由記述）</h3>
+          <h3 className="t-body font-medium text-slate-200">{t("customInstruction.title")}</h3>
           <Tooltip content={CUSTOM_INSTRUCTION_HINT} placement="top">
             <span
               tabIndex={0}
@@ -67,8 +69,7 @@ export default function CustomInstructionSettings({ settings }: Props) {
       </div>
 
       <p className="mb-2 t-label leading-relaxed text-slate-500">
-        プリセット（分析役割）に足したい観点があれば書いてください。
-        アプリ内蔵の分析プロンプトはそのまま使われ、この文だけが末尾に追加されます。
+        {t("customInstruction.description")}
       </p>
 
       <textarea
@@ -76,7 +77,7 @@ export default function CustomInstructionSettings({ settings }: Props) {
         onChange={(e) => setDraft(e.target.value)}
         rows={4}
         spellCheck={false}
-        placeholder="例: 半導体サイクルの底打ち時期に注目し、在庫水準の推移を重点的に評価してください。"
+        placeholder={t("customInstruction.placeholder")}
         className="selectable w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-2.5 py-2 t-label leading-relaxed text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
       />
 
@@ -86,7 +87,7 @@ export default function CustomInstructionSettings({ settings }: Props) {
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <span className="t-label text-slate-600">
-          {saved.trim() === "" ? "未設定（プリセットのみ）" : "設定済み"}
+          {saved.trim() === "" ? t("customInstruction.unset") : t("customInstruction.set")}
         </span>
         <div className="flex shrink-0 gap-2">
           {saved.trim() !== "" && (
@@ -95,7 +96,7 @@ export default function CustomInstructionSettings({ settings }: Props) {
               onClick={() => setDraft("")}
               className="min-h-8 rounded-md border border-slate-700 px-3 t-label text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200"
             >
-              クリア
+              {t("customInstruction.clear")}
             </button>
           )}
           <button
@@ -104,7 +105,7 @@ export default function CustomInstructionSettings({ settings }: Props) {
             disabled={busy || !dirty || error !== null}
             className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
           >
-            {busy ? "保存中…" : "保存"}
+            {busy ? t("settings.saving") : t("settings.save")}
           </button>
         </div>
       </div>

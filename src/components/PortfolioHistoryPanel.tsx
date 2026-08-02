@@ -20,6 +20,7 @@ import {
   IconLayoutRows,
   IconMessage,
 } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   onToggleCollapse: () => void;
@@ -39,6 +40,7 @@ export default function PortfolioHistoryPanel({
   collapseDisabledReason = null,
 }: Props) {
   const archive = useArchive();
+  const t = useT();
   const loading = useArchiveLoading();
   const split = usePortfolioSplit();
 
@@ -84,7 +86,7 @@ export default function PortfolioHistoryPanel({
         if (raw) sections.push({ ...item, body: raw });
       }
       pushChatDraft(buildTransferText(ticker, sections));
-      toastSuccess(`${ticker} の ${sections.length} 期分を対話へ転送しました`);
+      toastSuccess(t("history.forwarded", { ticker, count: sections.length }));
     } finally {
       setTransferring(false);
     }
@@ -122,9 +124,9 @@ export default function PortfolioHistoryPanel({
       const raw = isTauri()
         ? await invoke<string | null>("analysis_history_raw", { id })
         : null;
-      setBody(raw ?? "本文を取得できませんでした。");
+      setBody(raw ?? t("history.bodyMissing"));
     } catch (e) {
-      toastError("分析ログを開けませんでした", e);
+      toastError(t("history.openFailed"), e);
       setBody(null);
     } finally {
       setFetching(false);
@@ -134,25 +136,25 @@ export default function PortfolioHistoryPanel({
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toastSuccess("分析ログをコピーしました");
+      toastSuccess(t("history.copied"));
     } catch (e) {
-      toastError("コピーできませんでした", e);
+      toastError(t("history.copyFailed"), e);
     }
   };
 
   const quote = (ticker: string, label: string, text: string) => {
     pushChatDraft(
-      `以下は ${ticker} の過去の分析（${label}）です。この内容について質問します。\n\n---\n${text}\n---\n\n`,
+      `${t("history.quotePrefix", { ticker, label })}\n\n---\n${text}\n---\n\n`,
     );
-    toastSuccess("対話ウィンドウに引用しました");
+    toastSuccess(t("history.quoted"));
   };
 
   return (
     <section className="panel bg-slate-950">
       <PanelHeader
         icon={<IconChart className="h-3.5 w-3.5" />}
-        title="ポートフォリオ分析履歴"
-        subtitle={loading ? "読み込み中…" : `${archives.length} 銘柄`}
+        title={t("panel.history")}
+        subtitle={loading ? t("common.loading") : t("history.tickerCount", { count: archives.length })}
         onToggleCollapse={onToggleCollapse}
         collapseDisabledReason={collapseDisabledReason}
         actions={
@@ -162,7 +164,7 @@ export default function PortfolioHistoryPanel({
               type="button"
               onClick={() => setPortfolioSplit("horizontal")}
               aria-pressed={split === "horizontal"}
-              title="縦分割（左右に並べる）"
+              title={t("history.splitVertical")}
               className={`rounded p-1 transition-colors ${
                 split === "horizontal"
                   ? "bg-slate-700 text-emerald-300"
@@ -175,7 +177,7 @@ export default function PortfolioHistoryPanel({
               type="button"
               onClick={() => setPortfolioSplit("vertical")}
               aria-pressed={split === "vertical"}
-              title="横分割（上下に並べる）"
+              title={t("history.splitHorizontal")}
               className={`rounded p-1 transition-colors ${
                 split === "vertical"
                   ? "bg-slate-700 text-emerald-300"
@@ -200,10 +202,10 @@ export default function PortfolioHistoryPanel({
                 onClick={() => setView("heatmap")}
                 className="min-h-6 shrink-0 rounded border border-slate-700 px-2 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
               >
-                ← 一覧へ戻る
+                {t("history.back")}
               </button>
               <span className="font-mono t-body font-semibold text-emerald-300">
-                {selected?.ticker ?? "—"}
+                {selected?.ticker ?? t("common.none")}
               </span>
               <span className="t-label text-slate-500">
                 {selected?.entries.length ?? 0} 期分
@@ -225,15 +227,15 @@ export default function PortfolioHistoryPanel({
                         })),
                       )
                     }
-                    title="過去全四半期の分析を構造化テキストとして対話へ送る"
+                    title={t("history.forwardHint")}
                     className="flex min-h-6 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-2 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:opacity-40"
                   >
-                    📋 {transferring ? "転送中…" : "全期の分析データを対話へ転送"}
+                    📋 {transferring ? t("history.forwarding") : t("history.forwardAll")}
                   </button>
                 )}
                 {selected && (
                   <ExportMenu
-                    label="エクスポート"
+                    label={t("analysis.export")}
                     records={() => recordsFor(selected.ticker)}
                     disabled={selected.entries.length === 0}
                   />
@@ -265,7 +267,7 @@ export default function PortfolioHistoryPanel({
                         <span className="shrink-0 font-mono t-body font-medium text-slate-100">
                           {entry.averageScore !== null
                             ? entry.averageScore.toFixed(1)
-                            : "—"}
+                            : t("common.none")}
                         </span>
                         {record?.summary.statusIcon && (
                           <span className="shrink-0">{record.summary.statusIcon}</span>
@@ -275,7 +277,7 @@ export default function PortfolioHistoryPanel({
                           {entry.model ? ` / ${entry.model}` : ""}
                         </span>
                         <span className="shrink-0 t-label text-slate-500">
-                          {expanded ? "閉じる" : "開く"}
+                          {expanded ? t("settings.close") : t("history.open")}
                         </span>
                       </button>
 
@@ -286,7 +288,7 @@ export default function PortfolioHistoryPanel({
                             <div className="mb-2 grid gap-2 sm:grid-cols-2">
                               <div>
                                 <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
-                                  ブロック別スコア
+                                  {t("history.blockScores")}
                                 </div>
                                 <ul className="space-y-0.5">
                                   {record.blockScores.map((b) => (
@@ -296,7 +298,7 @@ export default function PortfolioHistoryPanel({
                                     >
                                       <span className="text-slate-400">{b.label}</span>
                                       <span className="font-mono text-slate-200">
-                                        {b.score === null ? "—" : b.score.toFixed(1)}
+                                        {b.score === null ? t("common.none") : b.score.toFixed(1)}
                                       </span>
                                     </li>
                                   ))}
@@ -304,7 +306,7 @@ export default function PortfolioHistoryPanel({
                               </div>
                               <div>
                                 <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
-                                  主要数値
+                                  {t("history.keyMetrics")}
                                 </div>
                                 <ul className="space-y-0.5">
                                   {record.keyMetrics.slice(0, 6).map((m) => (
@@ -331,7 +333,7 @@ export default function PortfolioHistoryPanel({
                               <div className="mb-2 grid gap-2 sm:grid-cols-2">
                                 <div>
                                   <div className="mb-1 t-label font-medium text-emerald-400">
-                                    適合・強み
+                                    {t("history.strengths")}
                                   </div>
                                   <ul className="space-y-0.5">
                                     {record.evaluations.strengths.map((item) => (
@@ -346,7 +348,7 @@ export default function PortfolioHistoryPanel({
                                 </div>
                                 <div>
                                   <div className="mb-1 t-label font-medium text-amber-400">
-                                    基準未達・リスク
+                                    {t("history.risks")}
                                   </div>
                                   <ul className="space-y-0.5">
                                     {record.evaluations.risks.map((item) => (
@@ -363,7 +365,7 @@ export default function PortfolioHistoryPanel({
                             )}
 
                           {fetching ? (
-                            <p className="t-label text-slate-500">読み込み中…</p>
+                            <p className="t-label text-slate-500">{t("common.loading")}</p>
                           ) : (
                             <>
                               <div className="mb-2 flex flex-wrap gap-1.5">
@@ -373,7 +375,7 @@ export default function PortfolioHistoryPanel({
                                   disabled={!body}
                                   className="min-h-6 rounded border border-slate-700 px-2 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:opacity-40"
                                 >
-                                  コピー
+                                  {t("history.copy")}
                                 </button>
                                 <button
                                   type="button"
@@ -384,7 +386,7 @@ export default function PortfolioHistoryPanel({
                                   className="flex min-h-6 items-center gap-1 rounded border border-slate-700 px-2 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:opacity-40"
                                 >
                                   <IconMessage className="h-3 w-3" />
-                                  対話へ引用
+                                  {t("history.quote")}
                                 </button>
                               </div>
                               <pre className="selectable max-h-96 overflow-auto whitespace-pre-wrap break-words t-label leading-relaxed text-slate-300">

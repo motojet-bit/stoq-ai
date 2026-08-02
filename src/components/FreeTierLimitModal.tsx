@@ -4,6 +4,7 @@ import { KEPT_ON_LOCK, lockBody, lockTitle } from "@/lib/license/lockMessages";
 import ModalShell from "@/components/ModalShell";
 import { IconBadge, IconKey } from "@/components/Icons";
 import { appName } from "@/lib/ui/appMeta";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -29,6 +30,7 @@ export default function FreeTierLimitModal({
   onClose,
   onOpenLicense,
 }: Props) {
+  const t = useT();
   const used = useUsedTickers();
 
   return (
@@ -45,7 +47,7 @@ export default function FreeTierLimitModal({
             onClick={onClose}
             className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
           >
-            あとで
+            {t("freeTier.later")}
           </button>
           <button
             type="button"
@@ -53,7 +55,7 @@ export default function FreeTierLimitModal({
             className="flex min-h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500"
           >
             <IconKey className="h-3.5 w-3.5" />
-            ライセンスキーを入力
+            {t("freeTier.enterKey")}
           </button>
         </footer>
       }
@@ -66,8 +68,7 @@ export default function FreeTierLimitModal({
 
         {/* ライセンスを入れてもデータが消えないことを先に伝える */}
         <p className="mt-2 t-label leading-relaxed text-emerald-300/80">
-          ライセンスを有効化しても、これまでの分析結果・対話履歴・ポートフォリオは
-          そのまま引き継がれます。
+          {t("freeTier.dataKept")}
         </p>
 
         {ticker && (
@@ -79,7 +80,7 @@ export default function FreeTierLimitModal({
 
         <div className="mt-4 rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5">
           <p className="mb-1.5 t-label font-medium uppercase tracking-wider text-slate-500">
-            分析済みの銘柄（{used.length} / {FREE_TICKER_LIMIT}）
+            {t("freeTier.usedTickers", { used: used.length, limit: FREE_TICKER_LIMIT })}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {used.map((item) => (

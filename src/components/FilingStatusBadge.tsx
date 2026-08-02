@@ -1,5 +1,6 @@
 import type { FilingStatus } from "@/types";
 import { filingSignal } from "@/lib/api/sec";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   status: FilingStatus | null;
@@ -15,11 +16,12 @@ const FRAME: Record<string, string> = {
 
 /** 資料準備インジケーター（🟢 / 🟡 / 🔴）。 */
 export default function FilingStatusBadge({ status, loading, error }: Props) {
+  const t = useT();
   if (loading) {
     return (
       <div className="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1.5 t-label text-slate-500">
         <span className="h-3 w-3 animate-spin rounded-full border border-slate-600 border-t-emerald-500" />
-        SEC 提出状況を確認中…
+        {t("filing.checking")}
       </div>
     );
   }
@@ -31,7 +33,7 @@ export default function FilingStatusBadge({ status, loading, error }: Props) {
         className="flex items-center gap-2 rounded-md border border-red-900 bg-red-950/40 px-2.5 py-1.5 t-label text-red-300"
       >
         <span aria-hidden="true">🔴</span>
-        SEC 資料: 確認失敗
+        {t("filing.failed")}
       </div>
     );
   }

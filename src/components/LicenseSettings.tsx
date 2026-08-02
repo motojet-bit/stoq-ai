@@ -6,6 +6,7 @@ import {
   useLicense,
 } from "@/lib/license/licenseStore";
 import { IconBadge } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 /**
  * ライセンス認証（骨組み）。
@@ -15,6 +16,7 @@ import { IconBadge } from "@/components/Icons";
  * 生のキーはフロントに持たず、マスク済み文字列だけを表示する。
  */
 export default function LicenseSettings() {
+  const t = useT();
   const license = useLicense();
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -49,7 +51,7 @@ export default function LicenseSettings() {
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
             <span className="t-body font-medium text-slate-100">
-              {license.activated ? "ライセンス有効" : "未認証"}
+              {license.activated ? t("license.active") : t("license.inactive")}
             </span>
             {license.masked && (
               <span className="shrink-0 rounded bg-slate-800 px-1.5 font-mono t-label text-slate-300">
@@ -65,7 +67,7 @@ export default function LicenseSettings() {
 
       <label className="block">
         <span className="mb-1 block t-label text-slate-500">
-          ライセンスキー（購入時にメールで届きます）
+          {t("license.keyLabel")}
         </span>
         <div className="flex items-end gap-2">
           <input
@@ -86,7 +88,7 @@ export default function LicenseSettings() {
             disabled={busy || key.trim() === ""}
             className="min-h-9 shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
           >
-            {busy ? "確認中…" : "ライセンス有効化"}
+            {busy ? t("license.checking") : t("license.activate")}
           </button>
         </div>
       </label>
@@ -97,16 +99,15 @@ export default function LicenseSettings() {
           onClick={() => void clearLicense()}
           className="min-h-7 rounded-md border border-slate-700 px-2.5 t-label text-slate-400 transition-colors hover:border-red-800 hover:text-red-300"
         >
-          このパソコンのライセンスを解除
+          {t("license.release")}
         </button>
       )}
 
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5">
         <p className="t-label leading-relaxed text-slate-500">
-          キーは OS のアプリ設定ディレクトリに保存され、画面にはマスク済みの文字列しか出ません。
+          {t("license.storageNote")}
           <br />
-          いまは形式の確認のみを行っています（オフライン）。
-          発行元サーバーでの照会はこの後の対応です。
+          {t("license.offlineNote")}
         </p>
       </div>
     </div>

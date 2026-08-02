@@ -1,6 +1,7 @@
 import { DISCLAIMER_TICKER_TEXT } from "@/lib/legal/disclaimer";
 import { openDisclaimer } from "@/lib/legal/disclaimerStore";
 import { IconWarning } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 /**
  * 画面下部を右から左へ流れ続ける免責テロップ。
@@ -10,12 +11,13 @@ import { IconWarning } from "@/components/Icons";
  * - 同じ文面を 2 回並べ、`-50%` まで動かすことで**継ぎ目なくループ**させる
  */
 export default function DisclaimerTicker() {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={openDisclaimer}
-      aria-label="免責事項の全文を表示"
-      title="クリックすると免責事項の全文が開きます"
+      aria-label={t("ticker.showFull")}
+      title={t("ticker.clickHint")}
       className="ticker ui-fixed flex min-h-6 w-full shrink-0 items-center gap-2 overflow-hidden border-t border-amber-900/70 bg-amber-950/40 px-2 text-left text-amber-200 transition-colors hover:bg-amber-950/70"
     >
       <IconWarning className="h-3.5 w-3.5 shrink-0 text-amber-400" />

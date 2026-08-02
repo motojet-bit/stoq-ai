@@ -119,14 +119,14 @@ export default function HelpAssistant({
     // 右下から立ち上がるドロワー。本体画面を隠しすぎないよう幅は控えめにする
     <aside
       role="dialog"
-      aria-label="ヘルプアシスタント"
+      aria-label={t("help.title")}
       className="fixed bottom-8 right-3 z-200 flex max-h-[70vh] w-96 flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60 ring-1 ring-white/5"
     >
       <header className="flex min-h-11 shrink-0 items-center justify-between gap-2 border-b border-slate-800 bg-slate-900 px-3">
         <span className="flex min-w-0 items-center gap-2">
           <IconHelp className="h-4 w-4 shrink-0 text-emerald-400" />
           <span className="truncate t-body font-semibold text-slate-100">
-            ヘルプアシスタント
+            {t("help.title")}
           </span>
         </span>
         <div className="flex shrink-0 items-center gap-1">
@@ -136,13 +136,13 @@ export default function HelpAssistant({
               onClick={() => setMessages([])}
               className="rounded px-2 py-1 t-label text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
             >
-              クリア
+              {t("help.clear")}
             </button>
           )}
           <button
             type="button"
             onClick={onClose}
-            aria-label="ヘルプを閉じる"
+            aria-label={t("help.close")}
             className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
           >
             <IconClose className="h-4 w-4" />
@@ -179,8 +179,7 @@ export default function HelpAssistant({
         ) : messages.length === 0 ? (
           <div className="space-y-3">
             <p className="t-body leading-relaxed text-slate-400">
-              このアプリの使い方について何でも聞いてください。
-              画面の見方、APIキーの設定、ショートカット、データ取得元の違いなどをご案内します。
+              {t("help.intro")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {HELP_EXAMPLES.map((example) => (
@@ -197,13 +196,13 @@ export default function HelpAssistant({
             </div>
             {!ready && (
               <p className="t-label text-amber-400">
-                {reason ?? "APIキーが未設定です。"}
+                {reason ?? t("help.noKey")}
                 <button
                   type="button"
                   onClick={onOpenSettings}
                   className="ml-1 underline underline-offset-2 hover:text-amber-300"
                 >
-                  設定を開く
+                  {t("help.openSettings")}
                 </button>
               </p>
             )}
@@ -217,7 +216,7 @@ export default function HelpAssistant({
                     m.role === "user" ? "text-slate-400" : "text-emerald-400"
                   }`}
                 >
-                  {m.role === "user" ? "あなた" : "ヘルプAI"}
+                  {m.role === "user" ? t("help.you") : t("help.ai")}
                 </div>
                 {m.error ? (
                   <p className="selectable t-body rounded border border-red-900 bg-red-950/40 px-2.5 py-2 text-red-300">
@@ -244,7 +243,7 @@ export default function HelpAssistant({
           onClick={onOpenTour}
           className="t-label text-slate-400 underline underline-offset-2 transition-colors hover:text-emerald-300"
         >
-          はじめかたを見る
+          {t("help.openTour")}
         </button>
         <a
           href={featureRequestUrl()}
@@ -252,7 +251,7 @@ export default function HelpAssistant({
           rel="noreferrer"
           className="t-label text-slate-400 underline underline-offset-2 transition-colors hover:text-emerald-300"
         >
-          欲しい機能がありませんか？開発者へリクエストを送る
+          {t("help.featureRequest")}
         </a>
       </div>
 
@@ -266,7 +265,7 @@ export default function HelpAssistant({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={sending || !ready}
-            placeholder={ready ? `使い方を質問（${sendKeyLabel} で送信）` : "APIキーを設定すると使えます"}
+            placeholder={ready ? t("help.placeholder", { key: sendKeyLabel }) : t("help.placeholderNoKey")}
             className="selectable t-body max-h-32 min-h-10 min-w-0 flex-1 resize-y overflow-y-auto rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-slate-200 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none disabled:cursor-not-allowed"
           />
           <button
@@ -275,7 +274,7 @@ export default function HelpAssistant({
             disabled={sending || !ready || input.trim().length === 0}
             className="t-body min-h-10 shrink-0 rounded-md bg-emerald-600 px-3 font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
           >
-            {sending ? "…" : "送信"}
+            {sending ? "…" : t("help.send")}
           </button>
         </div>
       </div>

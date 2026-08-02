@@ -3,16 +3,12 @@ import { parseCandidates } from "@/lib/candidates/parseCandidates";
 import { addCandidates } from "@/lib/candidates/candidateStore";
 import { IconBookmark } from "@/components/Icons";
 import ModalShell from "@/components/ModalShell";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
-
-const PLACEHOLDER = `AAPL|Apple|Phone
-NVDA|NVIDIA|AI Chip
-7203.T|トヨタ自動車|自動車
-# 先頭が # の行はメモとして無視されます`;
 
 /**
  * 検討中銘柄の一括インポート。
@@ -21,6 +17,7 @@ NVDA|NVIDIA|AI Chip
  * **取り込めなかった行を黙って捨てると、貼ったのに入っていないことに気づけない。**
  */
 export default function CandidateImportModal({ open, onClose }: Props) {
+  const t = useT();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -46,7 +43,7 @@ export default function CandidateImportModal({ open, onClose }: Props) {
   return (
     <ModalShell
       open={open}
-      title="検討中銘柄の追加"
+      title={t("import.title")}
       icon={<IconBookmark className="h-4 w-4 text-emerald-400" />}
       maxWidthClass="max-w-2xl"
       onClose={onClose}
@@ -57,7 +54,7 @@ export default function CandidateImportModal({ open, onClose }: Props) {
             onClick={onClose}
             className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
           >
-            キャンセル
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -65,7 +62,7 @@ export default function CandidateImportModal({ open, onClose }: Props) {
             disabled={busy || result.items.length === 0}
             className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
           >
-            {busy ? "保存中…" : `${result.items.length} 件を追加`}
+            {busy ? t("settings.saving") : t("import.addCount", { count: result.items.length })}
           </button>
         </footer>
       }
@@ -73,22 +70,21 @@ export default function CandidateImportModal({ open, onClose }: Props) {
         <div className="px-4 py-4">
           <label className="block">
             <span className="mb-1.5 block t-body text-slate-300">
-              パイプ区切りで ティッカー|社名|ジャンル を入力してください（複数行可）
+              {t("import.instructions")}
             </span>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               spellCheck={false}
               rows={10}
-              placeholder={PLACEHOLDER}
-              aria-label="検討中銘柄の入力"
+              placeholder={t("import.placeholder")}
+              aria-label={t("import.aria")}
               className="selectable w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2 font-mono t-body leading-relaxed text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
             />
           </label>
 
           <p className="mt-1.5 t-label leading-relaxed text-slate-500">
-            社名・ジャンルは省略できます（`NVDA` だけでも可）。全角の｜でも区切れます。
-            すでに登録済みのティッカーは社名・ジャンルが上書きされます。
+            {t("import.note")}
           </p>
 
           {text.trim().length > 0 && (
@@ -98,7 +94,7 @@ export default function CandidateImportModal({ open, onClose }: Props) {
                   取り込む銘柄（{result.items.length} 件）
                 </h3>
                 {result.items.length === 0 ? (
-                  <p className="t-label text-slate-600">取り込める行がありません。</p>
+                  <p className="t-label text-slate-600">{t("import.nothing")}</p>
                 ) : (
                   <div className="max-h-48 overflow-y-auto rounded-md border border-slate-800">
                     <table className="w-full">
@@ -108,9 +104,9 @@ export default function CandidateImportModal({ open, onClose }: Props) {
                             <td className="w-24 px-2 py-1 font-mono t-label text-emerald-300">
                               {item.ticker}
                             </td>
-                            <td className="px-2 py-1 t-label text-slate-300">{item.name || "—"}</td>
+                            <td className="px-2 py-1 t-label text-slate-300">{item.name || t("common.none")}</td>
                             <td className="w-32 px-2 py-1 t-label text-slate-500">
-                              {item.genre || "—"}
+                              {item.genre || t("common.none")}
                             </td>
                           </tr>
                         ))}

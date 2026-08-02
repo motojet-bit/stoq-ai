@@ -17,6 +17,7 @@ import {
 import { IconClose, IconHelp } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { useT } from "@/lib/i18n/i18n";
 
 /**
  * ショートカットキーの一覧と変更。
@@ -25,6 +26,7 @@ import { TOOLTIPS } from "@/lib/ui/tooltipText";
  * 修飾キー単体では確定しない（`Ctrl` だけでは割り当てにならないため）。
  */
 export default function ShortcutSettings() {
+  const t = useT();
   const bindings = useBindings();
   const [capturing, setCapturing] = useState<ShortcutAction | null>(null);
   const mac = isMac();
@@ -61,8 +63,7 @@ export default function ShortcutSettings() {
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <p className="t-label leading-relaxed text-slate-500">
-          「変更」を押してから、割り当てたいキーを押してください（Esc で中止）。
-          入力欄にカーソルがあるときは、文字入力を優先するため発火しません。
+          {t("shortcut.intro")}
         </p>
         <span className="flex shrink-0 items-center gap-2">
           <Tooltip content={TOOLTIPS.shortcuts} placement="left" widthClass="w-72">
@@ -75,7 +76,7 @@ export default function ShortcutSettings() {
             onClick={() => void resetShortcuts()}
             className="min-h-7 whitespace-nowrap rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
           >
-            すべて既定に戻す
+            {t("shortcut.resetAll")}
           </button>
         </span>
       </div>
@@ -96,7 +97,7 @@ export default function ShortcutSettings() {
                   <span className="t-body font-medium text-slate-200">{def.label}</span>
                   {def.handledLocally && (
                     <span className="shrink-0 rounded bg-slate-800 px-1 t-label text-slate-500">
-                      入力欄で有効
+                      {t("shortcut.inInput")}
                     </span>
                   )}
                 </div>
@@ -112,7 +113,7 @@ export default function ShortcutSettings() {
                       : "border-slate-700 bg-slate-950 text-slate-200"
                 }`}
               >
-                {capturingThis ? "キーを押す…" : displayBinding(binding, mac)}
+                {capturingThis ? t("shortcut.press") : displayBinding(binding, mac)}
               </kbd>
 
               <div className="flex shrink-0 items-center gap-1">
@@ -121,14 +122,14 @@ export default function ShortcutSettings() {
                   onClick={() => setCapturing(capturingThis ? null : def.action)}
                   className="min-h-7 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
                 >
-                  {capturingThis ? "中止" : "変更"}
+                  {capturingThis ? t("shortcut.cancel") : t("shortcut.change")}
                 </button>
                 <button
                   type="button"
                   onClick={() => void setShortcut(def.action, null)}
                   disabled={!isCustomized(def.action)}
-                  aria-label={`${def.label} を既定に戻す`}
-                  title="既定に戻す"
+                  aria-label={t("shortcut.resetOneAria", { label: def.label })}
+                  title={t("shortcut.resetOne")}
                   className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-25"
                 >
                   <IconClose className="h-3 w-3" />
@@ -141,8 +142,7 @@ export default function ShortcutSettings() {
 
       {Object.keys(conflicts).length > 0 && (
         <p className="rounded-md border border-amber-900/60 bg-amber-950/30 px-3 py-2 t-label text-amber-300">
-          同じキーが複数のアクションに割り当てられています。
-          先に定義されたほうだけが動作します。
+          {t("shortcut.conflict")}
         </p>
       )}
     </div>

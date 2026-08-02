@@ -12,6 +12,7 @@ import StagedFileChip from "@/components/StagedFileChip";
 import TokenMeter from "@/components/TokenMeter";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   /** LLM 入力上限（設定の maxPromptTokens） */
@@ -23,6 +24,7 @@ interface Props {
  * ドロップゾーンの直下に置き、状況が常に見えるようにする。
  */
 export default function DocumentTray({ tokenLimit }: Props) {
+  const t = useT();
   const documents = useStagedDocuments();
   const ingesting = useIngestingFiles();
   const [preview, setPreview] = useState<StagedDocument | null>(null);
@@ -35,7 +37,7 @@ export default function DocumentTray({ tokenLimit }: Props) {
       <div className="flex min-h-11 shrink-0 items-center gap-3 border-b border-slate-800 bg-slate-900/40 px-3 py-1.5">
         <div className="flex shrink-0 items-center gap-2">
           <span className="t-label font-medium uppercase tracking-wider text-slate-500">
-            一時保存中の資料
+            {t("tray.title")}
           </span>
           <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono t-label text-slate-400">
             {documents.length}
@@ -61,7 +63,7 @@ export default function DocumentTray({ tokenLimit }: Props) {
               <span className="h-3 w-3 animate-spin rounded-full border border-slate-600 border-t-emerald-500" />
               <span className="max-w-40 truncate">{job.name}</span>
               <span className="t-label text-slate-600">
-                {job.phase === "extracting" ? "抽出中" : "保存中"}
+                {job.phase === "extracting" ? t("tray.extracting") : t("tray.saving")}
               </span>
             </div>
           ))}
@@ -75,7 +77,7 @@ export default function DocumentTray({ tokenLimit }: Props) {
             onClick={() => setConfirmingClear(true)}
             className="min-h-7 shrink-0 rounded-md border border-slate-700 px-2.5 t-label text-slate-400 transition-colors hover:border-red-800 hover:text-red-300"
           >
-            一括クリア
+            {t("tray.clearAll")}
           </button>
         )}
       </div>
@@ -85,14 +87,15 @@ export default function DocumentTray({ tokenLimit }: Props) {
       {/* 一時保存資料は AI に渡すコンテキストそのものなので、消す前に必ず確認する */}
       <ConfirmDialog
         open={confirmingClear}
-        title="一時保存中の資料をすべて削除しますか？"
+        title={t("tray.clearTitle")}
         message={
-          "⚠️ コンテキスト（一時保存資料）がリセットされます。\n" +
-          "必要な場合は、事前に対話ウィンドウで AI に「引き継ぎ書」を書かせてから操作してください。\n\n" +
-          `削除される資料: ${documents.length} 件（概算 ${totalTokens(documents).toLocaleString()} トークン）`
+          t("tray.clearBody", {
+            count: documents.length,
+            tokens: totalTokens(documents).toLocaleString(),
+          })
         }
-        confirmLabel="このままリセット"
-        cancelLabel="もどる"
+        confirmLabel={t("tray.clearConfirm")}
+        cancelLabel={t("common.back")}
         destructive
         onConfirm={() => {
           setConfirmingClear(false);

@@ -10,10 +10,11 @@ export type Slots = Record<SlotId, PanelId>;
 
 export const SLOT_IDS: SlotId[] = ["leftTop", "leftBottom", "right"];
 
+/** パネル名の辞書キー。**文面は持たない**（言語で変わるため）。 */
 export const PANEL_TITLES: Record<PanelId, string> = {
-  market: "市場データ",
-  analysis: "分析結果",
-  chat: "対話",
+  market: "panel.market",
+  analysis: "panel.analysis",
+  chat: "panel.chat",
 };
 
 const STORAGE_KEY = "stockanalyzer.slots";

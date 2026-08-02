@@ -10,6 +10,7 @@ import {
   type CompareSource,
 } from "@/lib/compare/compareData";
 import { IconChart, IconWarning } from "@/components/Icons";
+import { t as tr, useT  } from "@/lib/i18n/i18n";
 
 interface Props {
   tickers: string[];
@@ -20,7 +21,7 @@ interface Props {
 /** スコア 0〜5 を横棒で表す。数字だけより差が一目で分かる。 */
 function ScoreBar({ score }: { score: number | null }) {
   if (score === null) {
-    return <span className="t-label text-slate-600">—</span>;
+    return <span className="t-label text-slate-600">{tr("common.none")}</span>;
   }
   const ratio = Math.max(0, Math.min(score / 5, 1));
   const tone =
@@ -49,6 +50,7 @@ function ScoreBar({ score }: { score: number | null }) {
  * 「何が足りないか」をその場で示したほうが次の行動につながるため。
  */
 export default function ComparePanel({ tickers, onOpenTicker }: Props) {
+  const t = useT();
   const analyses = useAnalyses();
   const [saved, setSaved] = useState<Record<string, SavedAnalysis | null>>({});
   const [loading, setLoading] = useState(true);
@@ -101,8 +103,7 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
     return (
       <div className="panel-scroll px-4 py-6">
         <p className="t-body text-slate-500">
-          左サイドバーの「検討中銘柄」で 2 銘柄以上にチェックを入れると、
-          ここで横並び比較できます。
+          {t("compare.empty")}
         </p>
       </div>
     );
@@ -113,10 +114,11 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
       <header className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 className="flex items-center gap-2 t-body font-semibold text-slate-100">
           <IconChart className="h-4 w-4 text-emerald-400" />
-          横並び比較
+          {t("compare.title")}
         </h2>
         <span className="t-label text-slate-500">
-          {view.columns.length} 社{loading ? " / 読み込み中…" : ""}
+          {t("history.tickerCount", { count: view.columns.length })}
+          {loading ? ` ${t("compare.loading")}` : ""}
         </span>
       </header>
 
@@ -125,7 +127,7 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
         <div className="mb-3 rounded-lg border border-amber-900/60 bg-amber-950/30 px-3 py-2.5">
           <p className="mb-1 flex items-center gap-1.5 t-label font-medium text-amber-300">
             <IconWarning className="h-3.5 w-3.5 shrink-0" />
-            分析データが未作成の銘柄があります
+            {t("compare.missingData")}
           </p>
           <ul className="space-y-0.5">
             {view.notices.map((notice) => (
@@ -140,7 +142,7 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
       {/* --------------------------------------------- サマリー比較テーブル */}
       <section className="mb-5">
         <h3 className="mb-2 t-heading font-medium uppercase tracking-wider text-slate-500">
-          サマリー比較
+          {t("compare.summary")}
         </h3>
 
         <div className="overflow-x-auto rounded-lg border border-slate-800">
@@ -148,14 +150,14 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/60">
                 <th className="sticky left-0 z-10 bg-slate-900 px-3 py-2 text-left t-label font-medium text-slate-500">
-                  指標
+                  {t("compare.metric")}
                 </th>
                 {view.columns.map((column) => (
                   <th key={column.ticker} className="px-3 py-2 text-right">
                     <button
                       type="button"
                       onClick={() => onOpenTicker(column.ticker)}
-                      title={`${column.ticker} の分析タブを開く`}
+                      title={t("compare.openTab", { ticker: column.ticker })}
                       className="block w-full text-right"
                     >
                       <span className="block font-mono t-body font-semibold text-emerald-300">
@@ -193,7 +195,7 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
                                 ? "text-slate-600"
                                 : "text-slate-200"
                           }`}
-                          title={isBest ? "この項目でいちばん良い値" : undefined}
+                          title={isBest ? t("compare.bestHint") : undefined}
                         >
                           {value.display}
                         </td>
@@ -207,14 +209,14 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
         </div>
 
         <p className="mt-1.5 t-label text-slate-600">
-          緑色はその項目でいちばん良い値です（PER・D/E・EV/粗利 は低いほど良い扱い）。
+          {t("compare.bestNote")}
         </p>
       </section>
 
       {/* --------------------------------------------- 5ブロック AI スコア */}
       <section>
         <h3 className="mb-2 t-heading font-medium uppercase tracking-wider text-slate-500">
-          AI スコア比較（5 ブロック）
+          {t("compare.scores")}
         </h3>
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -242,10 +244,10 @@ export default function ComparePanel({ tickers, onOpenTicker }: Props) {
                       <span className="block font-mono t-body font-semibold text-slate-100">
                         {column.averageScore.toFixed(1)}
                       </span>
-                      <span className="block t-label text-slate-600">平均 / 5</span>
+                      <span className="block t-label text-slate-600">{t("compare.average")}</span>
                     </>
                   ) : (
-                    <span className="t-label text-slate-600">未分析</span>
+                    <span className="t-label text-slate-600">{t("portfolio.unanalyzed")}</span>
                   )}
                 </span>
               </div>

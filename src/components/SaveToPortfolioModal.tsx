@@ -16,6 +16,7 @@ import {
 import { toastSuccess } from "@/lib/ui/toastStore";
 import ModalShell from "@/components/ModalShell";
 import { IconBookmark, IconPlus } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -30,6 +31,7 @@ interface Props {
  * 外す操作もここでできるようにしている（別画面へ行かせない）。
  */
 export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
+  const t = useT();
   const portfolios = usePortfolios();
   // null = まだ触っていない（現状のチェック状態を使う）
   const [selected, setSelected] = useState<string[] | null>(null);
@@ -67,7 +69,7 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
   return (
     <ModalShell
       open={open}
-      title="マイポートフォリオのどこに保存しますか？"
+      title={t("saveTo.title")}
       icon={<IconBookmark className="h-4 w-4 text-emerald-400" />}
       maxWidthClass="max-w-lg"
       onClose={onClose}
@@ -75,8 +77,8 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
         <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
           <span className="t-label text-slate-600">
             {hasChanges(plan)
-              ? `追加 ${plan.add.length} / 削除 ${plan.remove.length}`
-              : "変更はありません"}
+              ? t("saveTo.plan", { add: plan.add.length, remove: plan.remove.length })
+              : t("saveTo.noChange")}
           </span>
           <div className="flex shrink-0 gap-2">
             <button
@@ -84,7 +86,7 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
               onClick={onClose}
               className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
             >
-              キャンセル
+              {t("common.cancel")}
             </button>
             <button
               type="button"
@@ -92,7 +94,7 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
               disabled={busy || !ticker || !hasChanges(plan)}
               className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
-              {busy ? "保存中…" : "保存"}
+              {busy ? t("settings.saving") : t("analysis.save")}
             </button>
           </div>
         </footer>
@@ -100,22 +102,20 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
     >
       <div className="px-5 py-4">
         <p className="mb-3 t-body leading-relaxed text-slate-400">
-          <span className="font-mono font-semibold text-emerald-300">{ticker ?? "—"}</span>{" "}
-          の分析を残すリストを選んでください。
-          分析結果そのものは常に保存されており、ここで選ぶのは
-          <strong className="text-slate-300">どのリストに並べるか</strong>だけです。
+          <span className="font-mono font-semibold text-emerald-300">{ticker ?? t("common.none")}</span>{" "}
+          {t("saveTo.explain")}
         </p>
 
         {rows.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-700 px-4 py-6 text-center">
-            <p className="mb-2 t-body text-slate-500">リストがまだありません。</p>
+            <p className="mb-2 t-body text-slate-500">{t("saveTo.noLists")}</p>
             <button
               type="button"
               onClick={() => void createPortfolio()}
               className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800 px-3 t-body text-slate-200 transition-colors hover:border-emerald-700 hover:text-emerald-300"
             >
               <IconPlus className="h-3.5 w-3.5" />
-              新しいリストを作る
+              {t("portfolio.newList")}
             </button>
           </div>
         ) : (
@@ -135,7 +135,7 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
                     </span>
                     {row.alreadyIn && (
                       <span className="shrink-0 rounded bg-slate-800 px-1.5 t-label text-slate-400">
-                        登録済み
+                        {t("saveTo.registered")}
                       </span>
                     )}
                   </label>
@@ -149,7 +149,7 @@ export default function SaveToPortfolioModal({ open, ticker, onClose }: Props) {
               className="mt-2 inline-flex min-h-7 items-center gap-1.5 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
             >
               <IconPlus className="h-3 w-3" />
-              新しいリストを作る
+              {t("portfolio.newList")}
             </button>
           </>
         )}

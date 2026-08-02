@@ -6,6 +6,7 @@ import QuarterlyTrend from "@/components/QuarterlyTrend";
 import PanelHeader from "@/components/PanelHeader";
 import type { SlotId } from "@/lib/ui/layoutStore";
 import { IconChart } from "@/components/Icons";
+import { t as tr } from "@/lib/i18n/i18n";
 
 interface Props {
   tab: WorkspaceTab | undefined;
@@ -31,7 +32,7 @@ export default function WorkspacePanel({
     <section className="panel bg-slate-950" data-panel-slot={slot}>
       <PanelHeader
         icon={<IconChart className="h-3.5 w-3.5" />}
-        title="市場データ"
+        title={tr("panel.market")}
         subtitle={tab?.ticker ?? undefined}
         slot={slot}
         onToggleCollapse={onToggleCollapse}
@@ -50,7 +51,7 @@ function PanelBody({
   if (!tab) {
     return (
       <div className="flex flex-1 items-center justify-center t-body text-slate-600">
-        タブがありません
+        {tr("workspace.noTabs")}
       </div>
     );
   }
@@ -62,12 +63,10 @@ function PanelBody({
         <div className="max-w-md text-center">
           <h1 className="mb-2 t-body font-semibold text-slate-300">{tab.title}</h1>
           <p className="selectable t-body leading-relaxed text-slate-500">
-            上部のフォームにティッカーを入力して「分析」を押すと、
-            <br />
-            Yahoo Finance の主要指標と SEC の提出状況を取得します。
+            {tr("workspace.hint")}
           </p>
           <p className="mt-3 font-mono t-label text-slate-600">
-            例: AAPL / NVDA / 7203.T / ASML.AS
+            {tr("workspace.examples")}
           </p>
         </div>
       </div>
@@ -139,7 +138,7 @@ function PanelBody({
             onClick={() => onRetry(tab.ticker!)}
             className="mt-2 h-7 rounded-md border border-red-800 px-2.5 t-label text-red-200 hover:bg-red-950"
           >
-            再試行
+            {tr("workspace.retry")}
           </button>
         </div>
       )}
@@ -164,7 +163,7 @@ function PanelBody({
 
       {!loading && !error && fundamentals && fundamentals.groups.length === 0 && (
         <p className="t-body text-slate-600">
-          詳細指標を取得できませんでした。銘柄によっては Yahoo Finance が指標を提供していません。
+          {tr("workspace.metricsMissing")}
         </p>
       )}
     </div>

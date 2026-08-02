@@ -41,7 +41,7 @@ import {
 } from "@/lib/prompts/analysisRunner";
 import { providerReadiness } from "@/lib/config/providers";
 import { initFontSize } from "@/lib/ui/fontStore";
-import { initLocale } from "@/lib/i18n/i18n";
+import { initLocale, useT } from "@/lib/i18n/i18n";
 import { SLOT_IDS, useSlots, type PanelId, type SlotId } from "@/lib/ui/layoutStore";
 
 import MenuBar, { type MenuAction } from "@/components/MenuBar";
@@ -75,6 +75,7 @@ const newId = () => crypto.randomUUID();
 const TOUR_SEEN_KEY = "stockanalyzer.tourSeen";
 
 export default function App() {
+  const t = useT();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sessions = useChatSessions();
   const activeSessionId = useActiveSessionId();
@@ -115,7 +116,7 @@ export default function App() {
   const visibleSlots = SLOT_IDS.filter((slot) => !collapsedSlots[slot]);
   // 最後の 1 枚まで畳むと画面が空になるので、それだけは許さない
   const collapseDisabledReason =
-    visibleSlots.length <= 1 ? "最後のパネルは最小化できません" : null;
+    visibleSlots.length <= 1 ? t("app.collapseLast") : null;
 
   const collapseSlot = (slot: SlotId) => {
     if (collapseDisabledReason !== null) return;
@@ -141,7 +142,7 @@ export default function App() {
 
   const llm = settings
     ? providerReadiness(settings, settings.provider)
-    : { ready: false, reason: "設定を読み込めていません。" };
+    : { ready: false, reason: t("app.settingsUnavailable") };
 
   /**
    * 無料版の枠を確認する。使えるなら使用済みに登録して true を返す。
@@ -277,7 +278,7 @@ export default function App() {
     const history = (
       <PortfolioHistoryPanel
         onToggleCollapse={() => {}}
-        collapseDisabledReason="マイポートフォリオ画面では最小化できません"
+        collapseDisabledReason={t("app.collapsePortfolio")}
       />
     );
     const chat = (
@@ -286,7 +287,7 @@ export default function App() {
           settings={settings}
           ticker={activeTicker}
           onToggleCollapse={() => {}}
-          collapseDisabledReason="マイポートフォリオ画面では最小化できません"
+          collapseDisabledReason={t("app.collapsePortfolio")}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       </div>
@@ -474,7 +475,7 @@ export default function App() {
 
     const tab: WorkspaceTab = {
       id: newId(),
-      title: `比較: ${tickers.join(" / ")}`,
+      title: t("app.compareTab", { tickers: tickers.join(" / ") }),
       kind: "compare",
       ticker: null,
       tickers,
@@ -487,7 +488,7 @@ export default function App() {
   const handleNewTab = () => {
     const tab: WorkspaceTab = {
       id: newId(),
-      title: "ワークスペース",
+      title: t("app.workspace"),
       kind: "workspace",
       ticker: null,
       closable: true,
@@ -630,14 +631,12 @@ export default function App() {
       {/* 一次資料が無いまま分析しようとしたときの案内 */}
       <ConfirmDialog
         open={confirmingNoDocs}
-        title="一次資料が添付されていません"
+        title={t("app.noDocsTitle")}
         message={
-          "現在分析のベースとなる情報は、1. 財務指標 2. SEC資料 のみです。\n" +
-          "他に一次資料（決算説明会資料など）があれば、読み込ませてから分析すると" +
-          "より詳細な分析結果が得られます。"
+          t("app.noDocsBody")
         }
-        confirmLabel="このまま分析する"
-        cancelLabel="戻る"
+        confirmLabel={t("app.analyzeAnyway")}
+        cancelLabel={t("tour.back")}
         onConfirm={() => {
           setConfirmingNoDocs(false);
           startAnalysis();

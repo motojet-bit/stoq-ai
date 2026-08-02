@@ -77,8 +77,8 @@ describe("上限モーダルの中身", () => {
   });
 
   it("残る導線は「あとで」と「ライセンスキーを入力」の 2 つ", () => {
-    expect(MODAL).toContain("あとで");
-    expect(MODAL).toContain("ライセンスキーを入力");
+    expect(MODAL).toContain("freeTier.later");
+    expect(MODAL).toContain("freeTier.enterKey");
     expect(MODAL).toContain("onOpenLicense");
   });
 
@@ -86,11 +86,11 @@ describe("上限モーダルの中身", () => {
     // 「上限です」だけだと、既存銘柄まで止まったのかが分からず不安になる
     expect(MODAL).toContain("KEPT_ON_LOCK");
     // ライセンスを入れてもデータが消えないことを先に伝える
-    expect(MODAL).toContain("引き継がれます");
+    expect(MODAL).toContain("freeTier.dataKept");
   });
 
   it("分析済みの銘柄を列挙している", () => {
     expect(MODAL).toContain("useUsedTickers");
-    expect(MODAL).toContain("分析済みの銘柄");
+    expect(MODAL).toContain("freeTier.usedTickers");
   });
 });

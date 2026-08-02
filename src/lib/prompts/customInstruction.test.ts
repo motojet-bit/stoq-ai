@@ -80,8 +80,8 @@ describe("プロンプトの秘匿", () => {
     const ui = read("src/components/CustomInstructionSettings.tsx");
     expect(ui).toContain("customInstruction");
     expect(ui).not.toContain(CORE_MARKER);
-    // 「基本プロンプトはそのまま使われる」と伝える
-    expect(ui).toContain("末尾に追加");
+    // 「基本プロンプトはそのまま使われる」と伝える（文面は辞書側）
+    expect(ui).toContain("customInstruction.description");
   });
 
   it("**組み立てたプロンプトを返すコマンドが無い**", () => {

@@ -14,6 +14,7 @@ import {
   type Offset,
 } from "@/lib/ui/modalDrag";
 import { IconClose, IconGrip } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -50,6 +51,7 @@ export default function ModalShell({
   blocking = false,
   onClose,
 }: Props) {
+  const t = useT();
   const cardRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
   const dragRef = useRef<{ start: Offset; origin: { x: number; y: number } } | null>(null);
@@ -140,7 +142,7 @@ export default function ModalShell({
       >
         <header
           onPointerDown={startDrag}
-          title="ドラッグして位置を移動"
+          title={t("modal.dragHint")}
           className={`flex min-h-12 shrink-0 select-none items-center justify-between gap-2 border-b border-slate-800 px-4 ${
             dragging ? "cursor-grabbing bg-slate-800/60" : "cursor-grab"
           }`}
@@ -159,7 +161,7 @@ export default function ModalShell({
                 onClick={() => setOffset({ x: 0, y: 0 })}
                 className="rounded px-2 py-1 t-label text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
               >
-                中央に戻す
+                {t("modal.recenter")}
               </button>
             )}
             {!blocking && (
@@ -167,7 +169,7 @@ export default function ModalShell({
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={onClose}
-                aria-label={`${title}を閉じる`}
+                aria-label={t("modal.closeAria", { title })}
                 className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
               >
                 <IconClose className="h-4 w-4" />

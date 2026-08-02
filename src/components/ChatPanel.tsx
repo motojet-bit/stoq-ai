@@ -181,7 +181,7 @@ ${draft.text}`));
     <section className="panel bg-slate-950" data-panel-slot={slot}>
       <PanelHeader
         icon={<IconMessage className="h-3.5 w-3.5" />}
-        title="対話"
+        title={t("panel.chat")}
         slot={slot}
         onToggleCollapse={onToggleCollapse}
         collapseDisabledReason={collapseDisabledReason}
@@ -212,19 +212,16 @@ ${draft.text}`));
               </div>
             ) : messages.length === 0 ? (
               <div className="t-body space-y-2 text-slate-500">
-                <p>
-                  銘柄や決算資料について質問すると、ここに会話が表示されます。
-                  会話は自動で保存され、左のサイドバーから開き直せます。
-                </p>
+                <p className="selectable">{t("chat.empty")}</p>
                 {!ready && (
                   <p className="text-amber-500/90">
-                    APIキーが未設定です。
+                    {t("chat.noKey")}
                     <button
                       type="button"
                       onClick={onOpenSettings}
                       className="ml-1 underline underline-offset-2 hover:text-amber-400"
                     >
-                      設定を開く
+                      {t("help.openSettings")}
                     </button>
                   </p>
                 )}
@@ -238,7 +235,7 @@ ${draft.text}`));
                         m.role === "user" ? "text-slate-400" : "text-emerald-400"
                       }`}
                     >
-                      {m.role === "user" ? "あなた" : "AI"}
+                      {m.role === "user" ? t("chat.you") : t("chat.ai")}
                     </div>
                     {m.error ? (
                       <p className="selectable t-body rounded border border-red-900 bg-red-950/40 px-2.5 py-2 text-red-300">
@@ -267,13 +264,13 @@ ${draft.text}`));
             {settings && !ready && (
               <p className="t-label mb-2 rounded border border-amber-900/70 bg-amber-950/40 px-2.5 py-1.5 text-amber-300">
                 選択中のプロバイダ「{providerLabel(settings, settings.provider)}」は
-                {reason ?? "設定が不足しています"}
+                {reason ?? t("chat.settingsMissing")}
                 <button
                   type="button"
                   onClick={onOpenSettings}
                   className="ml-1 underline underline-offset-2 hover:text-amber-200"
                 >
-                  設定を開く
+                  {t("help.openSettings")}
                 </button>
               </p>
             )}
@@ -296,7 +293,7 @@ ${draft.text}`));
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={attaching}
-                title={`${t("chat.attach")}（この会話でのみ使う使い捨ての資料です）`}
+                title={t("chat.attachHint", { label: t("chat.attach") })}
                 aria-label={t("chat.attach")}
                 className="flex min-h-11 shrink-0 items-center gap-1 rounded-md border border-slate-700 px-2 text-slate-400 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:opacity-40"
               >
@@ -313,11 +310,11 @@ ${draft.text}`));
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={sending}
-                title={`${sendKeyLabel} で送信 / Enter で改行（手動で縦にも広げられます）`}
+                title={t("chat.composerHint", { key: sendKeyLabel })}
                 placeholder={
                   ready
-                    ? `長文もどうぞ。${sendKeyLabel} で送信 / Enter で改行`
-                    : "APIキーを設定すると送信できます"
+                    ? t("chat.placeholderLong", { key: sendKeyLabel })
+                    : t("chat.placeholderNoKey")
                 }
                 /*
                  * 入力量に合わせて自動で伸び、上限に達したらスクロールする。
@@ -329,10 +326,10 @@ ${draft.text}`));
                 type="button"
                 onClick={() => void send()}
                 disabled={sending || input.trim().length === 0}
-                title={`${sendKeyLabel} でも送信できます`}
+                title={t("chat.sendAlso", { key: sendKeyLabel })}
                 className="t-body min-h-11 shrink-0 rounded-md bg-emerald-600 px-4 font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
               >
-                {sending ? "送信中…" : "送信"}
+                {sending ? t("chat.sending") : t("chat.send")}
               </button>
             </div>
 
@@ -340,13 +337,16 @@ ${draft.text}`));
             {(attachments.length > 0 || attaching) && (
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 {attaching && (
-                  <span className="t-label text-slate-500">読み込み中…</span>
+                  <span className="t-label text-slate-500">{t("common.loading")}</span>
                 )}
                 {attachments.map((item) => (
                   <span
                     key={item.id}
-                    title={`${item.name}
-${item.charCount.toLocaleString()} 文字 / 概算 ${item.tokenEstimate.toLocaleString()} トークン`}
+                    title={t("chat.attachmentMeta", {
+                    name: item.name,
+                    chars: item.charCount.toLocaleString(),
+                    tokens: item.tokenEstimate.toLocaleString(),
+                  })}
                     className="flex min-h-6 max-w-56 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 t-label text-slate-300"
                   >
                     <IconPaperclip className="h-3 w-3 shrink-0 text-slate-500" />
@@ -354,7 +354,7 @@ ${item.charCount.toLocaleString()} 文字 / 概算 ${item.tokenEstimate.toLocale
                     <button
                       type="button"
                       onClick={() => removeChatAttachment(item.id)}
-                      aria-label={`${item.name} を外す`}
+                      aria-label={t("chat.attachmentRemove", { name: item.name })}
                       className="shrink-0 rounded text-slate-600 hover:text-red-300"
                     >
                       <IconClose className="h-3 w-3" />

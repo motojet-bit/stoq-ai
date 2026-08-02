@@ -7,6 +7,7 @@ import {
   IconMessage,
   IconPlus,
 } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   tabs: WorkspaceTab[];
@@ -25,6 +26,7 @@ const KIND_ICON = {
 
 /** Cursor 風のマルチタブバー */
 export default function TabBar({ tabs, activeTabId, onSelect, onClose, onNewTab }: Props) {
+  const t = useT();
   return (
     <div className="flex min-h-9 shrink-0 items-stretch border-b border-slate-800 bg-slate-900">
       <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
@@ -48,7 +50,7 @@ export default function TabBar({ tabs, activeTabId, onSelect, onClose, onNewTab 
               {tab.closable ? (
                 <button
                   type="button"
-                  aria-label={`${tab.title} を閉じる`}
+                  aria-label={t("tab.closeAria", { title: tab.title })}
                   onClick={(e) => {
                     e.stopPropagation();
                     onClose(tab.id);
@@ -68,7 +70,7 @@ export default function TabBar({ tabs, activeTabId, onSelect, onClose, onNewTab 
       <button
         type="button"
         onClick={onNewTab}
-        title="新しいタブ (Ctrl+T)"
+        title={t("tab.new")}
         className="flex shrink-0 items-center border-l border-slate-800 px-2.5 text-slate-500 hover:bg-slate-800 hover:text-slate-200"
       >
         <IconPlus className="h-4 w-4" />

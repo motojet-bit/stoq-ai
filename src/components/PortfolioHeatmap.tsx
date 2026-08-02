@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { ArchiveEntry } from "@/types";
 import { buildHeatmap, type HeatCell } from "@/lib/portfolio/heatmap";
 import { IconChart } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   entries: ArchiveEntry[];
@@ -26,14 +27,15 @@ function cellClass(cell: HeatCell): string {
  * 気になった銘柄をクリックしてタイムラインへ降りる流れにしている。
  */
 export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: Props) {
+  const t = useT();
   const map = useMemo(() => buildHeatmap(entries, tickers), [entries, tickers]);
 
   if (map.rows.length === 0) {
     return (
       <p className="px-1 py-4 t-body leading-relaxed text-slate-500">
-        まだ分析の履歴がありません。
+        {t("heatmap.empty")}
         <br />
-        銘柄を分析すると、実行のたびにここへ蓄積されます。
+        {t("heatmap.emptyHint")}
       </p>
     );
   }
@@ -43,7 +45,7 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
       <div className="flex items-center gap-2">
         <IconChart className="h-3.5 w-3.5 shrink-0 text-slate-500" />
         <span className="t-label font-medium uppercase tracking-wider text-slate-500">
-          スコア推移（銘柄 × 四半期）
+          {t("heatmap.title")}
         </span>
       </div>
 
@@ -52,7 +54,7 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
           <thead>
             <tr className="border-b border-slate-800 bg-slate-900/60">
               <th className="sticky left-0 z-10 bg-slate-900 px-2 py-1.5 text-left t-label font-medium text-slate-500">
-                銘柄
+                {t("status.ticker")}
               </th>
               {map.quarters.map((quarter) => (
                 <th
@@ -71,7 +73,7 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
                   <button
                     type="button"
                     onClick={() => onSelectTicker(row.ticker)}
-                    title={`${row.ticker} の四半期タイムラインを開く`}
+                    title={t("heatmap.openTimeline", { ticker: row.ticker })}
                     className="flex items-center gap-1.5 font-mono t-label font-medium text-emerald-300 transition-colors hover:text-emerald-200 hover:underline"
                   >
                     {row.ticker}
@@ -89,7 +91,7 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
                         disabled={cell.entryId === null}
                         title={
                           cell.score === null
-                            ? "この期の分析はありません"
+                            ? t("heatmap.noPeriod")
                             : `${quarter}: ${cell.score.toFixed(1)} / 5`
                         }
                         className={`flex min-h-7 w-full items-center justify-center gap-1 rounded font-mono t-label transition-opacity hover:opacity-80 disabled:cursor-default ${cellClass(
@@ -97,7 +99,7 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
                         )}`}
                       >
                         {cell.score === null ? (
-                          "—"
+                          t("common.none")
                         ) : (
                           <>
                             <span>{cell.statusIcon}</span>
@@ -115,7 +117,7 @@ export default function PortfolioHeatmap({ entries, tickers, onSelectTicker }: P
       </div>
 
       <p className="t-label text-slate-600">
-        銘柄名またはセルをクリックすると、その銘柄の四半期タイムラインを開きます。
+        {t("heatmap.hint")}
       </p>
     </div>
   );

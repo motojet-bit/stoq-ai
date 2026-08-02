@@ -30,6 +30,7 @@ import {
   IconSearch,
   IconTrash,
 } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   /** 銘柄をクリックしたとき（単体分析へ） */
@@ -50,6 +51,7 @@ interface MenuState {
  * `analyses` は最新 1 件しか持たないので、時系列は `analysis_history` から作る。
  */
 export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
+  const t = useT();
   const portfolios = usePortfolios();
   const archive = useArchive();
   const loading = useArchiveLoading();
@@ -108,12 +110,12 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
 
   const menuItems = (portfolio: Portfolio): ContextMenuItem[] => [
     {
-      label: "名前を変更",
+      label: t("portfolio.rename"),
       icon: <IconPencil className="h-3.5 w-3.5" />,
       onSelect: () => startRename(portfolio),
     },
     {
-      label: "リストを削除",
+      label: t("portfolio.deleteList"),
       icon: <IconTrash className="h-3.5 w-3.5" />,
       destructive: true,
       onSelect: () => setDeleting(portfolio),
@@ -141,7 +143,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
             type="checkbox"
             checked={selected.includes(ticker)}
             onChange={() => toggleSelected(ticker)}
-            aria-label={`${ticker} を比較対象にする`}
+            aria-label={t("portfolio.compareCheck", { ticker })}
             className="shrink-0 accent-emerald-500"
           />
 
@@ -151,7 +153,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
               setOpenTickers((prev) => toggle(prev, `${portfolioId ?? "-"}:${ticker}`))
             }
             aria-expanded={expanded}
-            title={`${ticker} の分析アーカイブ（${entries.entries.length} 件）`}
+            title={t("portfolio.archiveOf", { ticker, count: entries.entries.length })}
             className="flex min-w-0 flex-1 items-baseline gap-1.5 text-left"
           >
             <span className="shrink-0 font-mono t-label font-medium text-emerald-300">
@@ -162,7 +164,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
                 {entries.latestScore.toFixed(1)}
               </span>
             ) : (
-              <span className="shrink-0 t-label text-slate-600">未分析</span>
+              <span className="shrink-0 t-label text-slate-600">{t("portfolio.unanalyzed")}</span>
             )}
             {delta && (
               <span
@@ -174,15 +176,15 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
               </span>
             )}
             <span className="ml-auto shrink-0 t-label text-slate-600">
-              {entries.entries.length > 0 ? `${entries.entries.length}件` : ""}
+              {entries.entries.length > 0 ? t("portfolio.entryCount", { count: entries.entries.length }) : ""}
             </span>
           </button>
 
           <button
             type="button"
             onClick={() => onSelectTicker(ticker)}
-            aria-label={`${ticker} を分析`}
-            title="この銘柄を分析する"
+            aria-label={t("portfolio.analyzeAria", { ticker })}
+            title={t("portfolio.analyzeHint")}
             className="shrink-0 rounded p-0.5 text-slate-600 opacity-0 hover:bg-slate-700 hover:text-emerald-300 group-hover:opacity-100"
           >
             <IconSearch className="h-3 w-3" />
@@ -192,8 +194,8 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
             <button
               type="button"
               onClick={() => void removeTickerFromPortfolio(portfolioId, ticker)}
-              aria-label={`${ticker} をリストから外す`}
-              title="このリストから外す（分析結果は消えません）"
+              aria-label={t("portfolio.removeAria", { ticker })}
+              title={t("portfolio.removeHint")}
               className="shrink-0 rounded p-0.5 text-slate-600 opacity-0 hover:bg-red-950/60 hover:text-red-300 group-hover:opacity-100"
             >
               <IconClose className="h-3 w-3" />
@@ -206,7 +208,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
           <ul className="ml-5 border-l border-slate-800 pl-2">
             {entries.entries.length === 0 ? (
               <li className="py-1 t-label text-slate-600">
-                分析の履歴がありません。
+                {t("portfolio.noHistory")}
               </li>
             ) : (
               entries.entries.map((entry) => (
@@ -218,7 +220,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
                     {periodLabelOf(entry)}
                   </span>
                   <span className="shrink-0 font-mono text-slate-300">
-                    {entry.averageScore !== null ? entry.averageScore.toFixed(1) : "—"}
+                    {entry.averageScore !== null ? entry.averageScore.toFixed(1) : t("common.none")}
                   </span>
                   <span className="min-w-0 truncate text-slate-600">
                     {new Date(entry.savedAtMs).toLocaleDateString("ja-JP")}
@@ -236,27 +238,25 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center justify-between gap-1 px-3 pb-1 pt-2">
         <span className="t-label font-medium uppercase tracking-wider text-slate-500">
-          ポートフォリオ
+          {t("sidebar.portfolios")}
         </span>
         <button
           type="button"
           onClick={() => void createPortfolio()}
-          title="新しいリストを作る"
+          title={t("portfolio.newList")}
           className="flex min-h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-1.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
         >
           <IconPlus className="h-3 w-3" />
-          新規リスト作成
+          {t("sidebar.newList")}
         </button>
       </div>
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {portfolios.length === 0 && (
           <p className="px-2 py-6 text-center t-label leading-relaxed text-slate-600">
-            リストがありません。
+            {t("portfolio.noLists")}
             <br />
-            「＋ 新規リスト作成」から
-            <br />
-            作ってください。
+            {t("portfolio.noListsHint")}
           </p>
         )}
 
@@ -280,7 +280,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
                       if (e.key === "Enter") commitRename();
                       if (e.key === "Escape") setRenaming(null);
                     }}
-                    aria-label="リスト名"
+                    aria-label={t("portfolio.listName")}
                     className="selectable min-h-6 w-full rounded border border-emerald-700 bg-slate-950 px-1 t-body text-slate-100 focus:outline-none"
                   />
                 ) : (
@@ -289,7 +289,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
                       type="button"
                       onClick={() => setOpenLists((prev) => toggle(prev, portfolio.id))}
                       aria-expanded={expanded}
-                      title="クリックで開閉 / 右クリックでメニュー"
+                      title={t("portfolio.rowHint")}
                       className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
                     >
                       {expanded ? (
@@ -307,8 +307,8 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
                     <button
                       type="button"
                       onClick={() => startRename(portfolio)}
-                      aria-label={`${portfolio.name} の名前を変更`}
-                      title="名前を変更"
+                      aria-label={t("portfolio.renameAria", { name: portfolio.name })}
+                      title={t("portfolio.rename")}
                       className="shrink-0 rounded p-1 text-slate-600 opacity-0 hover:bg-slate-700 hover:text-emerald-300 group-hover:opacity-100"
                     >
                       <IconPencil className="h-3 w-3" />
@@ -321,7 +321,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
                 <ul className="ml-2 space-y-0.5 border-l border-slate-800 pl-1.5">
                   {rows.length === 0 ? (
                     <li className="px-1 py-2 t-label leading-relaxed text-slate-600">
-                      銘柄がありません。「検討中銘柄」や分析結果から追加できます。
+                      {t("portfolio.noTickers")}
                     </li>
                   ) : (
                     rows.map((row) => renderTicker(row.ticker, row, portfolio.id))
@@ -345,7 +345,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
         )}
 
         {loading && (
-          <p className="px-2 py-2 t-label text-slate-600">アーカイブを読み込み中…</p>
+          <p className="px-2 py-2 t-label text-slate-600">{t("portfolio.loadingArchive")}</p>
         )}
       </nav>
 
@@ -371,13 +371,13 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
 
       <ConfirmDialog
         open={deleting !== null}
-        title="このリストを削除しますか？"
-        message={
-          `「${deleting?.name ?? ""}」と、その中の ${deleting?.tickers.length ?? 0} 銘柄の登録が消えます。\n` +
-          "分析結果そのものは消えません（未分類として残ります）。"
-        }
-        confirmLabel="削除する"
-        cancelLabel="もどる"
+        title={t("portfolio.deleteTitle")}
+        message={t("portfolio.deleteBody", {
+          name: deleting?.name ?? "",
+          count: deleting?.tickers.length ?? 0,
+        })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.back")}
         destructive
         onConfirm={() => {
           if (deleting) void removePortfolio(deleting.id);

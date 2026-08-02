@@ -5,6 +5,7 @@ import {
 import { closeDisclaimer, useDisclaimerOpen } from "@/lib/legal/disclaimerStore";
 import ModalShell from "@/components/ModalShell";
 import { IconWarning } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 /**
  * 免責事項の全文。
@@ -14,6 +15,7 @@ import { IconWarning } from "@/components/Icons";
  * ——読ませることが目的なので、ユーザーが文字を大きくしていれば追従させる。
  */
 export default function LegalDisclaimerModal() {
+  const t = useT();
   const open = useDisclaimerOpen();
 
   return (
@@ -26,14 +28,14 @@ export default function LegalDisclaimerModal() {
       footer={
         <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
           <span className="t-label text-slate-500">
-            本ツールは投資助言を行うものではありません。投資判断は自己責任でお願いします。
+            {t("disclaimer.short")}
           </span>
           <button
             type="button"
             onClick={closeDisclaimer}
             className="min-h-8 shrink-0 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500"
           >
-            理解しました
+            {t("disclaimer.understood")}
           </button>
         </footer>
       }
@@ -42,8 +44,7 @@ export default function LegalDisclaimerModal() {
         <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-900/60 bg-amber-950/30 px-3 py-2.5">
           <IconWarning className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
           <p className="t-body leading-relaxed text-amber-200/90">
-            本ツールが表示するすべての情報は情報提供・リサーチ支援を目的としたものです。
-            投資助言ではなく、内容の正確性も保証されません。
+            {t("disclaimer.footer")}
           </p>
         </div>
 

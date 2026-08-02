@@ -4,6 +4,7 @@ import { removePrompt, savePrompt, usePrompts } from "@/lib/prompts/promptLibrar
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { IconPersona, IconPlus, IconTrash } from "@/components/Icons";
 import ModalShell from "@/components/ModalShell";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   open: boolean;
@@ -13,6 +14,7 @@ interface Props {
 /** 役割（システムプロンプト）ライブラリの管理。追加・編集・削除ができる。 */
 export default function PromptLibraryModal({ open, onClose }: Props) {
   const prompts = usePrompts();
+  const t = useT();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -51,7 +53,7 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
   return (
     <ModalShell
       open={open}
-      title="AI の役割ライブラリ"
+      title={t("promptLib.title")}
       icon={<IconPersona className="h-4 w-4 text-emerald-400" />}
       onClose={onClose}
     >
@@ -68,7 +70,7 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
                 className="flex min-h-6 items-center gap-1 rounded border border-slate-700 bg-slate-800 px-1.5 t-label text-slate-300 hover:border-emerald-700 hover:text-emerald-300"
               >
                 <IconPlus className="h-3 w-3" />
-                新規
+                {t("promptLib.newShort")}
               </button>
             </div>
 
@@ -92,8 +94,8 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
                     <button
                       type="button"
                       onClick={() => setDeleting(prompt)}
-                      aria-label={`${prompt.title} を削除`}
-                      title="この役割を削除"
+                      aria-label={t("promptLib.deleteAria", { title: prompt.title })}
+                      title={t("promptLib.deleteHint")}
                       className="shrink-0 rounded p-1 text-slate-600 opacity-0 hover:bg-red-950/60 hover:text-red-300 group-hover:opacity-100"
                     >
                       <IconTrash className="h-3 w-3" />
@@ -107,31 +109,31 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
           {/* ---------------------------------------------- 編集 */}
           <div className="min-w-0 space-y-3">
             <h3 className="t-label font-medium uppercase tracking-wider text-slate-500">
-              {editingId ? "役割を編集" : "新しい役割"}
+              {editingId ? t("promptLib.edit") : t("promptLib.new")}
             </h3>
 
             <label className="block">
-              <span className="mb-1 block t-label text-slate-500">名前</span>
+              <span className="mb-1 block t-label text-slate-500">{t("promptLib.nameLabel")}</span>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 spellCheck={false}
-                placeholder="例: 高成長・グロース株アナリスト"
+                placeholder={t("promptLib.namePlaceholder")}
                 className="selectable min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 t-body text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
               />
             </label>
 
             <label className="block">
               <span className="mb-1 block t-label text-slate-500">
-                内容（システムプロンプト。AI の立場・重視する観点・禁止事項を書く）
+                {t("promptLib.bodyLabel")}
               </span>
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 rows={9}
                 spellCheck={false}
-                placeholder="あなたは〜のアナリストです。〜を重視して評価してください。"
+                placeholder={t("promptLib.bodyPlaceholder")}
                 className="selectable w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-2.5 py-2 t-body leading-relaxed text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
               />
             </label>
@@ -143,7 +145,7 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
                   onClick={startNew}
                   className="min-h-8 rounded-md border border-slate-700 px-3.5 t-body text-slate-300 hover:bg-slate-800"
                 >
-                  編集をやめる
+                  {t("promptLib.cancelEdit")}
                 </button>
               )}
               <button
@@ -152,7 +154,7 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
                 disabled={busy || title.trim() === "" || body.trim() === ""}
                 className="min-h-8 rounded-md bg-emerald-600 px-4 t-body font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
               >
-                {busy ? "保存中…" : editingId ? "更新" : "追加"}
+                {busy ? t("settings.saving") : editingId ? t("promptLib.update") : t("sidebar.add")}
               </button>
             </div>
           </div>
@@ -160,10 +162,10 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
 
         <ConfirmDialog
           open={deleting !== null}
-          title="この役割を削除しますか？"
-          message={`「${deleting?.title ?? ""}」を削除します。\nこの操作は取り消せません。`}
-          confirmLabel="削除する"
-          cancelLabel="キャンセル"
+          title={t("promptLib.deleteTitle")}
+          message={t("promptLib.deleteBody", { title: deleting?.title ?? "" })}
+          confirmLabel={t("common.delete")}
+          cancelLabel={t("common.cancel")}
           destructive
           onConfirm={() => {
             if (deleting) {

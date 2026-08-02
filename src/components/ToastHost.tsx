@@ -1,5 +1,6 @@
 import { dismissToast, useToasts, type ToastKind } from "@/lib/ui/toastStore";
 import { IconClose } from "@/components/Icons";
+import { t as tr, useLocale } from "@/lib/i18n/i18n";
 
 const STYLES: Record<ToastKind, { frame: string; accent: string; icon: string }> = {
   error: { frame: "border-red-900 bg-red-950/90", accent: "text-red-300", icon: "✕" },
@@ -15,6 +16,8 @@ const STYLES: Record<ToastKind, { frame: string; accent: string; icon: string }>
 /** 画面右下に重ねて表示するトースト通知。 */
 export default function ToastHost() {
   const toasts = useToasts();
+  // 言語が変わったら閉じるボタンのラベルも追従させる
+  useLocale();
   if (toasts.length === 0) return null;
 
   return (
@@ -44,7 +47,7 @@ export default function ToastHost() {
             <button
               type="button"
               onClick={() => dismissToast(t.id)}
-              aria-label="通知を閉じる"
+              aria-label={tr("toast.close")}
               className="rounded p-0.5 text-slate-500 hover:bg-white/10 hover:text-slate-200"
             >
               <IconClose className="h-3 w-3" />

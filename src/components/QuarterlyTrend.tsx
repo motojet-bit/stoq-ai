@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Quarter, QuarterlySeries } from "@/types";
+import { t as tr, useT } from "@/lib/i18n/i18n";
 
 interface Props {
   series: QuarterlySeries | null;
@@ -22,28 +23,28 @@ interface MetricDef {
 const METRICS: MetricDef[] = [
   {
     key: "revenue",
-    label: "売上高",
+    label: tr("quarterly.revenue"),
     value: (q) => q.revenue,
     display: (q) => q.revenueDisplay,
   },
   {
     key: "netIncome",
-    label: "純利益",
+    label: tr("quarterly.netIncome"),
     value: (q) => q.netIncome,
     display: (q) => q.netIncomeDisplay,
   },
   {
     key: "netMargin",
-    label: "純利益率",
+    label: tr("quarterly.netMargin"),
     value: (q) => q.netMargin,
-    display: (q) => (q.netMargin === null ? "—" : `${q.netMargin.toFixed(1)}%`),
+    display: (q) => (q.netMargin === null ? tr("common.none") : `${q.netMargin.toFixed(1)}%`),
     isPercent: true,
   },
   {
     key: "eps",
     label: "EPS",
     value: (q) => q.epsActual,
-    display: (q) => (q.epsActual === null ? "—" : q.epsActual.toFixed(2)),
+    display: (q) => (q.epsActual === null ? tr("common.none") : q.epsActual.toFixed(2)),
   },
 ];
 
@@ -54,6 +55,7 @@ const METRICS: MetricDef[] = [
  * 前年同期比を主役にし、加速 / 減速をバッジで示す。
  */
 export default function QuarterlyTrend({ series, loading }: Props) {
+  const t = useT();
   const [metricKey, setMetricKey] = useState<MetricKey>("revenue");
 
   if (loading) {
@@ -89,7 +91,7 @@ export default function QuarterlyTrend({ series, loading }: Props) {
   return (
     <div className="mb-4 rounded-lg border border-slate-800 bg-slate-900/60 p-3.5">
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="t-heading font-medium text-slate-300">四半期推移（直近4Q）</h2>
+        <h2 className="t-heading font-medium text-slate-300">{t("quarterly.title")}</h2>
 
         <div className="flex gap-1">
           {METRICS.map((m) => (
@@ -177,21 +179,21 @@ function MomentumBadge({
   if (accelerating === null || latestYoy === null || previousYoy === null) {
     return (
       <span className="rounded border border-slate-700 bg-slate-800/60 px-1.5 py-0.5 t-label text-slate-500">
-        モメンタム判定不能
+        {tr("quarterly.unknown")}
       </span>
     );
   }
 
   return (
     <span
-      title={`売上 YoY: ${previousYoy.toFixed(1)}% → ${latestYoy.toFixed(1)}%`}
+      title={tr("quarterly.yoyShift", { previous: previousYoy.toFixed(1), latest: latestYoy.toFixed(1) })}
       className={`rounded border px-1.5 py-0.5 t-label font-medium ${
         accelerating
           ? "border-emerald-800 bg-emerald-950/50 text-emerald-300"
           : "border-amber-800 bg-amber-950/50 text-amber-300"
       }`}
     >
-      {accelerating ? "⏫ 成長が加速" : "⏬ 成長が減速"}
+      {accelerating ? tr("quarterly.accelerating") : tr("quarterly.decelerating")}
       <span className="ml-1 font-mono opacity-80">
         {previousYoy.toFixed(1)}% → {latestYoy.toFixed(1)}%
       </span>

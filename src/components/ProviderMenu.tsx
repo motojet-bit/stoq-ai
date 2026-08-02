@@ -24,7 +24,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (!settings) {
-    return <span className="text-slate-600">設定を読み込み中…</span>;
+    return <span className="text-slate-600">{t("provider.loading")}</span>;
   }
 
   const active = providerReadiness(settings, settings.provider);
@@ -32,7 +32,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
     ...BUILTIN_PROVIDERS.map((p) => ({ id: p.id as ProviderId, label: p.label })),
     ...settings.customProviders.map((c) => ({
       id: c.id,
-      label: c.label || "（名称未設定）",
+      label: c.label || t("settings.provider.unnamed"),
     })),
   ];
 
@@ -42,7 +42,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
     try {
       await saveSettings({ provider: id });
     } catch (e) {
-      toastError("プロバイダを切り替えられませんでした", e);
+      toastError(t("provider.switchFailed"), e);
     }
   };
 
@@ -52,7 +52,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={active.reason ?? "送信可能"}
+        title={active.reason ?? t("settings.provider.ready")}
         aria-haspopup="menu"
         aria-expanded={open}
         className={`flex min-h-[30px] items-center gap-2 rounded-md border px-2.5 transition-colors ${
@@ -77,7 +77,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
 
       <PortalMenu open={open} anchorRef={buttonRef} onClose={() => setOpen(false)} widthClass="w-72">
           <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-            プロバイダを選択
+            {t("provider.select")}
           </div>
 
           {entries.map(({ id, label }) => {
@@ -89,7 +89,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
                 type="button"
                 role="menuitem"
                 onClick={() => void select(id)}
-                title={state.reason ?? "送信可能"}
+                title={state.reason ?? t("settings.provider.ready")}
                 className={`flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-slate-700 ${
                   isActive ? "text-emerald-300" : "text-slate-300"
                 }`}
@@ -122,7 +122,7 @@ export default function ProviderMenu({ settings, onOpenSettings }: Props) {
             className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-slate-300 hover:bg-slate-700"
           >
             <IconSettings className="h-3.5 w-3.5 text-slate-500" />
-            APIキー・モデルの設定を開く…
+            {t("provider.openSettings")}
           </button>
       </PortalMenu>
     </div>

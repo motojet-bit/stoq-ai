@@ -4,6 +4,7 @@ import { EXPORT_FORMATS } from "@/lib/export/exportAnalysis";
 import { exportRecords } from "@/lib/export/exportStore";
 import PortalMenu from "@/components/PortalMenu";
 import { IconChevronDown, IconDownload } from "@/components/Icons";
+import { t as tr, useT  } from "@/lib/i18n/i18n";
 
 interface Props {
   /** 書き出す対象。空なら押せない */
@@ -19,7 +20,8 @@ interface Props {
  * 形式は CSV / Markdown / JSON。どれも同じ `AnalysisRecord` から作るので、
  * **形式によって数字が食い違うことがない**。
  */
-export default function ExportMenu({ records, label = "エクスポート", disabled }: Props) {
+export default function ExportMenu({ records, label = tr("analysis.export"), disabled }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -43,11 +45,11 @@ export default function ExportMenu({ records, label = "エクスポート", disa
         disabled={disabled || busy}
         aria-haspopup="menu"
         aria-expanded={open}
-        title="CSV / Markdown / JSON で書き出す"
+        title={t("export.hint")}
         className="flex min-h-6 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <IconDownload className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-        <span className="whitespace-nowrap">{busy ? "書き出し中…" : label}</span>
+        <span className="whitespace-nowrap">{busy ? t("export.working") : label}</span>
         <IconChevronDown className="h-3 w-3 shrink-0 text-slate-500" />
       </button>
 
@@ -58,7 +60,7 @@ export default function ExportMenu({ records, label = "エクスポート", disa
         widthClass="w-72"
       >
         <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-          書き出す形式
+          {t("export.pickFormat")}
         </div>
 
         {EXPORT_FORMATS.map((format) => (
@@ -76,8 +78,7 @@ export default function ExportMenu({ records, label = "エクスポート", disa
 
         <div className="my-1 border-t border-slate-700" />
         <p className="px-3 py-1 text-[11px] leading-relaxed text-slate-500">
-          ダウンロードフォルダに保存します。
-          同名のファイルがあれば連番を付けます。
+          {t("export.destination")}
         </p>
       </PortalMenu>
     </div>

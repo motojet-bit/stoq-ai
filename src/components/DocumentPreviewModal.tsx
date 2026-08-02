@@ -3,6 +3,7 @@ import type { StagedDocument } from "@/types";
 import { readDocumentText } from "@/lib/parser/documentStore";
 import { IconFile } from "@/components/Icons";
 import ModalShell from "@/components/ModalShell";
+import { t as tr } from "@/lib/i18n/i18n";
 
 interface Props {
   doc: StagedDocument | null;
@@ -57,7 +58,7 @@ export default function DocumentPreviewModal({ doc, onClose }: Props) {
           <span>{(doc?.charCount ?? 0).toLocaleString()} 文字</span>
           <span>概算 {(doc?.tokenEstimate ?? 0).toLocaleString()} トークン</span>
           <span>
-            取り込み: {doc ? new Date(doc.savedAtMs).toLocaleString("ja-JP") : "—"}
+            取り込み: {doc ? new Date(doc.savedAtMs).toLocaleString("ja-JP") : tr("common.none")}
           </span>
         </div>
 

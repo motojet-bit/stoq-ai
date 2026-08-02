@@ -8,6 +8,7 @@ import {
   usePanelDrag,
 } from "@/lib/ui/panelDrag";
 import { IconGrip, IconMinimize } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   icon: ReactNode;
@@ -39,6 +40,7 @@ export default function PanelHeader({
   actions,
   slot,
 }: Props) {
+  const t = useT();
   const gripRef = useRef<HTMLButtonElement>(null);
   const drag = usePanelDrag();
 
@@ -90,8 +92,8 @@ export default function PanelHeader({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={cancelPanelDrag}
-          aria-label={`${title} パネルを移動`}
-          title="ドラッグして他のパネルと位置を入れ替え"
+          aria-label={t("panel.moveAria", { title })}
+          title={t("panel.moveHint")}
           className={`shrink-0 touch-none rounded px-0.5 py-1 hover:bg-slate-800 hover:text-emerald-400 ${
             dragging ? "cursor-grabbing text-emerald-400" : "cursor-grab text-slate-600"
           }`}
@@ -111,8 +113,8 @@ export default function PanelHeader({
           type="button"
           onClick={onToggleCollapse}
           disabled={collapseDisabledReason !== null}
-          title={collapseDisabledReason ?? "最小化"}
-          aria-label="最小化"
+          title={collapseDisabledReason ?? t("panel.minimize")}
+          aria-label={t("panel.minimize")}
           className="shrink-0 rounded border border-slate-700 p-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <IconMinimize className="h-3 w-3" />

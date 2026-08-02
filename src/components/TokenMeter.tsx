@@ -1,4 +1,5 @@
 import { formatTokens, tokenUsage } from "@/lib/parser/tokenCount";
+import { t as tr, useLocale } from "@/lib/i18n/i18n";
 
 interface Props {
   tokens: number;
@@ -13,13 +14,20 @@ const STYLE = {
 
 /** LLM 入力上限に対するトークン消費量メーター。 */
 export default function TokenMeter({ tokens, limit }: Props) {
+  // 言語が変わったらツールチップも追従させる
+  useLocale();
   const usage = tokenUsage(tokens, limit);
   const style = STYLE[usage.level];
   const percent = Math.min(usage.ratio, 1) * 100;
 
   return (
     <div
-      title={`${usage.label}｜概算 ${tokens.toLocaleString()} / 上限 ${usage.limit.toLocaleString()} トークン（${(usage.ratio * 100).toFixed(1)}%）`}
+      title={tr("token.hint", {
+        label: usage.label,
+        tokens: tokens.toLocaleString(),
+        limit: usage.limit.toLocaleString(),
+        percent: (usage.ratio * 100).toFixed(1),
+      })}
       className="flex shrink-0 items-center gap-2"
     >
       <span aria-hidden="true" className="t-label">
@@ -36,7 +44,7 @@ export default function TokenMeter({ tokens, limit }: Props) {
           aria-valuenow={Math.round(usage.ratio * 100)}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="トークン消費量"
+          aria-label={tr("token.title")}
         >
           <div
             className={`h-full rounded-full transition-all ${style.bar}`}

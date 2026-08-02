@@ -17,6 +17,7 @@ import {
   IconStop,
   IconTrash,
 } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   ticker: string | null;
@@ -38,13 +39,14 @@ interface Props {
   onOpenSettings: () => void;
 }
 
+/** 状態の見出し。**辞書キー**を持ち、表示するときに引く。 */
 const PHASE_LABEL: Record<AnalysisRun["phase"], string> = {
-  idle: "未実行",
-  collecting: "資料を収集中…",
-  streaming: "分析中…",
-  done: "完了",
-  error: "失敗",
-  cancelled: "中断",
+  idle: "analysis.phase.idle",
+  collecting: "analysis.phase.collecting",
+  streaming: "analysis.phase.streaming",
+  done: "analysis.phase.done",
+  error: "analysis.phase.error",
+  cancelled: "analysis.phase.cancelled",
 };
 
 /** 20項目のファンダメンタル分析結果パネル。 */
@@ -64,6 +66,7 @@ export default function AnalysisPanel({
   onOpenSettings,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   const streaming = run?.phase === "streaming" || run?.phase === "collecting";
   const result = run?.result ?? null;
@@ -84,10 +87,12 @@ export default function AnalysisPanel({
   const subtitle =
     run && run.phase !== "idle" ? (
       <>
-        {PHASE_LABEL[run.phase]}
+        {t(PHASE_LABEL[run.phase])}
         {run.model ? ` / ${run.model}` : ""}
         {run.fromCache && run.savedAtMs
-          ? `（${new Date(run.savedAtMs).toLocaleString("ja-JP")} に保存した結果を復元）`
+          ? t("analysis.restored", {
+              when: new Date(run.savedAtMs).toLocaleString(),
+            })
           : ""}
       </>
     ) : undefined;
@@ -96,7 +101,7 @@ export default function AnalysisPanel({
     <section className="panel bg-slate-950" data-panel-slot={slot}>
       <PanelHeader
         icon={<IconChart className="h-3.5 w-3.5" />}
-        title="分析結果"
+        title={t("panel.analysis")}
         subtitle={subtitle}
         slot={slot}
         onToggleCollapse={onToggleCollapse}
@@ -113,7 +118,7 @@ export default function AnalysisPanel({
 
             {hasContent && !streaming && ticker && (
               <ExportMenu
-                label="エクスポート"
+                label={t("analysis.export")}
                 records={() => [
                   buildAnalysisRecord({
                     ticker,
@@ -132,11 +137,11 @@ export default function AnalysisPanel({
               <button
                 type="button"
                 onClick={onSaveToPortfolio}
-                title="この分析をマイポートフォリオのリストに残す"
+                title={t("analysis.saveHint")}
                 className="t-label flex min-h-6 shrink-0 items-center gap-1 rounded border border-slate-700 px-2 text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
               >
                 <IconBookmark className="h-3 w-3" />
-                保存
+                {t("analysis.save")}
               </button>
             )}
 
@@ -144,11 +149,11 @@ export default function AnalysisPanel({
               <button
                 type="button"
                 onClick={onClear}
-                title="この銘柄の分析結果を削除（保存済みキャッシュも消えます）"
+                title={t("analysis.clearHint")}
                 className="t-label flex min-h-6 shrink-0 items-center gap-1 rounded border border-slate-700 px-2 text-slate-400 hover:border-red-800 hover:text-red-300"
               >
                 <IconTrash className="h-3 w-3" />
-                クリア
+                {t("analysis.clear")}
               </button>
             )}
 
@@ -159,7 +164,7 @@ export default function AnalysisPanel({
                 className="t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded border border-red-800 px-2 text-red-300 hover:bg-red-950/50"
               >
                 <IconStop className="h-3 w-3" />
-                中断
+                {t("analysis.cancel")}
               </button>
             ) : (
               <button
@@ -177,8 +182,8 @@ export default function AnalysisPanel({
                   locked
                     ? lockedReason
                     : !ticker
-                      ? "先に銘柄を分析してください"
-                      : (readyReason ?? "AI分析を実行")
+                      ? t("analysis.needTicker")
+                      : (readyReason ?? t("analysis.run"))
                 }
                 className={`t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded px-2.5 font-medium disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500 ${
                   locked
@@ -187,7 +192,7 @@ export default function AnalysisPanel({
                 }`}
               >
                 <IconPlay className="h-3 w-3" />
-                {locked ? "⏳ 体験期間終了" : hasContent ? "再分析" : "AI分析を実行"}
+                {locked ? t("analysis.trialOver") : hasContent ? t("analysis.rerun") : t("analysis.run")}
               </button>
             )}
           </>
@@ -197,7 +202,7 @@ export default function AnalysisPanel({
       {/* 何をもとに分析したかを常に見えるようにする */}
       {run && run.basis.length > 0 && (
         <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/30 px-4 py-1.5">
-          <span className="t-label shrink-0 text-slate-500">分析根拠:</span>
+          <span className="t-label shrink-0 text-slate-500">{t("analysis.basis")}</span>
           {run.basis.map((item) => (
             <span
               key={item}
@@ -230,7 +235,7 @@ export default function AnalysisPanel({
                     onClick={onOpenSettings}
                     className="ml-1 underline underline-offset-2 hover:text-amber-400"
                   >
-                    設定を開く
+                    {t("help.openSettings")}
                   </button>
                 </p>
               )}
@@ -256,14 +261,14 @@ export default function AnalysisPanel({
               {run.phase === "collecting" && (
                 <p className="t-body mb-3 flex items-center gap-2 text-slate-500">
                   <span className="h-3 w-3 shrink-0 animate-spin rounded-full border border-slate-600 border-t-emerald-500" />
-                  SEC 提出書類と一時保存資料を読み込んでいます…
+                  {t("analysis.collecting")}
                 </p>
               )}
 
               {result && result.rows.length > 0 && (
                 <div className="mb-5">
                   <h3 className="t-heading mb-2 flex items-baseline gap-2 font-medium uppercase tracking-wider text-slate-500">
-                    評価テーブル
+                    {t("analysis.scoreTable")}
                     <span className="t-label font-mono normal-case text-slate-600">
                       {result.rows.length} / {CRITERIA.length} 項目
                     </span>
@@ -277,16 +282,16 @@ export default function AnalysisPanel({
               )}
 
               {result && result.strengths.length > 0 && (
-                <BulletSection title="強み" tone="emerald" items={result.strengths} />
+                <BulletSection title={t("analysis.strengths")} tone="emerald" items={result.strengths} />
               )}
               {result && result.risks.length > 0 && (
-                <BulletSection title="リスク" tone="amber" items={result.risks} />
+                <BulletSection title={t("analysis.risks")} tone="amber" items={result.risks} />
               )}
               {result?.valuation && (
-                <TextSection title="バリュエーション所見" body={result.valuation} />
+                <TextSection title={t("analysis.valuation")} body={result.valuation} />
               )}
               {result?.conclusion && (
-                <TextSection title="総合投資判断" body={result.conclusion} highlight />
+                <TextSection title={t("analysis.conclusion")} body={result.conclusion} highlight />
               )}
 
               {streaming && (

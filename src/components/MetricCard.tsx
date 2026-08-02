@@ -1,5 +1,6 @@
 import type { MetricGroup } from "@/types";
 import { IconChart } from "@/components/Icons";
+import { t as tr } from "@/lib/i18n/i18n";
 
 interface Props {
   group: MetricGroup;
@@ -15,7 +16,7 @@ export default function MetricCard({ group }: Props) {
       </div>
       <dl className="space-y-2">
         {group.metrics.map((m) => {
-          const missing = m.raw === null && m.value === "—";
+          const missing = m.raw === null && m.value === tr("common.none");
           return (
             <div key={m.label} className="flex items-baseline justify-between gap-3">
               <dt className="t-label min-w-0 truncate text-slate-500">{m.label}</dt>

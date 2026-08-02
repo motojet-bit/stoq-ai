@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { StagedDocument } from "@/types";
 import { formatTokens } from "@/lib/parser/tokenCount";
 import { IconClose, IconFile, IconPencil } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   doc: StagedDocument;
@@ -12,6 +13,7 @@ interface Props {
 
 /** 一時保存中の資料 1 件。クリックでプレビュー、ダブルクリックでリネーム。 */
 export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: Props) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(doc.displayName);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,10 +42,14 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
 
   return (
     <div
-      title={`${doc.originalName}\n${doc.charCount.toLocaleString()} 文字 / 概算 ${doc.tokenEstimate.toLocaleString()} トークン\nクリックでプレビュー`}
+      title={t("chip.meta", {
+        name: doc.originalName,
+        chars: doc.charCount.toLocaleString(),
+        tokens: doc.tokenEstimate.toLocaleString(),
+      })}
       className="flex min-h-7 shrink-0 items-center gap-1.5 rounded-md border border-emerald-900/70 bg-emerald-950/30 pl-1.5 pr-1 t-label"
     >
-      <span aria-hidden="true" className="t-label" title="一時保存中">
+      <span aria-hidden="true" className="t-label" title={t("chip.staged")}>
         🟢
       </span>
       <IconFile className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
@@ -55,7 +61,7 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={handleKeyDown}
-          aria-label="表示名"
+          aria-label={t("chip.displayName")}
           className="selectable h-5 w-44 rounded border border-emerald-700 bg-slate-950 px-1 t-label text-slate-100 focus:outline-none"
         />
       ) : (
@@ -76,8 +82,8 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
         <button
           type="button"
           onClick={() => setEditing(true)}
-          aria-label={`${doc.displayName} の名前を変更`}
-          title="名前を変更"
+          aria-label={t("chip.renameAria", { name: doc.displayName })}
+          title={t("portfolio.rename")}
           className="rounded p-0.5 text-slate-500 hover:bg-slate-700 hover:text-emerald-300"
         >
           <IconPencil className="h-3 w-3" />
@@ -87,7 +93,7 @@ export default function StagedFileChip({ doc, onPreview, onRename, onDelete }: P
       <button
         type="button"
         onClick={onDelete}
-        aria-label={`${doc.displayName} を削除`}
+        aria-label={t("chip.removeAria", { name: doc.displayName })}
         className="rounded p-0.5 text-slate-500 hover:bg-red-950/60 hover:text-red-300"
       >
         <IconClose className="h-3 w-3" />

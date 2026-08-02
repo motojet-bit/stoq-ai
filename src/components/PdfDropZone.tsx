@@ -1,6 +1,7 @@
 import { useRef, useState, type DragEvent } from "react";
 import { ACCEPT_ATTRIBUTE, SUPPORTED_EXTENSIONS } from "@/lib/parser/extractText";
 import { IconUpload } from "@/components/Icons";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   /** 受け取ったファイルを取り込む */
@@ -12,6 +13,7 @@ interface Props {
  * ドラッグ＆ドロップとファイル選択ダイアログの両方に対応する。
  */
 export default function PdfDropZone({ onFiles }: Props) {
+  const t = useT();
   const [isOver, setIsOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +32,7 @@ export default function PdfDropZone({ onFiles }: Props) {
       onDragLeave={() => setIsOver(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
-      title={`対応形式: ${SUPPORTED_EXTENSIONS.join(" / ")}\n\n※ WebサイトのURLではなく、ローカルのファイルをドロップしてください。\n　 クリックするとファイル選択ダイアログが開きます。`}
+      title={t("drop.hint", { formats: SUPPORTED_EXTENSIONS.join(" / ") })}
       className={`flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 t-label transition-colors ${
         isOver
           ? "border-emerald-500 bg-emerald-950/40 text-emerald-300"
@@ -39,11 +41,11 @@ export default function PdfDropZone({ onFiles }: Props) {
     >
       <IconUpload className="h-4 w-4 shrink-0" />
       <span className="truncate">
-        {isOver ? "ここにファイルをドロップ" : "決算PDF・IR資料をドロップ"}
+        {isOver ? t("drop.active") : t("drop.idle")}
         <span className="ml-1.5 text-slate-600">
           （PDF / DOCX / PPTX / TXT / MD / CSV / HTML）
         </span>
-        <span className="ml-1.5 text-slate-700">※ URL ではなくローカルのファイル</span>
+        <span className="ml-1.5 text-slate-700">{t("drop.localOnly")}</span>
       </span>
       <input
         ref={inputRef}

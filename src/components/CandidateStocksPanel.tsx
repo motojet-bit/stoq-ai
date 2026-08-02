@@ -20,6 +20,7 @@ import {
 } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   /** 銘柄をクリックしたとき。上部のティッカー入力欄にセットして分析へつなぐ */
@@ -58,6 +59,7 @@ export default function CandidateStocksPanel({
   onImportOpenChange,
   onCompare,
 }: Props) {
+  const t = useT();
   const candidates = useCandidates();
   const portfolios = usePortfolios();
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -84,22 +86,22 @@ export default function CandidateStocksPanel({
 
   const menuItems = (candidate: CandidateStock): ContextMenuItem[] => [
     {
-      label: "この銘柄を分析",
+      label: t("candidates.analyzeThis"),
       icon: <IconSearch className="h-3.5 w-3.5" />,
       onSelect: () => onSelectTicker(candidate.ticker),
     },
     // ポートフォリオへの振り分け。リストが 1 つも無いときは出さない
     ...portfolios.map((portfolio) => ({
-      label: `「${portfolio.name}」に追加`,
+      label: t("candidates.addTo", { list: portfolio.name }),
       icon: <IconBookmark className="h-3.5 w-3.5" />,
       onSelect: () => {
         void addTickerToPortfolio(portfolio.id, candidate.ticker).then(() =>
-          toastSuccess(`${candidate.ticker} を「${portfolio.name}」に追加しました`),
+          toastSuccess(t("candidates.added", { ticker: candidate.ticker, list: portfolio.name })),
         );
       },
     })),
     {
-      label: "削除",
+      label: t("settings.key.delete"),
       icon: <IconTrash className="h-3.5 w-3.5" />,
       destructive: true,
       onSelect: () => void removeCandidate(candidate.id),
@@ -113,7 +115,7 @@ export default function CandidateStocksPanel({
         role="separator"
         aria-orientation="horizontal"
         onPointerDown={onResizeStart}
-        title="ドラッグして高さを変更"
+        title={t("candidates.resizeHint")}
         className="group relative h-1 shrink-0 cursor-row-resize bg-slate-800 hover:bg-emerald-600"
       >
         <div className="absolute inset-x-0 -top-2 h-5" />
@@ -129,7 +131,7 @@ export default function CandidateStocksPanel({
             className="flex min-w-0 flex-1 items-center gap-1.5 t-label font-medium uppercase tracking-wider text-slate-500 hover:text-slate-300"
           >
             <IconBookmark className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">検討中銘柄</span>
+            <span className="truncate">{t("sidebar.candidates")}</span>
             {candidates.length > 0 && (
               <span className="shrink-0 font-mono normal-case text-slate-600">
                 {candidates.length}
@@ -142,17 +144,17 @@ export default function CandidateStocksPanel({
           <button
             type="button"
             onClick={() => onImportOpenChange(true)}
-            title="パイプ区切り、またはティッカーの羅列からまとめて追加"
+            title={t("candidates.importHint")}
             className="flex min-h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-1.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
           >
             <IconPlus className="h-3 w-3" />
-            追加
+            {t("sidebar.add")}
           </button>
           <button
             type="button"
             onClick={onToggleCollapsed}
-            aria-label={collapsed ? "検討中銘柄を開く" : "検討中銘柄を折りたたむ"}
-            title={collapsed ? "開く" : "折りたたむ"}
+            aria-label={collapsed ? t("candidates.expand") : t("candidates.collapse")}
+            title={collapsed ? t("candidates.expandShort") : t("candidates.collapseShort")}
             className="shrink-0 rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-200"
           >
             {collapsed ? (
@@ -172,13 +174,9 @@ export default function CandidateStocksPanel({
         <div style={{ height }} className="min-h-0 overflow-auto px-2 py-1.5">
           {candidates.length === 0 ? (
             <p className="px-1 py-3 t-label leading-relaxed text-slate-600">
-              まだ登録がありません。
+              {t("candidates.empty")}
               <br />
-              「＋ 追加」から
-              <br />
-              ティッカー|社名|ジャンル
-              <br />
-              を貼り付けてください。
+              {t("candidates.emptyHint", { format: t("candidates.format") })}
             </p>
           ) : (
             <ul className="w-max min-w-full space-y-0.5">
@@ -192,14 +190,16 @@ export default function CandidateStocksPanel({
                       type="checkbox"
                       checked={picked.includes(candidate.ticker)}
                       onChange={() => toggle(candidate.ticker)}
-                      aria-label={`${candidate.ticker} を比較対象にする`}
-                      title="チェックした銘柄を横並びで比較できます"
+                      aria-label={t("candidates.compareCheck", { ticker: candidate.ticker })}
+                      title={t("candidates.compareHint")}
                       className="shrink-0 accent-emerald-500"
                     />
                     <button
                       type="button"
                       onClick={() => onSelectTicker(candidate.ticker)}
-                      title={`${candidate.ticker}${candidate.name ? ` / ${candidate.name}` : ""}\nクリックで分析 / 右クリックでメニュー`}
+                      title={`${candidate.ticker}${
+                        candidate.name ? ` / ${candidate.name}` : ""
+                      }\n${t("candidates.rowHint")}`}
                       className="flex min-w-0 flex-1 items-baseline gap-1.5 whitespace-nowrap text-left"
                     >
                       <span className="shrink-0 font-mono t-label font-medium text-emerald-300">
@@ -218,8 +218,8 @@ export default function CandidateStocksPanel({
                     <button
                       type="button"
                       onClick={() => void removeCandidate(candidate.id)}
-                      aria-label={`${candidate.ticker} を削除`}
-                      title="この銘柄を削除"
+                      aria-label={t("candidates.removeAria", { ticker: candidate.ticker })}
+                      title={t("candidates.removeHint")}
                       className="sticky right-0 shrink-0 rounded bg-slate-900 p-0.5 text-slate-600 opacity-0 hover:bg-red-950/60 hover:text-red-300 group-hover:opacity-100"
                     >
                       <IconClose className="h-3 w-3" />

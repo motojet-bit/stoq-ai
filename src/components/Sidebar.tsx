@@ -178,7 +178,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onToggleCollapse}
-          title="サイドバーを開く (Ctrl+B)"
+          title={t("sidebar.open")}
           className="rounded p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
         >
           <IconPanelLeft className="h-4.5 w-4.5" />
@@ -186,7 +186,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onNewChat}
-          title="新規チャット"
+          title={t("menu.file.newChat")}
           className="rounded p-2 text-slate-400 hover:bg-slate-800 hover:text-emerald-400"
         >
           <IconPlus className="h-4.5 w-4.5" />
@@ -205,13 +205,13 @@ export default function Sidebar({
       <div
         role="separator"
         aria-orientation="vertical"
-        aria-label="サイドバーの幅を変更"
+        aria-label={t("sidebar.resizeAria")}
         onPointerDown={(e) => {
           e.preventDefault();
           e.currentTarget.setPointerCapture?.(e.pointerId);
           setWidthDragging(true);
         }}
-        title={`ドラッグして幅を変更（${MIN_SIDEBAR_WIDTH}〜${MAX_SIDEBAR_WIDTH}px）`}
+        title={t("sidebar.resizeHint", { min: MIN_SIDEBAR_WIDTH, max: MAX_SIDEBAR_WIDTH })}
         className={`absolute inset-y-0 right-0 z-20 w-1 cursor-col-resize ${
           widthDragging ? "bg-emerald-500" : "hover:bg-emerald-600"
         }`}
@@ -247,12 +247,12 @@ export default function Sidebar({
           className="flex min-h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-2.5 t-body text-slate-200 transition-colors hover:border-emerald-700 hover:bg-slate-700 hover:text-emerald-300"
         >
           <IconPlus className="h-4 w-4 shrink-0" />
-          <span className="truncate">新規チャット</span>
+          <span className="truncate">{t("menu.file.newChat")}</span>
         </button>
         <button
           type="button"
           onClick={onToggleCollapse}
-          title="サイドバーを閉じる (Ctrl+B)"
+          title={t("sidebar.close")}
           className="shrink-0 rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
         >
           <IconPanelLeft className="h-4.5 w-4.5" />
@@ -265,14 +265,14 @@ export default function Sidebar({
         <>
       <div className="flex shrink-0 items-center justify-between gap-1 px-3 pb-1 pt-2">
         <span className="t-label font-medium uppercase tracking-wider text-slate-500">
-          {showArchived ? "アーカイブ" : "履歴"}
+          {showArchived ? t("sidebar.archive") : t("sidebar.history")}
         </span>
         <div className="flex shrink-0 items-center gap-1">
           <span className="font-mono t-label text-slate-600">{shown.length}</span>
           <button
             type="button"
             onClick={() => setShowArchived((v) => !v)}
-            title={showArchived ? "履歴に戻る" : `アーカイブを見る（${archived.length} 件）`}
+            title={showArchived ? t("sidebar.backToHistory") : t("sidebar.viewArchive", { count: archived.length })}
             aria-pressed={showArchived}
             className={`rounded p-1 ${
               showArchived
@@ -294,19 +294,15 @@ export default function Sidebar({
           <p className="px-2 py-6 text-center t-label leading-relaxed text-slate-600">
             {showArchived ? (
               <>
-                アーカイブは空です。
+                {t("sidebar.emptyArchive")}
                 <br />
-                残しておきたい会話は
-                <br />
-                📁 ボタンでここへ移せます。
+                {t("sidebar.archiveTip")}
               </>
             ) : (
               <>
-                まだ会話がありません。
+                {t("sidebar.emptyChats")}
                 <br />
-                対話ウィンドウで質問すると、
-                <br />
-                自動でここに保存されます。
+                {t("sidebar.autoSaveTip")}
               </>
             )}
           </p>
@@ -342,14 +338,15 @@ export default function Sidebar({
 
       <ConfirmDialog
         open={deleting !== null}
-        title="このチャットを削除しますか？"
+        title={t("sidebar.deleteTitle")}
         message={
-          `「${deleting?.title ?? ""}」と、その中の ${deleting?.messageCount ?? 0} 件のメッセージが削除されます。\n` +
-          "残しておきたい場合は、削除ではなく 📁 アーカイブを使ってください。\n" +
-          "この操作は取り消せません。"
+          t("sidebar.deleteBody", {
+            title: deleting?.title ?? "",
+            count: deleting?.messageCount ?? 0,
+          })
         }
-        confirmLabel="削除する"
-        cancelLabel="もどる"
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.back")}
         destructive
         onConfirm={() => {
           if (deleting) onDeleteSession(deleting.id);

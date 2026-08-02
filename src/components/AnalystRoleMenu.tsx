@@ -6,6 +6,7 @@ import {
 } from "@/lib/prompts/analystRoleStore";
 import { IconChevronDown, IconPersona } from "@/components/Icons";
 import PortalMenu from "@/components/PortalMenu";
+import { useT } from "@/lib/i18n/i18n";
 
 /**
  * 20項目分析の「役割」を切り替える。
@@ -14,6 +15,7 @@ import PortalMenu from "@/components/PortalMenu";
  * 実際の分析指示は Rust 側の秘匿プロンプトにあり、フロントには渡ってこない。
  */
 export default function AnalystRoleMenu() {
+  const t = useT();
   const roles = useAnalystRoles();
   const activeId = useActiveRoleId();
   const [open, setOpen] = useState(false);
@@ -32,11 +34,11 @@ export default function AnalystRoleMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        title={active?.summary ?? "分析の役割を選ぶ"}
+        title={active?.summary ?? t("role.select")}
         className="flex min-h-6 max-w-56 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
       >
         <IconPersona className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-        <span className="min-w-0 truncate">{active?.label ?? "役割"}</span>
+        <span className="min-w-0 truncate">{active?.label ?? t("role.short")}</span>
         <IconChevronDown className="h-3 w-3 shrink-0 text-slate-500" />
       </button>
 
@@ -47,7 +49,7 @@ export default function AnalystRoleMenu() {
         widthClass="w-96"
       >
           <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-            分析の役割（企業タイプに合わせて選ぶ）
+            {t("role.heading")}
           </div>
 
           {roles.map((role) => {

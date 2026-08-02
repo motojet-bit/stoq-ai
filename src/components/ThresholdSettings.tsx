@@ -15,6 +15,7 @@ import { TOOLTIPS } from "@/lib/ui/tooltipText";
 import Tooltip from "@/components/Tooltip";
 import { IconHelp } from "@/components/Icons";
 import CustomInstructionSettings from "@/components/CustomInstructionSettings";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   settings: AppSettings | null;
@@ -27,6 +28,7 @@ interface Props {
  * **実際に送られる文面をその場で確認できる**ようにしている。
  */
 export default function ThresholdSettings({ settings }: Props) {
+  const t = useT();
   const [values, setValues] = useState<ThresholdValues>(() =>
     mergeThresholds(settings?.thresholds),
   );
@@ -48,7 +50,7 @@ export default function ThresholdSettings({ settings }: Props) {
       for (const id of customizedIds(next)) diff[id] = next[id];
       await saveSettings({ thresholds: diff });
     } catch (e) {
-      toastError("閾値を保存できませんでした", e);
+      toastError(t("thresholds.saveFailed"), e);
     } finally {
       setBusy(false);
     }
@@ -85,8 +87,7 @@ export default function ThresholdSettings({ settings }: Props) {
       {/* 迷った人がそのまま閉じられるよう、最初に「触らなくてよい」と伝える */}
       <div className="flex items-start justify-between gap-3 rounded-lg border border-emerald-900/60 bg-emerald-950/25 px-3 py-2.5">
         <p className="t-body leading-relaxed text-emerald-200/90">
-          💡 使い方がわからない場合や迷った場合は、デフォルト（既定値）のままで問題ありません。
-          プロの基準値が自動適用されます
+          {t("thresholds.beginnerNote")}
         </p>
         <Tooltip content={TOOLTIPS.thresholds} placement="left">
           <span className="shrink-0 text-emerald-600">
@@ -97,9 +98,7 @@ export default function ThresholdSettings({ settings }: Props) {
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="min-w-0 flex-1 t-label leading-relaxed text-slate-500">
-          AI が合格/不合格を判定する基準です。設定した数値は
-          <strong className="text-slate-300">そのままシステムプロンプトに埋め込まれ</strong>、
-          各項目の根拠欄に「基準に対して合格か」が明記されます。
+          {t("thresholds.intro")}
         </p>
         <button
           type="button"
@@ -107,7 +106,7 @@ export default function ThresholdSettings({ settings }: Props) {
           disabled={changed.length === 0 || busy}
           className="min-h-8 shrink-0 whitespace-nowrap rounded-md border border-slate-600 px-3 t-body text-slate-200 transition-colors hover:border-emerald-700 hover:bg-slate-800 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          既定値に戻す（デフォルト復元）
+          {t("thresholds.reset")}
         </button>
       </div>
 
@@ -148,7 +147,7 @@ export default function ThresholdSettings({ settings }: Props) {
                     value={value}
                     disabled={busy}
                     onChange={(e) => update(def.id, Number(e.target.value))}
-                    aria-label={`${def.label} のスライダー`}
+                    aria-label={t("thresholds.sliderAria", { label: def.label })}
                     className="h-1 w-40 cursor-pointer accent-emerald-500"
                   />
                   <input
@@ -159,7 +158,7 @@ export default function ThresholdSettings({ settings }: Props) {
                     value={value}
                     disabled={busy}
                     onChange={(e) => update(def.id, Number(e.target.value))}
-                    aria-label={`${def.label} の数値`}
+                    aria-label={t("thresholds.numberAria", { label: def.label })}
                     className="selectable min-h-7 w-20 rounded-md border border-slate-700 bg-slate-950 px-2 text-right font-mono t-label text-slate-100 focus:border-emerald-500 focus:outline-none"
                   />
                 </span>
@@ -172,15 +171,15 @@ export default function ThresholdSettings({ settings }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="t-label text-slate-600">
           {changed.length === 0
-            ? "すべて既定値です"
-            : `${changed.length} 項目を既定から変更しています`}
+            ? t("thresholds.allDefault")
+            : t("thresholds.changedCount", { count: changed.length })}
         </span>
         <button
           type="button"
           onClick={() => void togglePreview()}
           className="min-h-7 shrink-0 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300"
         >
-          {preview === null ? "AI に送る文面を見る" : "送信文を隠す"}
+          {preview === null ? t("thresholds.showPrompt") : t("thresholds.hidePrompt")}
         </button>
       </div>
 
@@ -195,10 +194,11 @@ export default function ThresholdSettings({ settings }: Props) {
 
       {changed.length > 0 && (
         <p className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 t-label leading-relaxed text-slate-400">
-          変更中: {changed.map((id) => {
-            const def = THRESHOLDS.find((t) => t.id === id)!;
-            return formatRule(def, values[id]);
-          }).join(" / ")}
+          {t("thresholds.changing", {
+            list: changed
+              .map((id) => formatRule(THRESHOLDS.find((def) => def.id === id)!, values[id]))
+              .join(" / "),
+          })}
         </p>
       )}
     </div>

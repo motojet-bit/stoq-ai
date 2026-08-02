@@ -7,6 +7,7 @@ import {
   IconPencil,
   IconUnarchive,
 } from "@/components/Icons";
+import { t, useT } from "@/lib/i18n/i18n";
 
 interface Props {
   session: ChatSession;
@@ -18,20 +19,23 @@ interface Props {
   onDelete: () => void;
 }
 
-/** 経過時間を「たった今 / 3 時間前 / 昨日」のように表す。 */
+/**
+ * 経過時間を「たった今 / 3 時間前 / 昨日」のように表す。
+ * 文面は辞書から引くので、表示言語に追従する。
+ */
 function relativeTime(ms: number): string {
   const diff = Date.now() - ms;
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "たった今";
-  if (minutes < 60) return `${minutes} 分前`;
+  if (minutes < 1) return t("time.justNow");
+  if (minutes < 60) return t("time.minutesAgo", { count: minutes });
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 時間前`;
+  if (hours < 24) return t("time.hoursAgo", { count: hours });
 
   const days = Math.floor(hours / 24);
-  if (days === 1) return "昨日";
-  if (days < 7) return `${days} 日前`;
-  return new Date(ms).toLocaleDateString("ja-JP");
+  if (days === 1) return t("time.yesterday");
+  if (days < 7) return t("time.daysAgo", { count: days });
+  return new Date(ms).toLocaleDateString();
 }
 
 /** サイドバーのチャット履歴 1 件。ダブルクリックまたは ✏️ でリネームできる。 */
@@ -44,6 +48,7 @@ export default function ChatHistoryItem({
   onDelete,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const t = useT();
   const [draft, setDraft] = useState(session.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -94,7 +99,7 @@ export default function ChatHistoryItem({
               onChange={(e) => setDraft(e.target.value)}
               onBlur={commit}
               onKeyDown={handleKeyDown}
-              aria-label="チャットのタイトル"
+              aria-label={t("chatItem.titleAria")}
               className="selectable h-6 w-full rounded border border-emerald-700 bg-slate-950 px-1 t-body text-slate-100 focus:outline-none"
             />
           ) : (
@@ -102,7 +107,7 @@ export default function ChatHistoryItem({
               type="button"
               onClick={onSelect}
               onDoubleClick={() => setEditing(true)}
-              title={`${session.title}\nダブルクリックで名前を変更`}
+              title={t("chatItem.renameHint", { title: session.title })}
               className="block w-full truncate text-left t-body leading-snug"
             >
               {session.title}
@@ -126,8 +131,8 @@ export default function ChatHistoryItem({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              aria-label={`${session.title} の名前を変更`}
-              title="名前を変更"
+              aria-label={t("chatItem.renameAria", { title: session.title })}
+              title={t("portfolio.rename")}
               className="rounded p-1 text-slate-500 hover:bg-slate-700 hover:text-emerald-300"
             >
               <IconPencil className="h-3 w-3" />
@@ -137,13 +142,13 @@ export default function ChatHistoryItem({
               onClick={onArchive}
               aria-label={
                 session.isArchived
-                  ? `${session.title} をアーカイブから戻す`
-                  : `${session.title} をアーカイブ`
+                  ? t("chatItem.unarchiveAria", { title: session.title })
+                  : t("chatItem.archiveAria", { title: session.title })
               }
               title={
                 session.isArchived
-                  ? "アーカイブから戻す"
-                  : "アーカイブへ移動（削除はされません）"
+                  ? t("chatItem.unarchiveHint")
+                  : t("chatItem.archiveHint")
               }
               className="rounded p-1 text-slate-500 hover:bg-slate-700 hover:text-emerald-300"
             >
@@ -156,8 +161,8 @@ export default function ChatHistoryItem({
             <button
               type="button"
               onClick={onDelete}
-              aria-label={`${session.title} を削除`}
-              title="このチャットを削除"
+              aria-label={t("chatItem.deleteAria", { title: session.title })}
+              title={t("chatItem.deleteHint")}
               className="rounded p-1 text-slate-500 hover:bg-red-950/60 hover:text-red-300"
             >
               <IconClose className="h-3 w-3" />

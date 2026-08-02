@@ -1,4 +1,5 @@
 import type { CriterionResult } from "@/lib/prompts/parseAnalysis";
+import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   row: CriterionResult;
@@ -15,6 +16,7 @@ function scoreStyle(score: number | null): { bar: string; text: string } {
 
 /** 20項目評価テーブルの 1 行。 */
 export default function CriterionScoreRow({ row }: Props) {
+  const t = useT();
   const style = scoreStyle(row.score);
   const filled = row.score ?? 0;
 
@@ -30,7 +32,7 @@ export default function CriterionScoreRow({ row }: Props) {
       <div className="pt-0.5">
         <div
           className="mb-1.5 flex items-center gap-1"
-          aria-label={`スコア ${row.score ?? "未判定"}`}
+          aria-label={t("criterion.scoreAria", { score: row.score ?? t("criterion.unscored") })}
         >
           {[1, 2, 3, 4, 5].map((n) => (
             <span
@@ -42,7 +44,7 @@ export default function CriterionScoreRow({ row }: Props) {
           ))}
         </div>
         <div className={`t-label ${style.text}`}>
-          {row.score === 0 ? "判定不能" : row.verdict || "—"}
+          {row.score === 0 ? t("criterion.undecidable") : row.verdict || t("common.none")}
         </div>
       </div>
 

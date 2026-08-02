@@ -10,12 +10,14 @@ import { IconChevronDown, IconPersona, IconSettings } from "@/components/Icons";
 import PortalMenu from "@/components/PortalMenu";
 import Tooltip from "@/components/Tooltip";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { useT } from "@/lib/i18n/i18n";
 
 /**
  * 対話パネルのヘッダーに置く役割（システムプロンプト）の切り替え。
  * ストックした役割をワンタップで適用できる。
  */
 export default function PromptLibraryMenu() {
+  const t = useT();
   const prompts = usePrompts();
   const activeId = useActivePromptId();
   const [open, setOpen] = useState(false);
@@ -41,18 +43,18 @@ export default function PromptLibraryMenu() {
           className="flex min-h-6 max-w-52 items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 text-slate-300 hover:border-emerald-700 hover:text-emerald-300"
         >
           <IconPersona className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-          <span className="min-w-0 truncate">{active ? active.title : "役割: 既定"}</span>
+          <span className="min-w-0 truncate">{active ? active.title : t("role.currentDefault")}</span>
           <IconChevronDown className="h-3 w-3 shrink-0 text-slate-500" />
         </button>
       </Tooltip>
 
       <PortalMenu open={open} anchorRef={buttonRef} onClose={() => setOpen(false)}>
           <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-            AI の役割を選ぶ
+            {t("role.pick")}
           </div>
 
           <PromptOption
-            title="既定（汎用アナリスト）"
+            title={t("role.default")}
             body={DEFAULT_SYSTEM_PROMPT}
             active={activeId === null}
             onSelect={() => select(null)}
@@ -80,7 +82,7 @@ export default function PromptLibraryMenu() {
             className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-slate-300 hover:bg-slate-700"
           >
             <IconSettings className="h-3.5 w-3.5 text-slate-500" />
-            役割を追加・編集…
+            {t("role.manage")}
           </button>
       </PortalMenu>
 
