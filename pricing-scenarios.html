@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="ja" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>価格シナリオ検討（内部用） — StoQ AI Analyzer</title>
+    <!--
+      **検索に載せない。** 公開リポジトリの gh-pages に置く以上 URL は誰でも踏めるが、
+      検討中の価格が検索結果に出ると、実際に売っている価格と食い違って見える。
+    -->
+    <meta name="robots" content="noindex, nofollow" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Hiragino Sans",
+                "Noto Sans JP",
+                "sans-serif",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* 言語の切り替え。index.html と同じ仕組み */
+      html[lang="en"] [data-ja] { display: none; }
+      html[lang="ja"] [data-en] { display: none; }
+    </style>
+  </head>
+
+  <body class="bg-slate-950 font-sans text-slate-200 antialiased">
+    <!-- ========================================================== 内部用の警告帯 -->
+    <!--
+      **一番上に、消えない帯で置く。** ここを本番の価格表と取り違えられるのが
+      いちばん困る。スクリーンショットが独り歩きしても、必ずこの帯が写る。
+    -->
+    <div class="sticky top-0 z-40 border-b border-amber-700/60 bg-amber-950/90 backdrop-blur">
+      <div
+        class="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p class="text-sm font-semibold text-amber-200">
+          <span aria-hidden="true">&#9888;</span>
+          <span data-ja>内部検討用のテストページです（販売ページではありません）</span>
+          <span data-en>Internal scenario page &mdash; this is not a sales page</span>
+        </p>
+        <div class="flex items-center gap-3">
+          <a
+            href="./index.html"
+            class="text-xs font-medium text-amber-300 underline underline-offset-4 hover:text-amber-100"
+          >
+            <span data-ja>本番の販売ページへ</span><span data-en>Go to the live page</span>
+          </a>
+          <button
+            type="button"
+            id="lang-toggle"
+            class="rounded-md border border-amber-700/60 px-2.5 py-1 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-900/50"
+          >
+            <span data-ja>English</span><span data-en>日本語</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <main class="mx-auto max-w-6xl px-5 py-14 sm:py-20">
+      <header>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
+          <span data-ja>価格シナリオ</span><span data-en>Pricing scenarios</span>
+        </p>
+        <h1 class="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <span data-ja>買い切り と 月額、どちらで出すか</span>
+          <span data-en>Lifetime or subscription &mdash; which do we ship?</span>
+        </h1>
+        <p class="mt-4 max-w-3xl text-sm leading-relaxed text-slate-400">
+          <span data-ja>
+            現在の V0 特別価格に加えて、第 2 段階・第 3 段階で検討している
+            買い切り／月額の 2 案を並べたもの。決済ボタンは動きません。
+          </span>
+          <span data-en>
+            The current V0 price plus the lifetime / subscription options under consideration for
+            stage 2 and stage 3. The checkout buttons are inert here.
+          </span>
+        </p>
+        <!--
+          **ここで比較すべきは金額そのものではなく「回収までの月数」。**
+          月額のほうが入口は軽いが、何か月で買い切りに追いつくかを併記しないと、
+          どちらが安いのかを読み手が判断できない。
+        -->
+        <p
+          class="mt-5 max-w-3xl rounded-lg border border-slate-800 bg-slate-900/50 px-4 py-3 text-xs leading-relaxed text-slate-400"
+        >
+          <span data-ja>
+            比較の軸は金額そのものではなく<strong class="text-slate-200">「買い切りに追いつくまでの月数」</strong>。
+            各月額カードに損益分岐を併記してあります。
+          </span>
+          <span data-en>
+            The axis that matters is not the sticker price but
+            <strong class="text-slate-200">how many months until the subscription costs more</strong>.
+            Each subscription card shows its break-even.
+          </span>
+        </p>
+      </header>
+
+      <!-- ========================================================== 現在（V0） -->
+      <section class="mt-16">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h2 class="text-xl font-bold text-white">
+            <span data-ja>現在 &mdash; V0（フィードバック期間）</span>
+            <span data-en>Now &mdash; V0 (feedback period)</span>
+          </h2>
+          <span
+            class="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300"
+          >
+            <span data-ja>実施中</span><span data-en>Live</span>
+          </span>
+        </div>
+        <p class="mt-2 text-sm text-slate-400">
+          <span data-ja>定価 $228 に対する数量限定の特別価格。買い切りのみ。</span>
+          <span data-en>A limited-quantity discount off the $228 list price. Lifetime only.</span>
+        </p>
+
+        <div class="mt-6 grid items-stretch gap-6 md:grid-cols-2">
+          <article
+            class="flex h-full flex-col rounded-2xl border border-emerald-700/60 bg-slate-950 p-8 shadow-2xl shadow-emerald-950/30"
+          >
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-emerald-400">
+              <span data-ja>ライフタイムライセンス</span><span data-en>Lifetime license</span>
+            </h3>
+            <p class="mt-4 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+              <span class="text-2xl font-semibold text-slate-500 line-through decoration-slate-600"
+                >$228</span
+              >
+              <span class="text-slate-600" aria-hidden="true">&rarr;</span>
+              <span class="text-5xl font-bold tracking-tight text-white">$62</span>
+              <span class="text-sm text-slate-500">
+                <span data-ja>一度きり</span><span data-en>one time</span>
+              </span>
+            </p>
+            <p class="mt-3">
+              <span
+                class="inline-block rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300"
+              >
+                <span data-ja>V0 フィードバック期間・数量限定価格</span>
+                <span data-en>V0 feedback period &middot; limited quantity</span>
+              </span>
+            </p>
+            <ul class="mt-7 flex-1 space-y-3 text-sm text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>銘柄数・分析回数ともに無制限</span>
+                <span data-en>Unlimited tickers and analyses</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>署名付きの自動アップデート</span>
+                <span data-en>Signed automatic updates</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>期間の制限なし</span>
+                <span data-en>No time limit</span>
+              </li>
+            </ul>
+            <p class="mt-7 rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3 text-[11px] leading-relaxed text-slate-400">
+              <span data-ja>※V1 リリースに伴い予告なく通常価格へ改定されます。</span>
+              <span data-en>* Returns to the regular price when V1 ships, without prior notice.</span>
+            </p>
+          </article>
+
+          <article
+            class="flex h-full flex-col justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/20 p-8 text-center"
+          >
+            <p class="text-sm leading-relaxed text-slate-500">
+              <span data-ja>
+                V0 では月額プランを用意しない。<br />
+                継続課金は<strong class="text-slate-300">解約導線と請求の問い合わせ</strong>を生み、
+                機能を作る時間をそのぶん奪うため。
+              </span>
+              <span data-en>
+                No subscription during V0.<br />
+                Recurring billing brings cancellation flows and billing questions, and that time
+                comes straight out of building the product.
+              </span>
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ========================================================== 第 2 段階 -->
+      <section class="mt-20">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h2 class="text-xl font-bold text-white">
+            <span data-ja>第 2 段階 &mdash; V1 リリース時</span>
+            <span data-en>Stage 2 &mdash; at the V1 release</span>
+          </h2>
+          <span class="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
+            <span data-ja>検討中</span><span data-en>Under review</span>
+          </span>
+        </div>
+        <p class="mt-2 text-sm text-slate-400">
+          <span data-ja>$98 の買い切り と $28 / 月 の 2 案。</span>
+          <span data-en>$98 lifetime versus $28 per month.</span>
+        </p>
+
+        <div class="mt-6 grid items-stretch gap-6 md:grid-cols-2">
+          <!-- A: 買い切り -->
+          <article
+            class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950 p-8"
+          >
+            <div class="flex items-baseline justify-between gap-3">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <span data-ja>案 A &mdash; 買い切り</span><span data-en>Option A &mdash; lifetime</span>
+              </h3>
+            </div>
+            <p class="mt-4 flex items-baseline gap-2">
+              <span class="text-5xl font-bold tracking-tight text-white">$98</span>
+              <span class="text-sm text-slate-500">
+                <span data-ja>一度きり</span><span data-en>one time</span>
+              </span>
+            </p>
+            <p class="mt-3 text-sm text-slate-400">
+              <span data-ja>V0 で買った人はそのまま。追加請求は発生しない。</span>
+              <span data-en>V0 buyers keep what they have. No additional charge.</span>
+            </p>
+            <ul class="mt-7 flex-1 space-y-3 text-sm text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>売り切りなので解約導線・請求対応が要らない</span>
+                <span data-en>No cancellation flow, no billing support burden</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>「買ったら自分のもの」が BYOK の思想と揃う</span>
+                <span data-en>"Buy it and it is yours" matches the BYOK stance</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-ja>継続収入がないので、開発を続ける原資が積み上がらない</span>
+                <span data-en>No recurring revenue to fund continued development</span>
+              </li>
+            </ul>
+          </article>
+
+          <!-- B: 月額 -->
+          <article
+            class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950 p-8"
+          >
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">
+              <span data-ja>案 B &mdash; 月額</span><span data-en>Option B &mdash; subscription</span>
+            </h3>
+            <p class="mt-4 flex items-baseline gap-2">
+              <span class="text-5xl font-bold tracking-tight text-white">$28</span>
+              <span class="text-sm text-slate-500">
+                <span data-ja>/ 月</span><span data-en>/ month</span>
+              </span>
+            </p>
+            <p class="mt-3">
+              <span
+                class="inline-block rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300"
+              >
+                <span data-ja>買い切り $98 に追いつくのは 4 か月目（$112）</span>
+                <span data-en>Passes the $98 lifetime in month 4 ($112)</span>
+              </span>
+            </p>
+            <ul class="mt-7 flex-1 space-y-3 text-sm text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>入口が軽く、試してから続けるか決められる</span>
+                <span data-en>Low entry cost; users decide to continue after trying</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>継続収入が開発の原資になる</span>
+                <span data-en>Recurring revenue funds development</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-ja>
+                  <strong class="text-slate-100">API 費用が別途かかる BYOK と二重取りに見える。</strong>
+                  ここが最大の反発点になりうる
+                </span>
+                <span data-en>
+                  <strong class="text-slate-100">Looks like double-charging on top of BYOK API costs.</strong>
+                  This is the likeliest source of pushback
+                </span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-ja>解約・返金・請求の問い合わせ対応が発生する</span>
+                <span data-en>Brings cancellation, refund and billing support</span>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- ========================================================== 第 3 段階 -->
+      <section class="mt-20">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h2 class="text-xl font-bold text-white">
+            <span data-ja>第 3 段階 &mdash; 機能が出そろったあと</span>
+            <span data-en>Stage 3 &mdash; once the feature set is complete</span>
+          </h2>
+          <span class="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
+            <span data-ja>検討中</span><span data-en>Under review</span>
+          </span>
+        </div>
+        <p class="mt-2 text-sm text-slate-400">
+          <span data-ja>$228 の買い切り と $49 / 月 の 2 案。$228 は現在の定価と同じ。</span>
+          <span data-en>$228 lifetime versus $49 per month. $228 is today's list price.</span>
+        </p>
+
+        <div class="mt-6 grid items-stretch gap-6 md:grid-cols-2">
+          <!-- A: 買い切り -->
+          <article
+            class="flex h-full flex-col rounded-2xl border border-emerald-800/50 bg-slate-950 p-8"
+          >
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-emerald-400">
+              <span data-ja>案 A &mdash; 買い切り</span><span data-en>Option A &mdash; lifetime</span>
+            </h3>
+            <p class="mt-4 flex items-baseline gap-2">
+              <span class="text-5xl font-bold tracking-tight text-white">$228</span>
+              <span class="text-sm text-slate-500">
+                <span data-ja>一度きり</span><span data-en>one time</span>
+              </span>
+            </p>
+            <p class="mt-3 text-sm text-slate-400">
+              <span data-ja>V0 の $62 から見ると 3.7 倍。値上げの根拠を示せるかが前提。</span>
+              <span data-en>3.7&times; the V0 price. Only viable if the increase is justified.</span>
+            </p>
+            <ul class="mt-7 flex-1 space-y-3 text-sm text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>V0 で買った人の満足度が最も高くなる（先に買うほど得）</span>
+                <span data-en>Rewards the earliest buyers most</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-ja>
+                  <strong class="text-slate-100">買い切りで $228 は、個人向けデスクトップとしては高い。</strong>
+                  無料の代替と比べられる価格帯に入る
+                </span>
+                <span data-en>
+                  <strong class="text-slate-100">$228 is steep for a consumer desktop app.</strong>
+                  It enters the range where free alternatives get compared
+                </span>
+              </li>
+            </ul>
+          </article>
+
+          <!-- B: 月額 -->
+          <article
+            class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950 p-8"
+          >
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">
+              <span data-ja>案 B &mdash; 月額</span><span data-en>Option B &mdash; subscription</span>
+            </h3>
+            <p class="mt-4 flex items-baseline gap-2">
+              <span class="text-5xl font-bold tracking-tight text-white">$49</span>
+              <span class="text-sm text-slate-500">
+                <span data-ja>/ 月</span><span data-en>/ month</span>
+              </span>
+            </p>
+            <p class="mt-3">
+              <span
+                class="inline-block rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300"
+              >
+                <span data-ja>買い切り $228 に追いつくのは 5 か月目（$245）</span>
+                <span data-en>Passes the $228 lifetime in month 5 ($245)</span>
+              </span>
+            </p>
+            <ul class="mt-7 flex-1 space-y-3 text-sm text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-ja>年 $588。プロ向けツールとしては説明のつく水準</span>
+                <span data-en>$588 a year &mdash; defensible for a professional tool</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-ja>
+                  <strong class="text-slate-100">5 か月で買い切りを超える。</strong>
+                  買い切りを併売すると、月額はほぼ選ばれない
+                </span>
+                <span data-en>
+                  <strong class="text-slate-100">Break-even lands at 5 months.</strong>
+                  If both are sold side by side, few will pick the subscription
+                </span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-ja>BYOK の API 費用に上乗せされる構図は第 2 段階と同じ</span>
+                <span data-en>Still stacks on top of the user's own BYOK API spend</span>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- ========================================================== まとめ -->
+      <section class="mt-20 rounded-2xl border border-slate-800 bg-slate-900/40 p-8">
+        <h2 class="text-lg font-bold text-white">
+          <span data-ja>判断のときに見るところ</span><span data-en>What to look at when deciding</span>
+        </h2>
+        <ul class="mt-5 space-y-3 text-sm leading-relaxed text-slate-400">
+          <li class="flex gap-2.5">
+            <span class="text-emerald-400" aria-hidden="true">&#8226;</span>
+            <span data-ja>
+              <strong class="text-slate-200">買い切りと月額を併売しない。</strong>
+              どちらの段階でも損益分岐が 4〜5 か月に来るので、
+              並べた瞬間に月額が選ばれなくなる。出すならどちらか一方
+            </span>
+            <span data-en>
+              <strong class="text-slate-200">Do not sell both at once.</strong>
+              Break-even lands at 4&ndash;5 months in either stage, so side by side the subscription
+              simply loses. Pick one
+            </span>
+          </li>
+          <li class="flex gap-2.5">
+            <span class="text-emerald-400" aria-hidden="true">&#8226;</span>
+            <span data-ja>
+              <strong class="text-slate-200">月額にするなら、月額でしか出せない価値を先に用意する。</strong>
+              こちらが継続的に費用を負担しているもの（ホスティング、配信データ）が
+              無いまま月額にすると、BYOK との二重取りに見える
+            </span>
+            <span data-en>
+              <strong class="text-slate-200">A subscription needs something only a subscription can deliver.</strong>
+              Without an ongoing cost on our side (hosting, delivered data), charging monthly on top
+              of BYOK reads as double-dipping
+            </span>
+          </li>
+          <li class="flex gap-2.5">
+            <span class="text-emerald-400" aria-hidden="true">&#8226;</span>
+            <span data-ja>
+              <strong class="text-slate-200">値上げの前に、V0 で買った人の扱いを決めておく。</strong>
+              「先に買ったほうが得だった」と言い切れる状態を保つ
+            </span>
+            <span data-en>
+              <strong class="text-slate-200">Settle what happens to V0 buyers before raising the price.</strong>
+              Buying early must stay unambiguously the better deal
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <p class="mt-12 text-center text-xs text-slate-600">
+        <span data-ja>このページは内部検討用です。公開の販売条件は index.html を参照。</span>
+        <span data-en>Internal use. The published terms live in index.html.</span>
+      </p>
+    </main>
+
+    <script>
+      /* 言語の切り替え。index.html と同じ保存キーを使うので、行き来しても言語が保たれる */
+      (function () {
+        var root = document.documentElement;
+        var stored = null;
+        try {
+          stored = localStorage.getItem("stoq.lp.lang");
+        } catch (e) {
+          /* プライベートモード等では保存しない */
+        }
+        // 検討用なので、指定が無ければ日本語で開く
+        root.lang = stored || "ja";
+
+        document.getElementById("lang-toggle").addEventListener("click", function () {
+          var next = root.lang === "ja" ? "en" : "ja";
+          root.lang = next;
+          try {
+            localStorage.setItem("stoq.lp.lang", next);
+          } catch (e) {
+            /* 保存できなくても切り替えは効く */
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
