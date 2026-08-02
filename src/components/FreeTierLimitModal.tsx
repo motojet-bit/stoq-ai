@@ -1,5 +1,6 @@
-import { FREE_TICKER_LIMIT } from "@/lib/license/freeTier";
+import { FREE_TICKER_LIMIT, type BlockReason } from "@/lib/license/freeTier";
 import { useUsedTickers } from "@/lib/license/freeTierStore";
+import { KEPT_ON_LOCK, lockBody, lockTitle } from "@/lib/license/lockMessages";
 import ModalShell from "@/components/ModalShell";
 import { IconBadge, IconKey } from "@/components/Icons";
 import { appName } from "@/lib/ui/appMeta";
@@ -8,6 +9,8 @@ interface Props {
   open: boolean;
   /** 制限に引っかかった銘柄 */
   ticker: string | null;
+  /** なぜ止めたのか。文面を切り替える */
+  reason?: BlockReason;
   onClose: () => void;
   /** 設定の「ライセンス認証」タブを開く */
   onOpenLicense: () => void;
@@ -22,6 +25,7 @@ interface Props {
 export default function FreeTierLimitModal({
   open,
   ticker,
+  reason = "tickerLimit",
   onClose,
   onOpenLicense,
 }: Props) {
@@ -30,7 +34,7 @@ export default function FreeTierLimitModal({
   return (
     <ModalShell
       open={open}
-      title={`🔒 無料版の分析上限（${FREE_TICKER_LIMIT}銘柄）に達しました`}
+      title={lockTitle(reason)}
       icon={<IconBadge className="h-4 w-4 text-amber-400" />}
       maxWidthClass="max-w-lg"
       onClose={onClose}
@@ -57,8 +61,13 @@ export default function FreeTierLimitModal({
       <div className="px-6 py-5">
         <p className="selectable t-body leading-relaxed text-slate-300">
           {appName()} をご利用いただきありがとうございます。
-          {FREE_TICKER_LIMIT + 1}銘柄目以降の無制限分析を行うには、
-          ライセンスキーを有効化してください。
+          {lockBody(reason)}
+        </p>
+
+        {/* ライセンスを入れてもデータが消えないことを先に伝える */}
+        <p className="mt-2 t-label leading-relaxed text-emerald-300/80">
+          ライセンスを有効化しても、これまでの分析結果・対話履歴・ポートフォリオは
+          そのまま引き継がれます。
         </p>
 
         {ticker && (
@@ -82,10 +91,11 @@ export default function FreeTierLimitModal({
               </span>
             ))}
           </div>
-          <p className="mt-2 t-label leading-relaxed text-slate-500">
-            この{used.length}銘柄は、無料版のまま**何度でも**再分析・対話・
-            過去ログの閲覧ができます。制限がかかるのは新しい銘柄だけです。
-          </p>
+          <ul className="mt-2 space-y-0.5 t-label leading-relaxed text-slate-500">
+            {KEPT_ON_LOCK.map((item) => (
+              <li key={item}>✓ {item}は制限なく続けられます</li>
+            ))}
+          </ul>
         </div>
       </div>
     </ModalShell>

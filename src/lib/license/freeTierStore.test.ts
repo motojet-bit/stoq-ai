@@ -36,6 +36,14 @@ function settings(freeTickers: string[]): AppSettings {
     license: { activated, masked: null, message: "" },
     freeTickers,
     eula: { agreed: true, agreedAtMs: 1_700_000_000_000 },
+    trial: {
+      startedAtMs: 1_700_000_000_000,
+      expiresAtMs: 1_700_000_000_000 + 21 * 86_400_000,
+      remainingDays: 21,
+      expired: false,
+      trialDays: 21,
+    },
+    customInstruction: "",
     cloud: {
       connected: false,
       clientIdConfigured: false,
@@ -73,15 +81,16 @@ describe("無料版ストア", () => {
     expect(store.getUsedTickers()).toEqual([]);
   });
 
-  it("3 銘柄までは通り、4 銘柄目で止まる", async () => {
+  it("10 銘柄までは通り、11 銘柄目で止まる", async () => {
     const store = await freshStore();
+    const tickers = Array.from({ length: 10 }, (_, i) => `T${i + 1}`);
 
-    for (const ticker of ["AAPL", "NVDA", "MSFT"]) {
+    for (const ticker of tickers) {
       expect(store.checkAccess(ticker).allowed).toBe(true);
       await store.useTicker(ticker);
     }
 
-    expect(store.getUsedTickers()).toEqual(["AAPL", "NVDA", "MSFT"]);
+    expect(store.getUsedTickers()).toEqual(tickers);
     expect(store.checkAccess("GOOGL").allowed).toBe(false);
     expect(store.checkAccess("GOOGL").limitReached).toBe(true);
   });
@@ -121,7 +130,7 @@ describe("無料版ストア", () => {
 
   it("ライセンス有効化で上限が即座に外れる", async () => {
     const store = await freshStore();
-    store.syncFromSettings(settings(["AAPL", "NVDA", "MSFT"]));
+    store.syncFromSettings(settings(Array.from({ length: 10 }, (_, i) => `T${i + 1}`)));
     expect(store.checkAccess("GOOGL").allowed).toBe(false);
 
     activated = true;
@@ -135,6 +144,60 @@ describe("無料版ストア", () => {
 
     await store.useTicker("AAPL");
     expect(toastError).toHaveBeenCalled();
+    expect(store.getUsedTickers()).toEqual(["AAPL"]);
+  });
+
+  it("**体験期間が切れると新規銘柄が止まる**", async () => {
+    const store = await freshStore();
+    store.syncFromSettings({
+      ...settings([]),
+      trial: {
+        startedAtMs: 0,
+        expiresAtMs: 1,
+        remainingDays: 0,
+        expired: true,
+        trialDays: 21,
+      },
+    });
+
+    const blocked = store.checkAccess("AAPL");
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.reason).toBe("trialExpired");
+  });
+
+  it("**期限切れでも既存銘柄は通る**（過去データの参照を止めない）", async () => {
+    const store = await freshStore();
+    store.syncFromSettings({
+      ...settings(["AAPL"]),
+      trial: {
+        startedAtMs: 0,
+        expiresAtMs: 1,
+        remainingDays: 0,
+        expired: true,
+        trialDays: 21,
+      },
+    });
+
+    expect(store.checkAccess("AAPL").allowed).toBe(true);
+  });
+
+  it("**ライセンスを入れると期限切れでも即座に通る**", async () => {
+    const store = await freshStore();
+    store.syncFromSettings({
+      ...settings(["AAPL"]),
+      trial: {
+        startedAtMs: 0,
+        expiresAtMs: 1,
+        remainingDays: 0,
+        expired: true,
+        trialDays: 21,
+      },
+    });
+    expect(store.checkAccess("NEW").allowed).toBe(false);
+
+    activated = true;
+    expect(store.checkAccess("NEW").allowed).toBe(true);
+    // 使用済みの記録はそのまま残る（データを引き継ぐ）
     expect(store.getUsedTickers()).toEqual(["AAPL"]);
   });
 

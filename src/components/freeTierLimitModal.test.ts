@@ -68,12 +68,12 @@ describe("提携導線を持たない", () => {
 });
 
 describe("上限モーダルの中身", () => {
-  it("指定どおりのタイトルを上限値から組み立てている", () => {
-    expect(MODAL).toContain("🔒 無料版の分析上限（");
-    expect(MODAL).toContain("FREE_TICKER_LIMIT");
-    // 「3」を直書きしていない（上限を変えたら文面も追従する）
-    expect(MODAL).not.toContain("上限（3銘柄）");
-    expect(FREE_TICKER_LIMIT).toBe(3);
+  it("タイトルと本文を理由ごとに切り替える", () => {
+    expect(MODAL).toContain("lockTitle(reason)");
+    expect(MODAL).toContain("lockBody(reason)");
+    // 文面を直書きしない（上限や日数を変えたら追従する）
+    expect(MODAL).not.toContain("上限（10銘柄）");
+    expect(FREE_TICKER_LIMIT).toBe(10);
   });
 
   it("残る導線は「あとで」と「ライセンスキーを入力」の 2 つ", () => {
@@ -84,8 +84,9 @@ describe("上限モーダルの中身", () => {
 
   it("**既存銘柄は使い続けられる**ことを伝えている", () => {
     // 「上限です」だけだと、既存銘柄まで止まったのかが分からず不安になる
-    expect(MODAL).toContain("再分析");
-    expect(MODAL).toContain("制限がかかるのは新しい銘柄だけ");
+    expect(MODAL).toContain("KEPT_ON_LOCK");
+    // ライセンスを入れてもデータが消えないことを先に伝える
+    expect(MODAL).toContain("引き継がれます");
   });
 
   it("分析済みの銘柄を列挙している", () => {

@@ -14,6 +14,7 @@ import { thresholdPreview } from "@/lib/prompts/analystRoleStore";
 import { TOOLTIPS } from "@/lib/ui/tooltipText";
 import Tooltip from "@/components/Tooltip";
 import { IconHelp } from "@/components/Icons";
+import CustomInstructionSettings from "@/components/CustomInstructionSettings";
 
 interface Props {
   settings: AppSettings | null;
@@ -188,6 +189,9 @@ export default function ThresholdSettings({ settings }: Props) {
           {preview}
         </pre>
       )}
+
+      {/* プリセットの横に置く自由記述欄 */}
+      <CustomInstructionSettings settings={settings} />
 
       {changed.length > 0 && (
         <p className="rounded-md border border-slate-700 bg-slate-800/50 px-3 py-2 t-label leading-relaxed text-slate-400">

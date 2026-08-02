@@ -59,6 +59,12 @@ pub struct Settings {
     /// 無料版で分析した銘柄（大文字）。上限に達したら増えない
     #[serde(default)]
     pub free_tickers: Vec<String>,
+    /// 初回起動の時刻（ミリ秒）。無料体験期間の起点
+    #[serde(default)]
+    pub first_installed_at_ms: i64,
+    /// 分析への追加指示（自由記述）。秘匿プロンプトの末尾へ Rust 側で結合する
+    #[serde(default)]
+    pub custom_instruction: String,
     /// 免責事項（EULA）に同意済みか。**ライセンスとは別**
     #[serde(default)]
     pub eula_agreed: bool,
@@ -94,6 +100,8 @@ impl Default for Settings {
             thresholds: BTreeMap::new(),
             license_key: String::new(),
             free_tickers: Vec::new(),
+            first_installed_at_ms: 0,
+            custom_instruction: String::new(),
             eula_agreed: false,
             eula_agreed_at_ms: 0,
             cloud: crate::cloud::CloudConfig::default(),
@@ -124,6 +132,10 @@ pub struct SettingsView {
     pub license: crate::license::LicenseStatus,
     /// 無料版で分析した銘柄
     pub free_tickers: Vec<String>,
+    /// 無料体験期間の状態
+    pub trial: crate::trial::TrialStatus,
+    /// 分析への追加指示（利用者自身が書いた文なのでそのまま返す）
+    pub custom_instruction: String,
     /// 免責事項への同意状態
     pub eula: crate::eula::EulaStatus,
     /// クラウド同期の状態（生のトークンは含まない）
@@ -199,6 +211,8 @@ impl Settings {
             thresholds: self.thresholds.clone(),
             license: crate::license::status_of(&self.license_key),
             free_tickers: self.free_tickers.clone(),
+            trial: crate::trial::status_of(self.first_installed_at_ms, crate::library::now_ms()),
+            custom_instruction: self.custom_instruction.clone(),
             eula: crate::eula::status_of(self.eula_agreed, self.eula_agreed_at_ms),
             cloud: crate::cloud::status_of(&self.cloud),
             keys: self
@@ -343,7 +357,15 @@ pub fn load(app: &AppHandle) -> Result<Settings> {
     // 壊れた設定ファイルで起動不能にならないよう、失敗時は既定値へフォールバックする
     let mut settings: Settings = serde_json::from_str(&text).unwrap_or_default();
 
-    if settings.migrate_legacy_custom() {
+    /*
+     * **初回起動の時刻はここで焼き付ける。** 体験期間の起点なので、
+     * 分析を一度も実行しなくても、アプリを開いた時点から数え始める。
+     */
+    let started = crate::trial::ensure_started(settings.first_installed_at_ms, crate::library::now_ms());
+    let stamped = started != settings.first_installed_at_ms;
+    settings.first_installed_at_ms = started;
+
+    if settings.migrate_legacy_custom() || stamped {
         save(app, &settings)?;
     }
     // 存在しないプロバイダが選択されたまま残らないようにする
@@ -456,6 +478,71 @@ mod tests {
         assert!(settings.cloud.client_id.is_empty());
         assert!(!settings.cloud.auto_backup);
         assert!(!settings.to_view().cloud.connected);
+    }
+
+    #[test]
+    fn ライセンスを入れてもデータは消えない() {
+        /*
+         * **有効化で触ってよいのは `license_key` だけ。**
+         * 体験期間の起点や使用済み銘柄まで書き換えると、
+         * 「買ったら過去のデータが消えた」という最悪の体験になる。
+         */
+        let mut s = Settings::default();
+        s.free_tickers = vec!["AAPL".into(), "NVDA".into()];
+        s.first_installed_at_ms = 1_700_000_000_000;
+        s.custom_instruction = "在庫水準を重点的に".into();
+        s.thresholds.insert("per".into(), 18.0);
+        s.cloud.client_id = "cid.apps.googleusercontent.com".into();
+        s.eula_agreed = true;
+        s.eula_agreed_at_ms = 1_700_000_000_000;
+
+        let before = s.clone();
+        // コマンド層と同じ操作（`license_activate` がするのはこれだけ）
+        s.license_key = crate::license::normalize_key(crate::license::MASTER_KEY);
+
+        assert!(s.to_view().license.activated);
+        assert_eq!(s.free_tickers, before.free_tickers);
+        assert_eq!(s.first_installed_at_ms, before.first_installed_at_ms);
+        assert_eq!(s.custom_instruction, before.custom_instruction);
+        assert_eq!(s.thresholds, before.thresholds);
+        assert_eq!(s.cloud.client_id, before.cloud.client_id);
+        assert!(s.eula_agreed);
+    }
+
+    #[test]
+    fn 初回起動の時刻は保存と読み込みで往復する() {
+        let mut s = Settings::default();
+        let now = crate::library::now_ms();
+        s.first_installed_at_ms = now;
+
+        let restored: Settings = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
+        assert_eq!(restored.first_installed_at_ms, now);
+        assert!(!restored.to_view().trial.expired, "起点が最近なら満了していない");
+
+        // 起点が 21 日より前なら満了している
+        s.first_installed_at_ms = now - crate::trial::TRIAL_MS - 1;
+        assert!(s.to_view().trial.expired);
+    }
+
+    #[test]
+    fn 体験期間を持たない旧設定ファイルも読める() {
+        let legacy = r#"{"provider":"openai"}"#;
+        let settings: Settings = serde_json::from_str(legacy).unwrap();
+
+        assert_eq!(settings.first_installed_at_ms, 0);
+        assert!(settings.custom_instruction.is_empty());
+        // 未記録なら「いま」を起点にするので満了扱いにしない
+        assert!(!settings.to_view().trial.expired);
+    }
+
+    #[test]
+    fn 自由記述は保存と読み込みで往復する() {
+        let mut s = Settings::default();
+        s.custom_instruction = "半導体サイクルの底打ちに注目".into();
+
+        let restored: Settings = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
+        assert_eq!(restored.custom_instruction, "半導体サイクルの底打ちに注目");
+        assert_eq!(restored.to_view().custom_instruction, "半導体サイクルの底打ちに注目");
     }
 
     #[test]

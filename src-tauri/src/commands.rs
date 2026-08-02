@@ -64,6 +64,8 @@ pub struct SettingsPatch {
     /// AI の合否判定に使う閾値。**渡した内容で丸ごと置き換える**
     /// （項目を消したいときに残ってしまわないように）
     pub thresholds: Option<std::collections::BTreeMap<String, f64>>,
+    /// 分析への追加指示（自由記述）
+    pub custom_instruction: Option<String>,
 }
 
 #[tauri::command]
@@ -102,6 +104,10 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
             .into_iter()
             .filter(|(_, v)| v.is_finite())
             .collect();
+    }
+    if let Some(instruction) = patch.custom_instruction {
+        // 長さの上限は結合側（prompts::custom_section）が持つ
+        current.custom_instruction = instruction.trim().to_string();
     }
 
     settings::save(&app, &current)?;

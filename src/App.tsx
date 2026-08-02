@@ -21,6 +21,7 @@ import {
 } from "@/lib/portfolio/portfolioStore";
 import { loadLicense } from "@/lib/license/licenseStore";
 import { checkAccess, useTicker } from "@/lib/license/freeTierStore";
+import type { BlockReason } from "@/lib/license/freeTier";
 import FreeTierLimitModal from "@/components/FreeTierLimitModal";
 import { bindingFromEvent } from "@/lib/ui/shortcutKeys";
 import { loadShortcuts, resolveAction } from "@/lib/ui/shortcutStore";
@@ -97,6 +98,7 @@ export default function App() {
   const [savingTicker, setSavingTicker] = useState<string | null>(null);
   // 無料版の上限に達したときに出す案内
   const [limitedTicker, setLimitedTicker] = useState<string | null>(null);
+  const [limitReason, setLimitReason] = useState<BlockReason>("tickerLimit");
   const sidebarMode = useSidebarMode();
   const portfolioSplit = usePortfolioSplit();
   // 初回だけ自動で開くチュートリアル。閉じたら印を残して二度と自動表示しない
@@ -150,6 +152,7 @@ export default function App() {
   const ensureAccess = (ticker: string): boolean => {
     const access = checkAccess(ticker);
     if (!access.allowed) {
+      setLimitReason(access.reason);
       setLimitedTicker(ticker.toUpperCase());
       return false;
     }
@@ -645,6 +648,7 @@ export default function App() {
       <FreeTierLimitModal
         open={limitedTicker !== null}
         ticker={limitedTicker}
+        reason={limitReason}
         onClose={() => setLimitedTicker(null)}
         onOpenLicense={() => {
           setLimitedTicker(null);

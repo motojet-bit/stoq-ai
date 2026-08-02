@@ -25,6 +25,7 @@ mod prompts;
 mod quarterly;
 mod settings;
 mod shortcuts;
+mod trial;
 mod yahoo;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

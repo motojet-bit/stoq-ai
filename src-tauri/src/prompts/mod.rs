@@ -223,6 +223,34 @@ pub struct AnalysisPreset {
     /// 出力言語（`ja` / `en` …）。未指定なら日本語
     #[serde(default)]
     pub locale: Option<String>,
+    /// ユーザーが自由記述で足す追加指示。**基本プロンプトの中身は返さない**まま、
+    /// この文字列だけを末尾に結合する
+    #[serde(default)]
+    pub custom_instruction: Option<String>,
+}
+
+/// 自由記述で受け付ける最大文字数。
+///
+/// **無制限にしない。** ここに長文を貼られると、そのぶん一次資料に
+/// 割ける予算が減り、分析の材料が痩せる。
+pub const MAX_CUSTOM_INSTRUCTION: usize = 2000;
+
+/// 自由記述の追加指示を、プロンプトに載せられる形に整える。
+///
+/// 空なら `None`。前後の空白を落とし、長すぎるぶんは切り捨てる。
+pub fn custom_section(instruction: Option<&str>) -> Option<String> {
+    let text = instruction?.trim();
+    if text.is_empty() {
+        return None;
+    }
+
+    let trimmed: String = text.chars().take(MAX_CUSTOM_INSTRUCTION).collect();
+    Some(format!(
+        "# 追加指示（利用者からの指定）\n\
+         以下は利用者が指定した追加の観点です。\
+         **上記の出力フォーマットと評価項目は変更せず**、その枠内で反映してください。\n\n\
+         {trimmed}"
+    ))
 }
 
 /// 出力言語の指示。
@@ -252,12 +280,22 @@ pub fn build_system_prompt(preset: &AnalysisPreset) -> String {
     let role = role_def(preset.role_id.as_deref().unwrap_or(DEFAULT_ROLE));
     let thresholds = threshold_section(&preset.thresholds);
 
+    let custom = custom_section(preset.custom_instruction.as_deref());
+
     let mut parts: Vec<&str> = vec![
         role.body.trim(),
         CORE.trim(),
         thresholds.trim(),
         OUTPUT.trim(),
     ];
+
+    /*
+     * 自由記述は**出力フォーマットの後ろ**に置く。前に置くと、
+     * 追加指示のほうが強く効いて表の形が崩れ、結果を読めなくなる。
+     */
+    if let Some(section) = custom.as_deref() {
+        parts.push(section);
+    }
 
     // 言語指示は最後に置く。**後ろにあるほど守られやすい**
     if let Some(directive) = language_directive(preset.locale.as_deref()) {
@@ -289,7 +327,74 @@ mod tests {
                 .map(|(k, v)| ((*k).to_string(), *v))
                 .collect(),
             locale: None,
+            custom_instruction: None,
         }
+    }
+
+    // ------------------------------------------------ 自由記述の追加指示
+
+    #[test]
+    fn 空の自由記述は何も足さない() {
+        assert!(custom_section(None).is_none());
+        assert!(custom_section(Some("")).is_none());
+        assert!(custom_section(Some("　 \n ")).is_none());
+    }
+
+    #[test]
+    fn 自由記述は見出し付きで載る() {
+        let section = custom_section(Some("半導体サイクルの底打ちに注目して")).unwrap();
+        assert!(section.starts_with("# 追加指示"));
+        assert!(section.contains("半導体サイクルの底打ちに注目して"));
+    }
+
+    #[test]
+    fn 自由記述に出力形式を壊さない釘を刺す() {
+        let section = custom_section(Some("自由に書いて")).unwrap();
+        assert!(section.contains("出力フォーマットと評価項目は変更せず"));
+    }
+
+    #[test]
+    fn 長すぎる自由記述は切り詰める() {
+        // 一次資料に割ける予算を食い潰させない
+        let long = "あ".repeat(MAX_CUSTOM_INSTRUCTION + 500);
+        let section = custom_section(Some(&long)).unwrap();
+        let body = section.split("\n\n").nth(1).unwrap();
+        assert_eq!(body.chars().count(), MAX_CUSTOM_INSTRUCTION);
+    }
+
+    #[test]
+    fn 自由記述はプロンプトの末尾側に入る() {
+        let mut p = preset("general", &[]);
+        p.custom_instruction = Some("配当の継続性を厳しく見て".into());
+        let prompt = build_system_prompt(&p);
+
+        assert!(prompt.contains("配当の継続性を厳しく見て"));
+        // 出力フォーマットより後ろ（追加指示が表の形を上書きしないように）
+        assert!(prompt.find("# 追加指示").unwrap() > prompt.find(OUTPUT.trim()).unwrap());
+    }
+
+    #[test]
+    fn 自由記述があっても基本プロンプトは残る() {
+        let mut p = preset("growth", &[]);
+        p.custom_instruction = Some("追加の観点".into());
+        let with = build_system_prompt(&p);
+        let without = build_system_prompt(&preset("growth", &[]));
+
+        // 差分は追加指示のぶんだけ
+        assert!(with.len() > without.len());
+        for line in without.lines().filter(|l| l.trim().len() > 10) {
+            assert!(with.contains(line), "基本プロンプトの行が消えている: {line}");
+        }
+    }
+
+    #[test]
+    fn 自由記述より言語指示が後ろに来る() {
+        let mut p = preset("general", &[]);
+        p.custom_instruction = Some("追加の観点".into());
+        p.locale = Some("en".into());
+        let prompt = build_system_prompt(&p);
+
+        assert!(prompt.find("# 追加指示").unwrap() < prompt.find("Respond all analysis").unwrap());
     }
 
     // ------------------------------------------------ 役割の選択
@@ -516,6 +621,7 @@ mod tests {
             role_id: Some("growth".into()),
             thresholds: BTreeMap::new(),
             locale: Some("en".into()),
+            custom_instruction: None,
         };
         let prompt = build_system_prompt(&preset);
 
@@ -538,6 +644,7 @@ mod tests {
             role_id: Some("general".into()),
             thresholds: BTreeMap::new(),
             locale: Some("en".into()),
+            custom_instruction: None,
         });
 
         for heading in ["# 厳守事項", "## 評価テーブル", "## 総合投資判断"] {

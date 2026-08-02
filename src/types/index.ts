@@ -59,12 +59,32 @@ export interface AppSettings {
   license: LicenseStatus;
   /** 無料版で分析した銘柄（大文字） */
   freeTickers: string[];
+  /** 無料体験期間の状態 */
+  trial: TrialStatus;
+  /** 分析への追加指示（自由記述） */
+  customInstruction: string;
   /** 免責事項への同意状態 */
   eula: EulaStatus;
   /** クラウド同期の状態 */
   cloud: CloudStatus;
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
+}
+
+/**
+ * 無料体験期間の状態。起点は**初回起動日**で、Rust 側が持つ。
+ */
+export interface TrialStatus {
+  /** 初回起動の時刻（ミリ秒） */
+  startedAtMs: number;
+  /** 期限（ミリ秒） */
+  expiresAtMs: number;
+  /** 残り日数（切り上げ）。切れていれば 0 */
+  remainingDays: number;
+  /** 期限切れか */
+  expired: boolean;
+  /** 体験期間の長さ（日） */
+  trialDays: number;
 }
 
 /**
@@ -128,6 +148,8 @@ export interface SettingsPatch {
   marketProvider?: MarketProviderId;
   /** 渡した内容で丸ごと置き換える */
   thresholds?: Record<string, number>;
+  /** 分析への追加指示（自由記述） */
+  customInstruction?: string;
 }
 
 /** settings_update_custom_provider に渡す差分 */

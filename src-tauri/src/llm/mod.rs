@@ -100,6 +100,13 @@ pub async fn send(
         if preset.locale.is_none() {
             preset.locale = request.locale.clone();
         }
+        /*
+         * 自由記述の追加指示は**設定ファイルが一次情報**。
+         * フロントから毎回送らせると、画面ごとに渡し忘れが起きる。
+         */
+        if preset.custom_instruction.is_none() {
+            preset.custom_instruction = Some(settings.custom_instruction.clone());
+        }
         request.system = Some(crate::prompts::build_system_prompt(&preset));
     } else if let Some(directive) = crate::prompts::language_directive(request.locale.as_deref())
     {

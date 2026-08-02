@@ -8,6 +8,8 @@ import PanelHeader from "@/components/PanelHeader";
 import AnalystRoleMenu from "@/components/AnalystRoleMenu";
 import ExportMenu from "@/components/ExportMenu";
 import { buildAnalysisRecord } from "@/lib/export/analysisRecord";
+import { useAccess } from "@/lib/license/freeTierStore";
+import { LOCK_HINT } from "@/lib/license/lockMessages";
 import {
   IconBookmark,
   IconChart,
@@ -66,6 +68,11 @@ export default function AnalysisPanel({
   const streaming = run?.phase === "streaming" || run?.phase === "collecting";
   const result = run?.result ?? null;
   const hasContent = (run?.raw.length ?? 0) > 0;
+
+  // 体験期間切れ・銘柄上限。**既存の結果を開いているだけなら止めない**
+  const access = useAccess(ticker);
+  const locked = !access.allowed && access.reason !== "none";
+  const lockedReason = locked ? LOCK_HINT[access.reason as "trialExpired" | "tickerLimit"] : "";
 
   // ストリーミング中は末尾を追いかける
   useEffect(() => {
@@ -158,12 +165,29 @@ export default function AnalysisPanel({
               <button
                 type="button"
                 onClick={onRun}
+                /*
+                 * 体験期間切れのときは `disabled` を付けない。
+                 * **本物の disabled はクリックを拾えず、案内を出せない。**
+                 * 見た目と支援技術には無効と伝えつつ、押されたら
+                 * 購入案内のダイアログを出す（判定は `App.ensureAccess`）。
+                 */
                 disabled={!ticker || !ready}
-                title={!ticker ? "先に銘柄を分析してください" : (readyReason ?? "AI分析を実行")}
-                className="t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded bg-emerald-600 px-2.5 font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
+                aria-disabled={locked || undefined}
+                title={
+                  locked
+                    ? lockedReason
+                    : !ticker
+                      ? "先に銘柄を分析してください"
+                      : (readyReason ?? "AI分析を実行")
+                }
+                className={`t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded px-2.5 font-medium disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500 ${
+                  locked
+                    ? "cursor-not-allowed bg-slate-800 text-slate-500"
+                    : "bg-emerald-600 text-white hover:bg-emerald-500"
+                }`}
               >
                 <IconPlay className="h-3 w-3" />
-                {hasContent ? "再分析" : "AI分析を実行"}
+                {locked ? "⏳ 体験期間終了" : hasContent ? "再分析" : "AI分析を実行"}
               </button>
             )}
           </>

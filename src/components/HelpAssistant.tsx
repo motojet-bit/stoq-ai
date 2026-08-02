@@ -3,6 +3,8 @@ import type { AppSettings, DisplayMessage } from "@/types";
 import { streamChat } from "@/lib/llm/client";
 import { providerReadiness } from "@/lib/config/providers";
 import { buildHelpSystemPrompt, HELP_EXAMPLES } from "@/lib/prompts/helpKnowledge";
+import ApiKeyGuide from "@/components/ApiKeyGuide";
+import { useT } from "@/lib/i18n/i18n";
 import { useBindings } from "@/lib/ui/shortcutStore";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { IconClose, IconHelp } from "@/components/Icons";
@@ -36,6 +38,7 @@ export default function HelpAssistant({
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const t = useT();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<DisplayMessage[]>(messages);
   messagesRef.current = messages;
@@ -44,6 +47,9 @@ export default function HelpAssistant({
   const { ready, reason } = settings
     ? providerReadiness(settings, settings.provider)
     : { ready: false, reason: null };
+
+  // キー未設定だと AI 自体が動かないので、ガイドを先に見せる
+  const [tab, setTab] = useState<"ask" | "guide">(ready ? "ask" : "guide");
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -144,8 +150,33 @@ export default function HelpAssistant({
         </div>
       </header>
 
+      <div className="flex shrink-0 items-center gap-1 border-b border-slate-800 px-3">
+        {(
+          [
+            ["ask", t("apiGuide.ask")],
+            ["guide", t("apiGuide.tab")],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            aria-pressed={tab === id}
+            className={`-mb-px border-b-2 px-2.5 py-1.5 t-label transition-colors ${
+              tab === id
+                ? "border-emerald-500 font-medium text-emerald-300"
+                : "border-transparent text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-        {messages.length === 0 ? (
+        {tab === "guide" ? (
+          <ApiKeyGuide onOpenSettings={onOpenSettings} />
+        ) : messages.length === 0 ? (
           <div className="space-y-3">
             <p className="t-body leading-relaxed text-slate-400">
               このアプリの使い方について何でも聞いてください。
@@ -225,6 +256,8 @@ export default function HelpAssistant({
         </a>
       </div>
 
+      {/* ガイドを読んでいるときは入力欄を出さない（読む幅を取る） */}
+      {tab === "ask" && (
       <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2">
         <div className="flex items-end gap-2">
           <textarea
@@ -246,6 +279,7 @@ export default function HelpAssistant({
           </button>
         </div>
       </div>
+      )}
     </aside>
   );
 }

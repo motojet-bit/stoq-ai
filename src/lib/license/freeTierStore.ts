@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
-import type { AppSettings } from "@/types";
-import { getLicense } from "@/lib/license/licenseStore";
+import type { AppSettings, TrialStatus } from "@/types";
+import { getLicense, useLicense } from "@/lib/license/licenseStore";
 import {
   evaluateAccess,
   registerTicker,
@@ -16,6 +16,13 @@ import {
  * ブラウザデータの消去で制限が外れてしまう。
  */
 let usedTickers: string[] = [];
+
+/**
+ * 体験期間の状態。**起点は Rust が持つ**
+ * （初回起動時に設定ファイルへ焼き付ける）。
+ * 未確認のうちは期限切れ扱いにしない（読み込み中に止めない）。
+ */
+let trial: TrialStatus | null = null;
 
 const listeners = new Set<() => void>();
 
@@ -45,14 +52,34 @@ export function getUsedTickers(): string[] {
   return usedTickers;
 }
 
+export function getTrial(): TrialStatus | null {
+  return trial;
+}
+
+export function useTrial(): TrialStatus | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => trial,
+    () => trial,
+  );
+}
+
 /** 設定を読み込んだときに同期する。 */
 export function syncFromSettings(settings: AppSettings | null): void {
   const next = settings?.freeTickers ?? [];
+  const nextTrial = settings?.trial ?? null;
+  const sameTickers =
+    next.length === usedTickers.length && next.every((t, i) => t === usedTickers[i]);
+  const sameTrial =
+    trial?.expiresAtMs === nextTrial?.expiresAtMs &&
+    trial?.expired === nextTrial?.expired &&
+    trial?.remainingDays === nextTrial?.remainingDays;
+
   // 内容が同じなら再描画を起こさない
-  if (next.length === usedTickers.length && next.every((t, i) => t === usedTickers[i])) {
-    return;
-  }
+  if (sameTickers && sameTrial) return;
+
   usedTickers = next;
+  if (nextTrial) trial = nextTrial;
   emit();
 }
 
@@ -62,6 +89,27 @@ export function checkAccess(ticker: string): AccessResult {
     activated: getLicense().activated,
     usedTickers,
     ticker,
+    trialExpired: trial?.expired ?? false,
+  });
+}
+
+/**
+ * 画面から使う判定。銘柄・体験期間・ライセンスの
+ * **どれが変わっても再描画される**。
+ */
+export function useAccess(ticker: string | null): AccessResult {
+  useSyncExternalStore(
+    subscribe,
+    () => usedTickers,
+    () => usedTickers,
+  );
+  const license = useLicense();
+
+  return evaluateAccess({
+    activated: license.activated,
+    usedTickers,
+    ticker: ticker ?? "",
+    trialExpired: trial?.expired ?? false,
   });
 }
 
@@ -89,5 +137,6 @@ export async function useTicker(ticker: string): Promise<void> {
 /** テスト用。 */
 export function resetFreeTier(): void {
   usedTickers = [];
+  trial = null;
   emit();
 }
