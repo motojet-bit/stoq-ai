@@ -133,6 +133,9 @@ const LOCALIZED = [
   // --- 67章: 残りの日本語 ---
   "src/lib/prompts/helpKnowledge.ts",
   "src/lib/prompts/promptLibrary.ts",
+  "src/lib/parser/fiscalPeriod.ts",
+  "src/lib/prompts/citations.ts",
+  "src/lib/prompts/periodLink.ts",
   "src/lib/debate/debateStore.ts",
   "src/lib/debate/debateTurn.ts",
   "src/lib/portfolio/heatmap.ts",

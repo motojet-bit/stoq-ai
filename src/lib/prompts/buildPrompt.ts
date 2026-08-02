@@ -1,6 +1,7 @@
 import { t } from "@/lib/i18n/i18n";
 import { estimateTokens } from "@/lib/parser/tokenCount";
 import { condenseDocument } from "@/lib/prompts/condense";
+import { buildPeriodSection, linkFiscalPeriod, type PeriodLink } from "@/lib/prompts/periodLink";
 import type { Fundamentals, QuarterlySeries } from "@/types";
 
 /** プロンプトに載せる 1 件の一次資料 */
@@ -37,6 +38,11 @@ export interface PromptSources {
 
 export interface BuiltPrompt {
   user: string;
+  /**
+   * 添付資料から読み取れた決算期と、当時の四半期データの突き合わせ結果。
+   * 読み取れなければ null（分析は止めない）。
+   */
+  periodLink: PeriodLink | null;
   /** 全体の概算トークン数 */
   tokens: number;
   /** 切り詰めが起きた場合の説明。UI にそのまま出せる日本語 */
@@ -76,11 +82,20 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   const metrics = buildMetricsSection(sources.fundamentals);
   const quarterly = buildQuarterlySection(sources.quarterly);
 
+  /*
+   * 決算期の突き合わせ。**資料の切り詰めより先に判定する。**
+   * 表紙は先頭にあるので圧縮で落ちることは少ないが、
+   * 落ちてから探しても遅い。
+   */
+  const periodLink = linkFiscalPeriod(sources.documents, sources.quarterly);
+  const periodSection = buildPeriodSection(periodLink);
+
   const fixedTokens =
     sources.systemTokens +
     estimateTokens(header) +
     estimateTokens(metrics) +
     estimateTokens(quarterly) +
+    estimateTokens(periodSection) +
     // 見出しや区切りの分の余裕
     500;
 
@@ -90,7 +105,7 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
     notes.push(
       t("prompt.budgetTooSmall"),
     );
-    return finish(sources.systemTokens, [header, metrics, quarterly], notes);
+    return finish(sources.systemTokens, [header, metrics, quarterly, periodSection], notes, periodLink);
   }
 
   // 資料と SEC で予算を分ける。片方が使い切らなければ他方へ回す。
@@ -113,8 +128,9 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
 
   const built = finish(
     sources.systemTokens,
-    [header, metrics, quarterly, filingSection, documentsSection],
+    [header, metrics, quarterly, periodSection, filingSection, documentsSection],
     notes,
+    periodLink,
   );
 
   // 節ごとの切り詰めは概算なので、最後に全体で上限を検算する
@@ -125,9 +141,14 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   );
 }
 
-function finish(systemTokens: number, parts: string[], notes: string[]): BuiltPrompt {
+function finish(
+  systemTokens: number,
+  parts: string[],
+  notes: string[],
+  periodLink: PeriodLink | null = null,
+): BuiltPrompt {
   const user = parts.filter((p) => p.length > 0).join("\n\n");
-  return { user, tokens: systemTokens + estimateTokens(user), notes };
+  return { user, tokens: systemTokens + estimateTokens(user), notes, periodLink };
 }
 
 /**
@@ -162,6 +183,8 @@ function enforceLimit(
       ...built.notes,
       t("prompt.condensedFurther"),
     ],
+    // 切り詰めても決算期の判定結果は捨てない（画面で使う）
+    periodLink: built.periodLink,
   };
 }
 

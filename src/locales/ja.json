@@ -981,5 +981,17 @@
   "debate.critiqueFailed": "批判の生成に失敗しました",
   "debate.rebuttalFailed": "反論の生成に失敗しました",
   "debate.toggleOpen": "批判的検証を開く",
-  "debate.toggleClose": "批判的検証を閉じる"
+  "debate.toggleClose": "批判的検証を閉じる",
+  "prompt.periodHeading": "## 添付資料の決算期と、当時の市場データ",
+  "prompt.periodDetected": "この資料は **{{key}}** のものと判定した（資料内の記載: 「{{text}}」／ファイル: {{document}}）。",
+  "prompt.periodMatched": "当時の四半期データ（{{label}}、期末 {{endDate}}）が取得できたので、下表に示す。",
+  "prompt.periodColItem": "項目",
+  "prompt.periodColValue": "当時の値",
+  "prompt.periodRevenue": "売上",
+  "prompt.periodNetIncome": "純利益",
+  "prompt.periodYoy": "前年同期比",
+  "prompt.periodQoq": "前四半期比",
+  "prompt.periodEps": "EPS（実績）",
+  "prompt.periodCompare": "**資料の数値と上表を突き合わせ、食い違いがあれば必ず指摘すること。** 一致しない場合は、どちらの値をどの根拠で採ったかを明記する。",
+  "prompt.periodUnmatched": "**当時の四半期データは取得できなかった**（取得元が保持している期間の外）。添付資料の数値のみで分析し、当時の株価や市場データを推測で補わないこと。"
 }

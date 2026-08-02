@@ -981,5 +981,17 @@
   "debate.critiqueFailed": "Could not generate the findings",
   "debate.rebuttalFailed": "Could not generate the rebuttal",
   "debate.toggleOpen": "Open the critical review",
-  "debate.toggleClose": "Close the critical review"
+  "debate.toggleClose": "Close the critical review",
+  "prompt.periodHeading": "## Fiscal period of the attached document, and the market data from that time",
+  "prompt.periodDetected": "This document was identified as **{{key}}** (found in the text: \"{{text}}\" / file: {{document}}).",
+  "prompt.periodMatched": "The quarterly data from that period ({{label}}, ending {{endDate}}) was retrieved and is shown below.",
+  "prompt.periodColItem": "Item",
+  "prompt.periodColValue": "Value at the time",
+  "prompt.periodRevenue": "Revenue",
+  "prompt.periodNetIncome": "Net income",
+  "prompt.periodYoy": "YoY",
+  "prompt.periodQoq": "QoQ",
+  "prompt.periodEps": "EPS (actual)",
+  "prompt.periodCompare": "**Compare the figures in the document against the table above and call out any discrepancy.** If they disagree, state which value you used and why.",
+  "prompt.periodUnmatched": "**No quarterly data is available for that period** (it falls outside the range the data source keeps). Analyze using the document's figures alone, and do not guess at the share price or market data from that time."
 }
