@@ -13,10 +13,10 @@
 | プレースホルダ | 何を入れるか |
 | --- | --- |
 | `__LEMONSQUEEZY_CHECKOUT_URL__` | Lemon Squeezy の商品チェックアウト URL |
-| `__SUPPORT_EMAIL__` | サポート窓口のメールアドレス |
+| ~~`__SUPPORT_EMAIL__`~~ | 設定済み（`superpuzanoza@gmail.com`） |
 
-> アプリ側の `src/lib/ui/tooltipText.ts` の `FEATURE_REQUEST_EMAIL` も
-> `xxxx@xxx.com` のままなので、同じアドレスに揃えること。
+> アプリ側（`src/lib/ui/tooltipText.ts` の `FEATURE_REQUEST_EMAIL`）も
+> 同じアドレスに揃えてある。片方だけ変えないこと。
 
 ダウンロードボタンは `https://github.com/motojet-bit/stoq-releases/releases/latest`
 を指している。**`stoq-releases` にリリースが 1 つも無い間は 404 になる**ので、
