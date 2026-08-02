@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StoQ AI Analyzer — AI fundamental analysis for US &amp; global equities</title>
+    <meta
+      name="description"
+      content="A desktop app that turns financial data and filings into a 20-point fundamental assessment. Bring your own API key, keep every byte on your machine."
+    />
+    <meta property="og:title" content="StoQ AI Analyzer" />
+    <meta
+      property="og:description"
+      content="AI fundamental analysis for US & global equities. Bring your own API key. Your data never leaves your machine."
+    />
+    <meta property="og:type" content="website" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Hiragino Sans",
+                "Noto Sans JP",
+                "sans-serif",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* 言語の切り替え。既定は英語（アプリ本体と同じ方針） */
+      html[lang="en"] [data-ja] { display: none; }
+      html[lang="ja"] [data-en] { display: none; }
+      .glow {
+        background-image: radial-gradient(
+          60rem 30rem at 50% -10%,
+          rgba(16, 185, 129, 0.18),
+          transparent 70%
+        );
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-950 font-sans text-slate-300 antialiased">
+    <!-- ============================================================ ヘッダー -->
+    <header
+      class="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur"
+    >
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+        <a href="#top" class="flex items-center gap-2.5">
+          <span
+            class="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-500/30"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 4 5-8" /><path d="M3 21h18" />
+            </svg>
+          </span>
+          <span class="text-[15px] font-semibold tracking-tight">
+            <span class="text-emerald-400" data-ja>株究</span>
+            <span class="text-emerald-400" data-en>StoQ</span>
+            <span class="ml-0.5 text-slate-200" data-ja>- StoQ AI Analyzer</span>
+            <span class="ml-0.5 text-slate-200" data-en>AI Analyzer</span>
+          </span>
+        </a>
+
+        <nav class="flex items-center gap-1.5 sm:gap-3">
+          <a
+            href="#features"
+            class="hidden rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100 sm:block"
+          >
+            <span data-en>Features</span><span data-ja>機能</span>
+          </a>
+          <a
+            href="#pricing"
+            class="hidden rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100 sm:block"
+          >
+            <span data-en>Pricing</span><span data-ja>価格</span>
+          </a>
+
+          <button
+            type="button"
+            id="lang-toggle"
+            class="rounded-md border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
+            aria-label="Switch language"
+          >
+            <span data-en>日本語</span><span data-ja>English</span>
+          </button>
+
+          <a
+            href="#download"
+            class="rounded-md bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+          >
+            <span data-en>Free download</span><span data-ja>無料ダウンロード</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- ========================================================== ヒーロー -->
+      <section class="glow relative overflow-hidden">
+        <div class="mx-auto max-w-4xl px-5 pb-20 pt-20 text-center sm:pt-28">
+          <p
+            class="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-900/70 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+            <span data-en>Desktop app for Windows &middot; Bring your own API key</span>
+            <span data-ja>Windows デスクトップアプリ &middot; APIキー持ち込み型</span>
+          </p>
+
+          <h1
+            class="text-balance text-4xl font-bold leading-[1.15] tracking-tight text-white sm:text-6xl"
+          >
+            <span data-en>
+              Read the filings.<br />
+              <span class="text-emerald-400">Not the hype.</span>
+            </span>
+            <span data-ja>
+              決算を、読み解く。<br />
+              <span class="text-emerald-400">空気ではなく。</span>
+            </span>
+          </h1>
+
+          <p
+            class="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-slate-400 sm:text-lg"
+          >
+            <span data-en>
+              StoQ pulls financial metrics, quarterly momentum and SEC filings, adds the
+              earnings decks you drop in, and hands the whole thing to an LLM — returning a
+              structured 20-point fundamental assessment you can compare across quarters.
+            </span>
+            <span data-ja>
+              財務指標・四半期モメンタム・SEC 提出書類に、あなたが読み込ませた決算資料を束ねて
+              LLM へ渡し、20 項目のファンダメンタル評価を構造化して返します。
+              決算期をまたいだ比較まで、ひとつの画面で。
+            </span>
+          </p>
+
+          <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="#download"
+              class="w-full rounded-lg bg-emerald-600 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-emerald-900/40 transition-colors hover:bg-emerald-500 sm:w-auto"
+            >
+              <span data-en>Start the $0 free trial</span>
+              <span data-ja>$0 の無料トライアルを始める</span>
+            </a>
+            <a
+              href="#pricing"
+              class="w-full rounded-lg border border-slate-700 px-7 py-3.5 text-base font-medium text-slate-200 transition-colors hover:border-slate-600 hover:bg-slate-900 sm:w-auto"
+            >
+              <span data-en>See pricing</span><span data-ja>価格を見る</span>
+            </a>
+          </div>
+
+          <p class="mt-4 text-xs text-slate-500">
+            <span data-en>3 weeks &middot; 10 tickers &middot; every feature unlocked &middot; no card required</span>
+            <span data-ja>3 週間 &middot; 10 銘柄 &middot; 全機能を開放 &middot; クレジットカード不要</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- ========================================================== 特徴 -->
+      <section id="features" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-6xl px-5">
+          <h2 class="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>Built for people who actually read the numbers</span>
+            <span data-ja>数字を自分で読む人のために</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+            <span data-en>
+              No signals, no scores handed down from a black box you cannot inspect.
+            </span>
+            <span data-ja>
+              シグナルの配信でも、中身の見えない点数付けでもありません。
+            </span>
+          </p>
+
+          <div class="mt-14 grid gap-6 md:grid-cols-3">
+            <!-- ① -->
+            <article
+              class="rounded-2xl border border-slate-800 bg-slate-900/40 p-7 transition-colors hover:border-slate-700"
+            >
+              <span
+                class="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/25"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-5 w-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h8M8 17h5" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-lg font-semibold text-white">
+                <span data-en>AI analysis, written up for you</span>
+                <span data-ja>AI 分析とレポート自動生成</span>
+              </h3>
+              <p class="mt-3 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Twenty evaluation axes across business, growth, profitability, financials,
+                  management and risk — each with a score and the reasoning behind it. Export
+                  to CSV, Markdown or JSON, or send a whole quarterly history back into the chat.
+                </span>
+                <span data-ja>
+                  事業・成長・収益性・財務・経営・リスクの 20 項目を、スコアと根拠つきで評価。
+                  CSV / Markdown / JSON へ書き出せるほか、過去全四半期をまとめて対話へ送れます。
+                </span>
+              </p>
+            </article>
+
+            <!-- ② -->
+            <article
+              class="rounded-2xl border border-slate-800 bg-slate-900/40 p-7 transition-colors hover:border-slate-700"
+            >
+              <span
+                class="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/25"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-5 w-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-lg font-semibold text-white">
+                <span data-en>Thresholds you set, applied strictly</span>
+                <span data-ja>あなたの基準で、しきい値判定</span>
+              </h3>
+              <p class="mt-3 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Growth investors and value investors do not share a pass mark. Set your own bar
+                  for revenue growth, operating margin, ROE, cash runway, P/E, D/E and more — the
+                  numbers go straight into the prompt, and every verdict states which bar it met.
+                </span>
+                <span data-ja>
+                  成長株を探す人と割安株を探す人では、合格ラインが違います。
+                  売上成長率・営業利益率・ROE・キャッシュランウェイ・PER・D/E などを自分で設定でき、
+                  その数値がそのままプロンプトに入り、各項目の根拠に合否が明記されます。
+                </span>
+              </p>
+            </article>
+
+            <!-- ③ -->
+            <article
+              class="rounded-2xl border border-slate-800 bg-slate-900/40 p-7 transition-colors hover:border-slate-700"
+            >
+              <span
+                class="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/25"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" class="h-5 w-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-lg font-semibold text-white">
+                <span data-en>Your key, your machine, your data</span>
+                <span data-ja>BYOK &mdash; 鍵もデータも、あなたの手元に</span>
+              </h3>
+              <p class="mt-3 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  You contract directly with OpenAI, Anthropic or Google, so we take no cut and add
+                  no subscription. Your API key is stored in your OS config directory and never sent
+                  to us. Analyses, chats and portfolios live in local SQLite files.
+                </span>
+                <span data-ja>
+                  OpenAI / Anthropic / Google と直接契約する方式なので、当方は中間マージンを取らず、
+                  月額の上乗せもありません。APIキーは OS の設定ディレクトリにのみ保存され、
+                  当方のサーバーへ送信されることはありません。分析結果・対話・ポートフォリオは
+                  すべて手元の SQLite に保存されます。
+                </span>
+              </p>
+            </article>
+          </div>
+
+          <p class="mx-auto mt-10 max-w-3xl text-center text-xs leading-relaxed text-slate-500">
+            <span data-en>
+              Typical AI cost is roughly $0.03&ndash;$0.10 per analysis, billed by your provider —
+              it varies with the model you pick and how much source material you attach. Set a usage
+              limit on your provider's console and you cannot be surprised by a bill.
+            </span>
+            <span data-ja>
+              AI の費用の目安は 1 銘柄あたり約 5〜15 円（各社への従量課金）。
+              選ぶモデルと添付資料の量によって変動します。
+              各社の管理画面で利用上限を設定しておけば、想定外の請求は防げます。
+            </span>
+          </p>
+        </div>
+      </section>
+
+      <!-- ========================================================== 価格 -->
+      <section id="pricing" class="border-t border-slate-900 bg-slate-900/20 py-20 sm:py-24">
+        <div class="mx-auto max-w-5xl px-5">
+          <h2 class="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>Try it first. Buy it once.</span>
+            <span data-ja>まず試して、買うのは一度だけ。</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+            <span data-en>No subscription. The license is tied to you, not to a billing cycle.</span>
+            <span data-ja>サブスクリプションはありません。買い切りです。</span>
+          </p>
+
+          <div class="mt-14 grid gap-6 md:grid-cols-2">
+            <!-- Free -->
+            <div class="rounded-2xl border border-slate-800 bg-slate-950 p-8">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <span data-en>Free Trial</span><span data-ja>無料トライアル</span>
+              </h3>
+              <p class="mt-4 flex items-baseline gap-1">
+                <span class="text-5xl font-bold tracking-tight text-white">$0</span>
+              </p>
+              <p class="mt-3 text-sm text-slate-400">
+                <span data-en>Every feature, for three weeks.</span>
+                <span data-ja>全機能を 3 週間。</span>
+              </p>
+
+              <ul class="mt-7 space-y-3 text-sm text-slate-300">
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>3 weeks from first launch</span>
+                  <span data-ja>初回起動から 3 週間</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Up to 10 tickers</span>
+                  <span data-ja>10 銘柄まで</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>No feature is held back</span>
+                  <span data-ja>機能制限なし</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>No credit card</span>
+                  <span data-ja>クレジットカード登録不要</span>
+                </li>
+                <li class="flex gap-2.5 text-slate-400">
+                  <span class="text-slate-600" aria-hidden="true">&#8226;</span>
+                  <span data-en>After the trial, saved analyses stay readable forever</span>
+                  <span data-ja>期間終了後も、保存済みの分析はいつでも閲覧できます</span>
+                </li>
+              </ul>
+
+              <a
+                href="#download"
+                class="mt-8 block rounded-lg border border-slate-700 px-5 py-3 text-center text-sm font-medium text-slate-100 transition-colors hover:border-slate-600 hover:bg-slate-900"
+              >
+                <span data-en>Download for Windows</span><span data-ja>Windows 版をダウンロード</span>
+              </a>
+            </div>
+
+            <!-- Lifetime -->
+            <div
+              class="relative rounded-2xl border border-emerald-700/60 bg-slate-950 p-8 shadow-2xl shadow-emerald-950/30 ring-1 ring-emerald-500/10"
+            >
+              <span
+                class="absolute -top-3 right-8 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white"
+              >
+                <span data-en>Buy once</span><span data-ja>買い切り</span>
+              </span>
+
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-emerald-400">
+                <span data-en>Lifetime License</span><span data-ja>ライフタイムライセンス</span>
+              </h3>
+              <p class="mt-4 flex items-baseline gap-2">
+                <span class="text-5xl font-bold tracking-tight text-white">$98</span>
+                <span class="text-sm text-slate-500">
+                  <span data-en>one time</span><span data-ja>一度きり</span>
+                </span>
+              </p>
+              <p class="mt-3 text-sm text-slate-400">
+                <span data-en>Unlimited tickers, forever, with updates included.</span>
+                <span data-ja>銘柄数は無制限。アップデートも継続。</span>
+              </p>
+
+              <ul class="mt-7 space-y-3 text-sm text-slate-300">
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Unlimited tickers and analyses</span>
+                  <span data-ja>銘柄数・分析回数ともに無制限</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>No time limit</span>
+                  <span data-ja>期間の制限なし</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Signed automatic updates</span>
+                  <span data-ja>署名付きの自動アップデート</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Everything you already analyzed carries over</span>
+                  <span data-ja>それまでのデータをそのまま引き継ぎ</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Optional encrypted backup to your own Google Drive</span>
+                  <span data-ja>自分の Google Drive へのバックアップにも対応</span>
+                </li>
+              </ul>
+
+              <a
+                href="__LEMONSQUEEZY_CHECKOUT_URL__"
+                data-checkout
+                class="mt-8 block rounded-lg bg-emerald-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+              >
+                <span data-en>Buy the lifetime license</span>
+                <span data-ja>ライフタイムライセンスを購入</span>
+              </a>
+              <p class="mt-3 text-center text-xs text-slate-500">
+                <span data-en>Secure checkout by Lemon Squeezy</span>
+                <span data-ja>決済は Lemon Squeezy 経由（安全な決済ページへ移動します）</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== ダウンロード -->
+      <section id="download" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-3xl px-5 text-center">
+          <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>Download and start in a few minutes</span>
+            <span data-ja>数分ではじめられます</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-xl text-slate-400">
+            <span data-en>
+              Install, paste in an API key from your provider, type a ticker. The app walks you
+              through getting a key if you do not have one yet.
+            </span>
+            <span data-ja>
+              インストールして、AI 提供各社の APIキーを貼り付け、ティッカーを入力するだけ。
+              キーの取り方はアプリ内のガイドが案内します。
+            </span>
+          </p>
+
+          <a
+            href="https://github.com/motojet-bit/stoq-releases/releases/latest"
+            data-download
+            class="mt-9 inline-flex items-center gap-2.5 rounded-lg bg-emerald-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
+            </svg>
+            <span data-en>Download for Windows &mdash; free</span>
+            <span data-ja>Windows 版を無料ダウンロード</span>
+          </a>
+
+          <p class="mt-5 text-xs text-slate-500">
+            <span data-en>Windows 10 / 11 (64-bit) &middot; about 3 MB installer</span>
+            <span data-ja>Windows 10 / 11（64bit）&middot; インストーラー約 3 MB</span>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================================================ フッター -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-14">
+      <div class="mx-auto max-w-4xl px-5">
+        <div
+          class="rounded-xl border border-amber-900/40 bg-amber-950/15 px-5 py-4 text-xs leading-relaxed text-amber-100/70"
+        >
+          <p class="mb-1.5 font-semibold text-amber-200/90">
+            <span data-en>&#9888; Disclaimer</span><span data-ja>&#9888; 免責事項</span>
+          </p>
+          <p data-en>
+            StoQ AI Analyzer is a research-support tool. It does not provide investment advice
+            and is not a solicitation to buy or sell any security. AI systems can produce
+            incorrect figures and may answer the same question differently each time; no warranty
+            is made as to accuracy, currency or completeness. All investment decisions, and any
+            resulting gains or losses, are yours alone. The developer accepts no liability.
+          </p>
+          <p data-ja>
+            本ソフトはリサーチ支援ツールであり、投資助言を行うものではありません。
+            特定の有価証券・金融商品の売買を推奨するものでもありません。
+            AI は事実と異なる数値を生成することがあり、同じ質問でも回答が変わる場合があります。
+            出力の正確性・最新性・完全性について保証はいたしません。
+            投資判断およびその結果生じる損益は、すべてご自身の責任に帰属します。
+            開発者は一切の責任を負いません。
+          </p>
+        </div>
+
+        <div
+          class="mt-8 flex flex-col items-center justify-between gap-4 text-xs text-slate-500 sm:flex-row"
+        >
+          <p>&copy; 2026 StoQ AI Analyzer. All Rights Reserved.</p>
+          <div class="flex items-center gap-5">
+            <a
+              href="mailto:__SUPPORT_EMAIL__"
+              data-support
+              class="transition-colors hover:text-slate-300"
+            >
+              <span data-en>Contact support</span><span data-ja>お問い合わせ</span>
+            </a>
+            <a
+              href="https://github.com/motojet-bit/stoq-releases/releases"
+              class="transition-colors hover:text-slate-300"
+            >
+              <span data-en>Release notes</span><span data-ja>更新履歴</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      /*
+       * 言語の切り替え。
+       * 既定は英語（アプリ本体と同じく英語を原文とする）。
+       * 日本語圏のブラウザから来た人には、最初から日本語で見せる。
+       */
+      (function () {
+        var root = document.documentElement;
+        var stored = null;
+        try {
+          stored = localStorage.getItem("stoq.lp.lang");
+        } catch (e) {
+          /* プライベートモード等では保存しない */
+        }
+        var initial =
+          stored || ((navigator.language || "en").toLowerCase().indexOf("ja") === 0 ? "ja" : "en");
+        root.lang = initial;
+
+        document.getElementById("lang-toggle").addEventListener("click", function () {
+          var next = root.lang === "ja" ? "en" : "ja";
+          root.lang = next;
+          try {
+            localStorage.setItem("stoq.lp.lang", next);
+          } catch (e) {
+            /* 保存できなくても切り替えは効く */
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
