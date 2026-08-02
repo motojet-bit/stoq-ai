@@ -20,8 +20,8 @@ export interface LocaleDefinition {
   code: string;
   /** その言語での表記（設定画面に出す） */
   nativeLabel: string;
-  /** 日本語での表記 */
-  label: string;
+  /** 一覧に出すときの表示名（辞書キー） */
+  labelKey: string;
   /** AI へ「この言語で答えて」と伝えるときの名前（英語表記） */
   promptName: string;
   dictionary: Dictionary;
@@ -40,14 +40,14 @@ export const LOCALES: LocaleDefinition[] = [
   {
     code: "ja",
     nativeLabel: "日本語",
-    label: "日本語",
+    labelKey: "locale.label.ja",
     promptName: "Japanese",
     dictionary: ja as Dictionary,
   },
   {
     code: "en",
     nativeLabel: "English",
-    label: "英語",
+    labelKey: "locale.label.en",
     promptName: "English",
     dictionary: en as Dictionary,
   },

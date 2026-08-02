@@ -6,6 +6,10 @@ import {
   quarterKey,
   quarterOrder,
 } from "@/lib/portfolio/heatmap";
+import { setLocale } from "@/lib/i18n/i18n";
+
+/* 文面は日本語で検証する（既定は英語）。定数の組み立てに間に合うようトップレベルで呼ぶ */
+setLocale("ja");
 
 function entry(over: Partial<ArchiveEntry> & { ticker: string }): ArchiveEntry {
   return {
@@ -130,7 +134,7 @@ describe("buildTransferText（全期の一括転送）", () => {
     const text = buildTransferText("AAPL", entries);
     expect(text).toContain("AAPL の過去 2 期分");
     expect(text).toContain('ticker="AAPL"');
-    expect(text).toContain('期数="2"');
+    expect(text).toContain('periods="2"');
   });
 
   it("時系列での変化を見るよう指示する", () => {

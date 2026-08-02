@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { AppSettings, DisplayMessage } from "@/types";
 import { streamChat } from "@/lib/llm/client";
 import { providerReadiness } from "@/lib/config/providers";
-import { buildHelpSystemPrompt, HELP_EXAMPLES } from "@/lib/prompts/helpKnowledge";
+import { buildHelpSystemPrompt, helpExamples } from "@/lib/prompts/helpKnowledge";
 import ApiKeyGuide from "@/components/ApiKeyGuide";
 import { useT } from "@/lib/i18n/i18n";
 import { useBindings } from "@/lib/ui/shortcutStore";
@@ -183,7 +183,7 @@ export default function HelpAssistant({
               {t("help.intro")}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {HELP_EXAMPLES.map((example) => (
+              {helpExamples().map((example: string) => (
                 <button
                   key={example}
                   type="button"

@@ -23,9 +23,10 @@ export type ShortcutAction =
 
 export interface ShortcutDefinition {
   action: ShortcutAction;
-  label: string;
-  /** 何のためのキーかの補足 */
-  hint: string;
+  /** 表示名の辞書キー。**定数に文面を焼かない**（言語切替に追従しないため） */
+  labelKey: string;
+  /** 何のためのキーかの補足（辞書キー） */
+  hintKey: string;
   defaultBinding: string;
   /**
    * 入力欄の中でも効かせるか。
@@ -42,44 +43,44 @@ export interface ShortcutDefinition {
 export const SHORTCUTS: ShortcutDefinition[] = [
   {
     action: "chat.new",
-    label: t("shortcut.chatNew"),
-    hint: t("shortcut.chatNewHint"),
+    labelKey: "shortcut.chatNew",
+    hintKey: "shortcut.chatNewHint",
     defaultBinding: "Ctrl+N",
   },
   {
     action: "candidates.add",
-    label: t("shortcut.candidateAdd"),
-    hint: t("shortcut.candidateAddHint"),
+    labelKey: "shortcut.candidateAdd",
+    hintKey: "shortcut.candidateAddHint",
     defaultBinding: "Ctrl+Shift+A",
   },
   {
     action: "ticker.focus",
-    label: t("shortcut.tickerFocus"),
-    hint: t("shortcut.tickerFocusHint"),
+    labelKey: "shortcut.tickerFocus",
+    hintKey: "shortcut.tickerFocusHint",
     defaultBinding: "Ctrl+L",
   },
   {
     action: "analysis.run",
-    label: t("shortcut.analysisRun"),
-    hint: t("shortcut.analysisRunHint"),
+    labelKey: "shortcut.analysisRun",
+    hintKey: "shortcut.analysisRunHint",
     defaultBinding: "Ctrl+Shift+Enter",
   },
   {
     action: "sidebar.toggle",
-    label: t("shortcut.sidebarToggle"),
-    hint: t("shortcut.sidebarToggleHint"),
+    labelKey: "shortcut.sidebarToggle",
+    hintKey: "shortcut.sidebarToggleHint",
     defaultBinding: "Ctrl+B",
   },
   {
     action: "app.settings",
-    label: t("shortcut.settingsOpen"),
-    hint: t("shortcut.settingsOpenHint"),
+    labelKey: "shortcut.settingsOpen",
+    hintKey: "shortcut.settingsOpenHint",
     defaultBinding: "Ctrl+,",
   },
   {
     action: "chat.send",
-    label: t("shortcut.chatSend"),
-    hint: t("shortcut.chatSendHint"),
+    labelKey: "shortcut.chatSend",
+    hintKey: "shortcut.chatSendHint",
     defaultBinding: "Ctrl+Enter",
     allowInInput: true,
     handledLocally: true,

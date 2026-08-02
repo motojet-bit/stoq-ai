@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import {
-  DEFAULT_SYSTEM_PROMPT,
+  defaultSystemPrompt,
   setActivePrompt,
   useActivePromptId,
   usePrompts,
@@ -55,7 +55,7 @@ export default function PromptLibraryMenu() {
 
           <PromptOption
             title={t("role.default")}
-            body={DEFAULT_SYSTEM_PROMPT}
+            body={defaultSystemPrompt()}
             active={activeId === null}
             onSelect={() => select(null)}
           />

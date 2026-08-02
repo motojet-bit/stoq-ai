@@ -125,6 +125,14 @@ const LOCALIZED = [
   "src/components/UpdateSettings.tsx",
   "src/lib/update/updateStore.ts",
   "src/lib/update/updateVersion.ts",
+
+  // --- 67章: 残りの日本語 ---
+  "src/lib/prompts/helpKnowledge.ts",
+  "src/lib/prompts/promptLibrary.ts",
+  "src/lib/portfolio/heatmap.ts",
+  "src/lib/sampleData.ts",
+  "src/lib/ui/tooltipHint.ts",
+  "src/lib/i18n/locales.ts",
 ];
 
 /**
@@ -134,6 +142,8 @@ const LOCALIZED = [
  * 訳すと `findMetric` がヒットしなくなり、値が全部「—」になる。
  */
 const INTERNAL_KEYS: Record<string, string[]> = {
+  // 言語の「自称」。日本語の選択肢を英語表記にすると、日本語話者が見つけられない
+  "src/lib/i18n/locales.ts": ["日本語"],
   "src/lib/compare/compareData.ts": [
     "現金・同等物",
     "営業CF",

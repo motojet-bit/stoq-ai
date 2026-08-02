@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 import { estimateTokens } from "@/lib/parser/tokenCount";
 import { condenseDocument } from "@/lib/prompts/condense";
 import type { Fundamentals, QuarterlySeries } from "@/types";
@@ -87,7 +88,7 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
 
   if (available <= 0) {
     notes.push(
-      "トークン上限が小さすぎるため、財務指標のみで分析します。設定で上限を引き上げてください。",
+      t("prompt.budgetTooSmall"),
     );
     return finish(sources.systemTokens, [header, metrics, quarterly], notes);
   }
@@ -150,7 +151,7 @@ function enforceLimit(
     user = condenseDocument(
       user,
       Math.floor(userBudget * (1 - attempt * 0.05)),
-      "資料全体",
+      t("prompt.wholeDocument"),
     ).text;
   }
 
@@ -159,7 +160,7 @@ function enforceLimit(
     tokens: systemTokens + estimateTokens(user),
     notes: [
       ...built.notes,
-      "入力トークン上限に収めるため、資料全体をさらに圧縮しました。設定で上限を引き上げると、より多くの原文を渡せます。",
+      t("prompt.condensedFurther"),
     ],
   };
 }
@@ -167,22 +168,18 @@ function enforceLimit(
 // ---------------------------------------------------------------- 各セクション
 
 function buildHeader(ticker: string): string {
-  return `# 分析対象
-
-ティッカー: ${ticker}
-
-以下の資料に基づいて、20項目の評価を行ってください。`;
+  return t("prompt.header", { ticker });
 }
 
 function buildMetricsSection(f: Fundamentals | null): string {
   if (!f) {
-    return `## 財務指標（Yahoo Finance）
+    return `${t("prompt.metricsHeading")}
 
 取得できませんでした。指標に依存する項目はスコア 0（判定不能）としてください。`;
   }
 
   const lines = [
-    `## 財務指標（Yahoo Finance / 取得: ${new Date(f.fetchedAtMs).toLocaleString("ja-JP")}）`,
+    t("prompt.metricsHeadingAt", { when: new Date(f.fetchedAtMs).toLocaleString() }),
     "",
     `銘柄名: ${f.name}`,
     `取引所: ${f.exchange || "不明"}`,
@@ -212,7 +209,11 @@ function buildFilingSection(
 ): string {
   if (!filing) return "";
 
-  const head = `## SEC 提出書類（${filing.form} / 提出 ${filing.filed} / 対象期間 ${filing.period}）
+  const head = `${t("prompt.filingHeading", {
+    form: filing.form,
+    filed: filing.filed,
+    period: filing.period,
+  })}
 
 出典: ${filing.url}
 
@@ -232,7 +233,7 @@ function buildDocumentsSection(
 ): string {
   if (documents.length === 0) return "";
 
-  const parts: string[] = ["## 添付された一次資料"];
+  const parts: string[] = [t("prompt.documentsHeading")];
 
   // まず均等割りし、収まりきる資料は全量残す。
   // 余った分を、はみ出す資料へ再配分する（小さい資料が枠を余らせないように）
@@ -333,7 +334,7 @@ function buildQuarterlySection(series: QuarterlySeries | null): string {
   if (!series || series.quarters.length === 0) return "";
 
   const lines = [
-    "## 四半期推移（直近4四半期）",
+    t("prompt.quarterlyHeading"),
     "",
     `出典: ${series.source}`,
     "",

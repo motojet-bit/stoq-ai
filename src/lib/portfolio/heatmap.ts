@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 import type { ArchiveEntry } from "@/types";
 import { periodLabelOf } from "@/lib/portfolio/archive";
 import { statusOf, type AnalysisStatus } from "@/lib/export/analysisRecord";
@@ -140,26 +141,34 @@ export function buildTransferText(
   entries: { label: string; score: number | null; savedAtMs: number; body: string }[],
 ): string {
   if (entries.length === 0) {
-    return `${ticker} の過去の分析データはまだありません。`;
+    return t("archive.empty", { ticker });
   }
 
   const sections = entries
-    .map(
-      (entry) =>
-        `### ${entry.label}（総合 ${
-          entry.score === null ? "—" : entry.score.toFixed(1)
-        } / 5・${new Date(entry.savedAtMs).toLocaleDateString("ja-JP")}）\n\n${entry.body}`,
+    .map((entry) =>
+      [
+        t("archive.entryHeading", {
+          label: entry.label,
+          score: entry.score === null ? "—" : entry.score.toFixed(1),
+          date: new Date(entry.savedAtMs).toLocaleDateString(),
+        }),
+        "",
+        entry.body,
+      ].join("\n"),
     )
     .join("\n\n");
 
-  return `以下は ${ticker} の過去 ${entries.length} 期分の分析データです。
-時系列での変化（改善・悪化した点、想定が外れた点）を踏まえて回答してください。
+  /*
+   * 囲みタグは AI が範囲を取り違えないための目印。
+   * **訳さない。** 表示するものではなく、プロンプト内の構造を示す記号。
+   */
+  return `${t("archive.promptHeading", { ticker, count: entries.length })}
 
-<過去の分析データ ticker="${ticker}" 期数="${entries.length}">
+<archive ticker="${ticker}" periods="${entries.length}">
 
 ${sections}
 
-</過去の分析データ>
+</archive>
 
 `;
 }

@@ -12,7 +12,7 @@ import {
   countTooltipShown,
   getTooltipShownCount,
   HINT_INTERVAL,
-  OFF_HINT,
+  offHint,
   resetTooltipCount,
   shouldShowHint,
   withHint,
@@ -24,6 +24,10 @@ import {
   subscribePortfolioSplit,
   togglePortfolioSplit,
 } from "@/lib/ui/portfolioLayout";
+import { setLocale } from "@/lib/i18n/i18n";
+
+/* 文面は日本語で検証する（既定は英語）。定数の組み立てに間に合うようトップレベルで呼ぶ */
+setLocale("ja");
 
 const viewport = { width: 1200, height: 800 };
 
@@ -183,12 +187,12 @@ describe("ツールチップの OFF 案内", () => {
   });
 
   it("出す回は本文の後ろに案内を添える", () => {
-    expect(withHint("本文", 5)).toBe(`本文\n\n${OFF_HINT}`);
+    expect(withHint("本文", 5)).toBe(`本文\n\n${offHint()}`);
     expect(withHint("本文", 4)).toBe("本文");
   });
 
   it("案内文が指定どおり", () => {
-    expect(OFF_HINT).toBe("💡 ツールチップは [設定] ➔ [表示] タブからオフにできます");
+    expect(offHint()).toBe("💡 ツールチップは [設定] ➔ [表示] タブからオフにできます");
   });
 
   it("表示のたびにカウントが進み、localStorage に残る", () => {

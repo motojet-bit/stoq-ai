@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import type { AppSettings } from "@/types";
 import {
   buildHelpSystemPrompt,
-  HELP_EXAMPLES,
+  helpExamples,
   marketLabel,
   settingsSummary,
   shortcutTable,
 } from "@/lib/prompts/helpKnowledge";
 import { mergeBindings, SHORTCUTS } from "@/lib/ui/shortcutStore";
 import { tooltip } from "@/lib/ui/tooltipText";
+import { setLocale, t } from "@/lib/i18n/i18n";
+
+setLocale("ja");
 
 const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   provider: "anthropic",
@@ -65,7 +68,7 @@ describe("shortcutTable", () => {
   it("すべてのアクションを表に並べる", () => {
     const table = shortcutTable(mergeBindings([]), false);
     for (const def of SHORTCUTS) {
-      expect(table).toContain(def.label);
+      expect(table).toContain(t(def.labelKey));
     }
     expect(table).toContain("Ctrl+N");
     expect(table).toContain("Ctrl+Shift+A");
@@ -208,8 +211,8 @@ describe("ティッカー形式の案内", () => {
 
 describe("補助", () => {
   it("質問例が用意されている", () => {
-    expect(HELP_EXAMPLES.length).toBeGreaterThan(0);
-    expect(HELP_EXAMPLES).toContain("ショートカットキーはどこで変える？");
+    expect(helpExamples().length).toBeGreaterThan(0);
+    expect(helpExamples()).toContain("ショートカットキーはどこで変える？");
   });
 
   it("取得元の表示名が引ける", () => {

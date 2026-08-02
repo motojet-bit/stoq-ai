@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 import type { WorkspaceTab } from "@/types";
 
 /**
@@ -7,5 +8,5 @@ import type { WorkspaceTab } from "@/types";
  * ここにあったダミーデータは削除した。
  */
 export const INITIAL_TABS: WorkspaceTab[] = [
-  { id: "t1", title: "ワークスペース", kind: "workspace", ticker: null, closable: false },
+  { id: "t1", title: t("app.workspace"), kind: "workspace", ticker: null, closable: false },
 ];

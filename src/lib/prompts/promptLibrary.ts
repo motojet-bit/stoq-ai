@@ -12,10 +12,15 @@ import { t } from "@/lib/i18n/i18n";
  * （DB に入れると設定同期の対象になってしまう）。
  */
 
-/** ライブラリを使わないときの既定の役割 */
-export const DEFAULT_SYSTEM_PROMPT =
-  "あなたは米国株・グローバル株のファンダメンタル分析を支援するアシスタントです。" +
-  "根拠を明示し、断定できない点は不確実であると述べてください。回答は日本語で行ってください。";
+/**
+ * ライブラリを使わないときの既定の役割。
+ *
+ * **出力言語の指定は書かない。** Rust 側が表示言語に応じて
+ * `language_directive` を足すので、ここで「日本語で」と書くと食い違う。
+ */
+export function defaultSystemPrompt(): string {
+  return t("prompt.defaultRole");
+}
 
 const ACTIVE_KEY = "stockanalyzer.activePromptId";
 
@@ -70,7 +75,7 @@ export function getActivePrompt(): StoredPrompt | null {
 
 /** LLM に渡すシステムプロンプト。役割が未選択なら既定文を使う。 */
 export function activeSystemPrompt(): string {
-  return getActivePrompt()?.body ?? DEFAULT_SYSTEM_PROMPT;
+  return getActivePrompt()?.body ?? defaultSystemPrompt();
 }
 
 export function setActivePrompt(id: string | null): void {

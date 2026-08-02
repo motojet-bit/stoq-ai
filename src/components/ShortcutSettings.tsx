@@ -94,14 +94,14 @@ export default function ShortcutSettings() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="t-body font-medium text-slate-200">{def.label}</span>
+                  <span className="t-body font-medium text-slate-200">{t(def.labelKey)}</span>
                   {def.handledLocally && (
                     <span className="shrink-0 rounded bg-slate-800 px-1 t-label text-slate-500">
                       {t("shortcut.inInput")}
                     </span>
                   )}
                 </div>
-                <p className="t-label text-slate-500">{def.hint}</p>
+                <p className="t-label text-slate-500">{t(def.hintKey)}</p>
               </div>
 
               <kbd
@@ -128,7 +128,7 @@ export default function ShortcutSettings() {
                   type="button"
                   onClick={() => void setShortcut(def.action, null)}
                   disabled={!isCustomized(def.action)}
-                  aria-label={t("shortcut.resetOneAria", { label: def.label })}
+                  aria-label={t("shortcut.resetOneAria", { label: t(def.labelKey) })}
                   title={t("shortcut.resetOne")}
                   className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-25"
                 >

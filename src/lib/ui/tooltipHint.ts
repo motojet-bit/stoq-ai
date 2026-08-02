@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 /**
  * ツールチップの表示回数と、たまに出す「切り方」の案内。
  *
@@ -10,7 +11,13 @@ const STORAGE_KEY = "stockanalyzer.tooltipShowCount";
 /** 何回に 1 回ヒントを出すか */
 export const HINT_INTERVAL = 5;
 
-export const OFF_HINT = "💡 ツールチップは [設定] ➔ [表示] タブからオフにできます";
+/**
+ * 切り方の案内。
+ * **定数にしない**（読み込み時に固めると言語切替に追従しない）。
+ */
+export function offHint(): string {
+  return t("tooltip.disableHint");
+}
 
 /** その回数のときヒントを出すか。1 始まりで数える。 */
 export function shouldShowHint(count: number): boolean {
@@ -20,7 +27,7 @@ export function shouldShowHint(count: number): boolean {
 
 /** 本文にヒントを添える（出さない回はそのまま返す）。 */
 export function withHint(content: string, count: number): string {
-  return shouldShowHint(count) ? `${content}\n\n${OFF_HINT}` : content;
+  return shouldShowHint(count) ? `${content}\n\n${offHint()}` : content;
 }
 
 function read(): number {
