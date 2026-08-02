@@ -7,6 +7,7 @@ mod analyses;
 mod candidates;
 mod chats;
 mod cloud;
+mod debate;
 mod commands;
 mod documents;
 mod edgar;

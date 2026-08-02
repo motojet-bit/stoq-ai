@@ -46,7 +46,7 @@ export default function FilingStatusBadge({ status, loading, error }: Props) {
       className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 t-label ${FRAME[info.signal]}`}
     >
       <span aria-hidden="true">{info.emoji}</span>
-      <span className="font-medium">SEC 資料: {info.label}</span>
+      <span className="font-medium">{t("filing.secLabel", { label: info.label })}</span>
       {status?.latest10k && (
         <span className="t-label font-mono opacity-70">10-K {status.latest10k.filed}</span>
       )}

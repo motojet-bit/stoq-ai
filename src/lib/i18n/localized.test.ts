@@ -21,7 +21,10 @@ const LOCALIZED = [
   "src/components/CandidateStocksPanel.tsx",
   "src/components/ChatHistoryItem.tsx",
   "src/components/ChatPanel.tsx",
+  "src/components/AnalysisWithDebate.tsx",
   "src/components/CloudSyncGuide.tsx",
+  "src/components/DebatePanel.tsx",
+  "src/components/DebateSettings.tsx",
   "src/components/CloudSyncSettings.tsx",
   "src/components/CommandBar.tsx",
   "src/components/ComparePanel.tsx",
@@ -130,6 +133,8 @@ const LOCALIZED = [
   // --- 67章: 残りの日本語 ---
   "src/lib/prompts/helpKnowledge.ts",
   "src/lib/prompts/promptLibrary.ts",
+  "src/lib/debate/debateStore.ts",
+  "src/lib/debate/debateTurn.ts",
   "src/lib/portfolio/heatmap.ts",
   "src/lib/sampleData.ts",
   "src/lib/ui/tooltipHint.ts",
@@ -272,6 +277,15 @@ function japaneseLiterals(source: string): string[] {
   }
 
   for (const m of code.matchAll(/>([^<>{}]*)</g)) {
+    if (CJK.test(m[1])) found.push(m[1].trim());
+  }
+
+  /*
+   * **`{式}` の手前に置かれた地の文も拾う。**
+   * `>取り込む銘柄（{n} 件）<` の「取り込む銘柄（」側。
+   * 上の `>...<` は `{` を含む区間を弾くので、ここも抜けていた。
+   */
+  for (const m of code.matchAll(/>([^<>{}]*)\{/g)) {
     if (CJK.test(m[1])) found.push(m[1].trim());
   }
 

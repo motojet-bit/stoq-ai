@@ -17,6 +17,7 @@ import {
   IconStop,
   IconTrash,
 } from "@/components/Icons";
+import { useDebatePaneOpen, toggleDebatePane } from "@/lib/ui/debateLayout";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
@@ -67,6 +68,7 @@ export default function AnalysisPanel({
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = useT();
+  const debateOpen = useDebatePaneOpen();
 
   const streaming = run?.phase === "streaming" || run?.phase === "collecting";
   const result = run?.result ?? null;
@@ -112,9 +114,27 @@ export default function AnalysisPanel({
           <>
             <AnalystRoleMenu />
 
+            {/*
+              批判的検証ペインの開閉。**分析の隣に置く。**
+              設定の奥に隠すと、機能があること自体に気づかれない。
+            */}
+            <button
+              type="button"
+              onClick={toggleDebatePane}
+              aria-pressed={debateOpen}
+              title={debateOpen ? t("debate.toggleClose") : t("debate.toggleOpen")}
+              className={`shrink-0 rounded px-1.5 py-0.5 t-label transition-colors ${
+                debateOpen
+                  ? "bg-amber-950/60 text-amber-300"
+                  : "text-slate-600 hover:bg-slate-800 hover:text-amber-300"
+              }`}
+            >
+              🔥
+            </button>
+
             {result && result.averageScore !== null && (
               <span className="t-label shrink-0 font-mono text-emerald-400">
-                平均 {result.averageScore.toFixed(1)} / 5
+                {t("analysis.averageScore", { score: result.averageScore.toFixed(1) })}
               </span>
             )}
 

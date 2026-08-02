@@ -67,6 +67,8 @@ export interface AppSettings {
   eula: EulaStatus;
   /** クラウド同期の状態 */
   cloud: CloudStatus;
+  /** AI クロスディベート（批判側）の設定状態 */
+  debate: DebateStatus;
   /** 組み込み + カスタムの全プロバイダのキー状態 */
   keys: KeyStatus[];
 }
@@ -99,6 +101,27 @@ export interface EulaStatus {
 }
 
 /** クラウド同期（Google Drive アプリ専用領域）の状態。生のトークンは含まない。 */
+/**
+ * AI クロスディベート（批判側）の設定。
+ *
+ * **メイン分析と別のプロバイダを充てられる。**
+ * 同じモデルに自分の出力を批判させても、同じ癖がそのまま残る。
+ */
+export interface DebateStatus {
+  /** 明示的に設定されたプロバイダ ID。未設定なら空 */
+  provider: string;
+  /** 明示的に設定されたモデル名。未設定なら空 */
+  model: string;
+  /** 実際に使われるプロバイダ ID */
+  effectiveProvider: string;
+  /** 実際に使われるモデル名 */
+  effectiveModel: string;
+  /** そのプロバイダの APIキーが入っているか */
+  ready: boolean;
+  /** メイン分析と同じプロバイダになるか（同じだと批判の意味が薄い） */
+  sameAsMain: boolean;
+}
+
 export interface CloudStatus {
   /** Google と連携済みか */
   connected: boolean;
@@ -150,6 +173,10 @@ export interface SettingsPatch {
   thresholds?: Record<string, number>;
   /** 分析への追加指示（自由記述） */
   customInstruction?: string;
+  /** ディベート（批判側）のプロバイダ ID。空文字ならメインと同じに戻す */
+  debateProvider?: string;
+  /** ディベート（批判側）のモデル名。空文字なら既定モデルに戻す */
+  debateModel?: string;
 }
 
 /** settings_update_custom_provider に渡す差分 */

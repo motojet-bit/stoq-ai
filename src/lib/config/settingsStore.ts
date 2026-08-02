@@ -44,6 +44,11 @@ export function useSettings(): AppSettings | null {
   );
 }
 
+/** React の外から現在の設定を読む（ストアやイベント処理で使う）。 */
+export function getSettings(): AppSettings | null {
+  return snapshot;
+}
+
 export function useSettingsError(): string | null {
   return useSyncExternalStore(
     subscribe,

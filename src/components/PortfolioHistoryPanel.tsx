@@ -390,7 +390,7 @@ export default function PortfolioHistoryPanel({
                                         key={item}
                                         className="selectable t-label text-slate-300"
                                       >
-                                        ・{item}
+                                        &bull; {item}
                                       </li>
                                     ))}
                                   </ul>
@@ -405,7 +405,7 @@ export default function PortfolioHistoryPanel({
                                         key={item}
                                         className="selectable t-label text-slate-300"
                                       >
-                                        ・{item}
+                                        &bull; {item}
                                       </li>
                                     ))}
                                   </ul>

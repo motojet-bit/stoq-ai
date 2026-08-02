@@ -63,6 +63,14 @@ pub struct LlmRequest {
     /// 秘匿プロンプトとの結合は Rust 側で行う（`crate::prompts` を参照）。
     #[serde(default)]
     pub analysis_preset: Option<crate::prompts::AnalysisPreset>,
+    /// ディベートの担当。指定すると **Rust 側の秘匿プロンプト**を system に使う。
+    /// `system` / `analysis_preset` より優先する。
+    #[serde(default)]
+    pub debate: Option<crate::debate::Side>,
+    /// モデルの上書き。ディベート用に別モデルを充てるときだけ使う。
+    /// 未指定ならプロバイダの既定モデル。
+    #[serde(default)]
+    pub model: Option<String>,
     /// 出力言語（`ja` / `en` …）。対話・ヘルプでも使う
     #[serde(default)]
     pub locale: Option<String>,
@@ -95,7 +103,13 @@ pub async fn send(
      * 分析プリセットが来たら、ここで秘匿プロンプトと結合する。
      * **組み立てた文字列はフロントへ返さない**（返した時点で秘匿の意味が無くなる）。
      */
-    if let Some(mut preset) = request.analysis_preset.take() {
+    /*
+     * ディベートは**プリセットより先に見る**。
+     * 批判・反論のプロンプトは 20 項目分析とは別物で、混ぜると両方が効かなくなる。
+     */
+    if let Some(side) = request.debate {
+        request.system = Some(crate::debate::system_prompt(side, request.locale.as_deref()));
+    } else if let Some(mut preset) = request.analysis_preset.take() {
         // プリセットに言語が無ければリクエストの言語を使う
         if preset.locale.is_none() {
             preset.locale = request.locale.clone();
@@ -130,7 +144,11 @@ pub async fn send(
         return Err(AppError::code(code::LLM_NO_MESSAGES));
     }
 
-    let model = settings.model_for(&provider);
+    let model = request
+        .model
+        .clone()
+        .filter(|m| !m.trim().is_empty())
+        .unwrap_or_else(|| settings.model_for(&provider));
     let api_key = settings.key_for(&provider)?;
     let max_tokens = request.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS);
     let request_id = request.request_id.clone().unwrap_or_default();

@@ -336,7 +336,7 @@ export default function PortfolioPanel({ onSelectTicker, onCompare }: Props) {
         {unfiled.length > 0 && (
           <div className="mt-2 border-t border-slate-800 pt-2">
             <div className="px-1 pb-1 t-label font-medium uppercase tracking-wider text-slate-600">
-              未分類の分析（{unfiled.length}）
+              {t("portfolio.unfiledCount", { count: unfiled.length })}
             </div>
             <ul className="space-y-0.5">
               {unfiled.map((row) => renderTicker(row.ticker, row, null))}

@@ -66,6 +66,10 @@ pub struct SettingsPatch {
     pub thresholds: Option<std::collections::BTreeMap<String, f64>>,
     /// 分析への追加指示（自由記述）
     pub custom_instruction: Option<String>,
+    /// ディベート（批判側）のプロバイダ ID。空文字ならメインと同じに戻す
+    pub debate_provider: Option<String>,
+    /// ディベート（批判側）のモデル名。空文字なら既定モデルに戻す
+    pub debate_model: Option<String>,
 }
 
 #[tauri::command]
@@ -85,6 +89,17 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
                 current.models.insert(provider, model);
             }
         }
+    }
+    if let Some(provider) = patch.debate_provider {
+        let provider = provider.trim().to_string();
+        // 知らない ID を保存すると、実行時にキーが引けず毎回エラーになる
+        if !provider.is_empty() && !current.has_provider(&provider) {
+            return Err(AppError::detail(code::UNKNOWN_PROVIDER, provider));
+        }
+        current.debate.provider = provider;
+    }
+    if let Some(model) = patch.debate_model {
+        current.debate.model = model.trim().to_string();
     }
     if let Some(ua) = patch.sec_user_agent {
         current.sec_user_agent = ua.trim().to_string();

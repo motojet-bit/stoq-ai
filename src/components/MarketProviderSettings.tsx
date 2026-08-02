@@ -208,7 +208,7 @@ export default function MarketProviderSettings({ settings }: Props) {
                   )}
                   {meta.signupUrl && (
                     <span className="selectable t-label text-slate-600">
-                      キーの取得: {meta.signupUrl}
+                      {t("settings.market.signupUrl", { url: meta.signupUrl })}
                     </span>
                   )}
                 </div>

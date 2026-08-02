@@ -62,7 +62,7 @@ export default function PromptLibraryModal({ open, onClose }: Props) {
           <div className="min-w-0">
             <div className="mb-2 flex items-center justify-between gap-2">
               <h3 className="t-label font-medium uppercase tracking-wider text-slate-500">
-                ストック（{prompts.length}）
+                {t("prompts.stockCount", { count: prompts.length })}
               </h3>
               <button
                 type="button"

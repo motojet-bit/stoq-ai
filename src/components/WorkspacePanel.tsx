@@ -124,7 +124,9 @@ function PanelBody({
 
           {fundamentals && (
             <span className="ml-auto t-label text-slate-600">
-              取得: {new Date(fundamentals.fetchedAtMs).toLocaleTimeString("ja-JP")}
+              {tr("workspace.fetchedAt", {
+                when: new Date(fundamentals.fetchedAtMs).toLocaleTimeString(),
+              })}
             </span>
           )}
         </div>

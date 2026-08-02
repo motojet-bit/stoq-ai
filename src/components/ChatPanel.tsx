@@ -264,8 +264,10 @@ ${draft.text}`));
           <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2">
             {settings && !ready && (
               <p className="t-label mb-2 rounded border border-amber-900/70 bg-amber-950/40 px-2.5 py-1.5 text-amber-300">
-                選択中のプロバイダ「{providerLabel(settings, settings.provider)}」は
-                {reason ?? t("chat.settingsMissing")}
+                {t("chat.providerNotReady", {
+                  provider: providerLabel(settings, settings.provider),
+                  reason: reason ?? t("chat.settingsMissing"),
+                })}
                 <button
                   type="button"
                   onClick={onOpenSettings}

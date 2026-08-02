@@ -44,6 +44,14 @@ function settings(freeTickers: string[]): AppSettings {
       trialDays: 21,
     },
     customInstruction: "",
+    debate: {
+      provider: "",
+      model: "",
+      effectiveProvider: "anthropic",
+      effectiveModel: "claude-opus-5",
+      ready: false,
+      sameAsMain: true,
+    },
     cloud: {
       connected: false,
       clientIdConfigured: false,

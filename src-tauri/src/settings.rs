@@ -71,6 +71,10 @@ pub struct Settings {
     /// 同意した時刻（ミリ秒）
     #[serde(default)]
     pub eula_agreed_at_ms: i64,
+    /// AI クロスディベート（批判側）のプロバイダとモデル。
+    /// **メイン分析とは独立して選べる**（同じモデルでは見落としが見落としのまま残る）
+    #[serde(default)]
+    pub debate: crate::debate::DebateConfig,
     /// クラウド同期（Google Drive アプリ専用領域）の設定。
     /// 更新用トークンを含むため、フロントへはマスク済みの状態しか返さない
     #[serde(default)]
@@ -104,6 +108,7 @@ impl Default for Settings {
             custom_instruction: String::new(),
             eula_agreed: false,
             eula_agreed_at_ms: 0,
+            debate: crate::debate::DebateConfig::default(),
             cloud: crate::cloud::CloudConfig::default(),
             custom_base_url: String::new(),
         }
@@ -138,6 +143,8 @@ pub struct SettingsView {
     pub custom_instruction: String,
     /// 免責事項への同意状態
     pub eula: crate::eula::EulaStatus,
+    /// ディベート（批判側）の設定状態
+    pub debate: crate::debate::DebateStatus,
     /// クラウド同期の状態（生のトークンは含まない）
     pub cloud: crate::cloud::CloudStatus,
     /// 組み込み + カスタムの全プロバイダのキー状態
@@ -214,6 +221,7 @@ impl Settings {
             trial: crate::trial::status_of(self.first_installed_at_ms, crate::library::now_ms()),
             custom_instruction: self.custom_instruction.clone(),
             eula: crate::eula::status_of(self.eula_agreed, self.eula_agreed_at_ms),
+            debate: crate::debate::status_of(self),
             cloud: crate::cloud::status_of(&self.cloud),
             keys: self
                 .provider_ids()

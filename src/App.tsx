@@ -50,7 +50,7 @@ import Sidebar from "@/components/Sidebar";
 import TabBar from "@/components/TabBar";
 import WorkspacePanel from "@/components/WorkspacePanel";
 import ResizableSplit from "@/components/ResizableSplit";
-import AnalysisPanel from "@/components/AnalysisPanel";
+import AnalysisWithDebate from "@/components/AnalysisWithDebate";
 import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
 import SettingsModal, { type SettingsTab } from "@/components/SettingsModal";
@@ -242,7 +242,7 @@ export default function App() {
         );
       case "analysis":
         return (
-          <AnalysisPanel
+          <AnalysisWithDebate
             ticker={activeTicker}
             run={activeRun}
             ready={llm.ready}

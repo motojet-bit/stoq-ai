@@ -18,6 +18,7 @@ import ThresholdSettings from "@/components/ThresholdSettings";
 import DisplaySettings from "@/components/DisplaySettings";
 import LicenseSettings from "@/components/LicenseSettings";
 import CloudSyncSettings from "@/components/CloudSyncSettings";
+import DebateSettings from "@/components/DebateSettings";
 import ModalShell from "@/components/ModalShell";
 import { useT } from "@/lib/i18n/i18n";
 import { errorMessage } from "@/lib/errors/errorMessage";
@@ -28,6 +29,7 @@ export type SettingsTab =
   | "thresholds"
   | "display"
   | "shortcuts"
+  | "debate"
   | "cloud"
   | "license";
 
@@ -236,6 +238,7 @@ export default function SettingsModal({
             ["thresholds", t("settings.tab.thresholds")],
             ["display", t("settings.tab.general")],
             ["shortcuts", t("settings.tab.shortcuts")],
+            ["debate", t("settings.tab.debate")],
             ["cloud", t("settings.tab.cloud")],
             ["license", t("settings.tab.license")],
           ] as const
@@ -259,6 +262,8 @@ export default function SettingsModal({
       <div className="px-4 py-4">
           {tab === "license" ? (
             <LicenseSettings />
+          ) : tab === "debate" ? (
+            <DebateSettings settings={settings} />
           ) : tab === "cloud" ? (
             <CloudSyncSettings />
           ) : tab === "shortcuts" ? (

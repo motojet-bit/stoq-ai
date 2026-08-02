@@ -19,6 +19,16 @@ export interface LlmRequest {
     locale?: string;
   };
   /**
+   * ディベートの担当。指定すると **Rust 側の秘匿プロンプト**が system になる。
+   * `system` / `analysisPreset` より優先される。
+   */
+  debate?: "bear" | "bull";
+  /**
+   * モデルの上書き。ディベートに別モデルを充てるときだけ使う。
+   * 未指定ならプロバイダの既定モデル。
+   */
+  model?: string;
+  /**
    * 出力言語（`ja` / `en` …）。
    * **指定しなければ送信時に現在の表示言語が入る。**
    * 画面ごとに書き分けると設定と食い違うため。

@@ -73,7 +73,7 @@ export default function FreeTierLimitModal({
 
         {ticker && (
           <p className="mt-3 t-label text-slate-500">
-            分析しようとした銘柄:{" "}
+            {t("lock.attemptedTicker")}{" "}
             <span className="font-mono text-slate-300">{ticker}</span>
           </p>
         )}
