@@ -10,7 +10,7 @@
 
 use serde_json::Value;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 use crate::market::MarketDataProvider;
 use crate::yahoo::{fmt_money, fmt_pct, fmt_price, fmt_ratio, Fundamentals, Metric, MetricGroup};
@@ -36,22 +36,20 @@ impl AlphaVantage {
             ])
             .send()
             .await
-            .map_err(|e| AppError::msg(format!("Alpha Vantage へ接続できません: {e}")))?;
+            .map_err(|e| AppError::detail(code::MARKET_FETCH_FAILED, e.to_string()))?;
 
         let status = res.status();
         let body = res
             .text()
             .await
-            .map_err(|e| AppError::msg(format!("Alpha Vantage の応答を読めません: {e}")))?;
+            .map_err(|e| AppError::detail(code::MARKET_FETCH_FAILED, e.to_string()))?;
 
         if !status.is_success() {
-            return Err(AppError::msg(format!(
-                "Alpha Vantage がエラーを返しました（{status}）"
-            )));
+            return Err(AppError::detail(code::MARKET_FETCH_FAILED, status.to_string()));
         }
 
         let json: Value = serde_json::from_str(&body)
-            .map_err(|e| AppError::msg(format!("Alpha Vantage の応答を解釈できません: {e}")))?;
+            .map_err(|e| AppError::detail(code::MARKET_FETCH_FAILED, e.to_string()))?;
 
         check_api_error(&json)?;
         Ok(json)
@@ -61,15 +59,13 @@ impl AlphaVantage {
 /// Alpha Vantage は失敗も HTTP 200 で返す。本文を見て判定する。
 fn check_api_error(json: &Value) -> Result<()> {
     if let Some(message) = json.get("Error Message").and_then(|v| v.as_str()) {
-        return Err(AppError::msg(format!("Alpha Vantage: {message}")));
+        return Err(AppError::detail(code::MARKET_FETCH_FAILED, message.to_string()));
     }
     if let Some(note) = json.get("Note").and_then(|v| v.as_str()) {
-        return Err(AppError::msg(format!(
-            "Alpha Vantage の利用上限に達しました。しばらく待ってからお試しください。（{note}）"
-        )));
+        return Err(AppError::detail(code::MARKET_FETCH_FAILED, note.to_string()));
     }
     if let Some(info) = json.get("Information").and_then(|v| v.as_str()) {
-        return Err(AppError::msg(format!("Alpha Vantage: {info}")));
+        return Err(AppError::detail(code::MARKET_FETCH_FAILED, info.to_string()));
     }
     Ok(())
 }
@@ -86,14 +82,12 @@ impl MarketDataProvider for AlphaVantage {
     async fn fundamentals(&self, ticker: &str) -> Result<Fundamentals> {
         let symbol = ticker.trim().to_uppercase();
         if symbol.is_empty() {
-            return Err(AppError::msg("ティッカーが空です。"));
+            return Err(AppError::code(code::INVALID_INPUT));
         }
 
         let overview = self.get("OVERVIEW", &symbol).await?;
         if overview.get("Symbol").is_none() {
-            return Err(AppError::msg(format!(
-                "Alpha Vantage に {symbol} のデータがありませんでした。ティッカーをご確認ください。"
-            )));
+            return Err(AppError::detail(code::MARKET_FETCH_FAILED, symbol.to_string()));
         }
 
         // 株価が取れなくても指標は出す
@@ -132,9 +126,7 @@ impl MarketDataProvider for AlphaVantage {
         let overview = self.get("OVERVIEW", &symbol).await?;
         match text(&overview, "Name") {
             Some(name) => Ok(format!("Alpha Vantage に接続できました（{name}）")),
-            None => Err(AppError::msg(format!(
-                "キーは有効ですが、{symbol} のデータが見つかりませんでした。"
-            ))),
+            None => Err(AppError::detail(code::NOT_FOUND, symbol.to_string())),
         }
     }
 }

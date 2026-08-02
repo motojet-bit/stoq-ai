@@ -9,7 +9,7 @@ import PromptLibraryModal from "@/components/PromptLibraryModal";
 import { IconChevronDown, IconPersona, IconSettings } from "@/components/Icons";
 import PortalMenu from "@/components/PortalMenu";
 import Tooltip from "@/components/Tooltip";
-import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { tooltip } from "@/lib/ui/tooltipText";
 import { useT } from "@/lib/i18n/i18n";
 
 /**
@@ -33,7 +33,7 @@ export default function PromptLibraryMenu() {
 
   return (
     <div className="ui-fixed shrink-0">
-      <Tooltip content={TOOLTIPS.promptRole} placement="bottom" widthClass="w-80">
+      <Tooltip content={tooltip("promptRole")} placement="bottom" widthClass="w-80">
         <button
           ref={buttonRef}
           type="button"

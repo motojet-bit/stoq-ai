@@ -113,6 +113,12 @@ const LOCALIZED = [
   "src/lib/export/exportAnalysis.ts",
   "src/lib/config/modelCatalog.ts",
   "src/lib/prompts/parseAnalysis.ts",
+
+  // --- E: 法務・案内文 / F: エラーコードの変換 ---
+  "src/lib/legal/disclaimer.ts",
+  "src/lib/ui/tooltipText.ts",
+  "src/lib/errors/errorMessage.ts",
+  "src/lib/ui/toastStore.ts",
 ];
 
 /**
@@ -152,9 +158,8 @@ function startsRegex(before: string): boolean {
 /**
  * コメントと正規表現リテラルを空白に潰す。文字列の中の `//` は残す。
  *
- * **正規表現も飛ばすのが要点。** `/[",
-]/` のような文字クラスに引用符が
- * 入っていると、そこから文字列が始まったと誤読して以降を丸ごと拾ってしまう。
+ * **正規表現も飛ばすのが要点。** 文字クラスに引用符が入っている正規表現
+ * （CSV のエスケープ判定など）を、文字列の開始と誤読して以降を丸ごと拾ってしまう。
  */
 function stripComments(text: string): string {
   let out = "";

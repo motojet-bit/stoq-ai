@@ -23,6 +23,7 @@ import type {
   StagedDocument,
 } from "@/types";
 import { t } from "@/lib/i18n/i18n";
+import { errorMessage } from "@/lib/errors/errorMessage";
 
 /** 1 銘柄分の分析実行状態 */
 export interface AnalysisRun {
@@ -174,7 +175,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           "warning",
           t("toast.analysis.secFailed"),
           t("toast.analysis.secFallback", {
-        reason: e instanceof Error ? e.message : String(e),
+        reason: errorMessage(e),
       }),
         );
       }
@@ -288,7 +289,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           "warning",
           t("toast.analysis.saveFailed"),
           t("toast.analysis.saveFailedHint", {
-            reason: e instanceof Error ? e.message : String(e),
+            reason: errorMessage(e),
           }),
         );
       }
@@ -300,7 +301,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       pushToast("success", t("toast.analysis.done", { ticker }));
     }
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+    const message = errorMessage(e);
     patch(ticker, {
       phase: "error",
       error: message,

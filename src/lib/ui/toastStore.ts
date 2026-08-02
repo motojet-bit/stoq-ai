@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/errors/errorMessage";
 import { useSyncExternalStore } from "react";
 
 export type ToastKind = "error" | "warning" | "success" | "info";
@@ -59,7 +60,12 @@ export function toastSuccess(title: string, detail?: string): void {
   pushToast("success", title, detail);
 }
 
-/** Error / 文字列のどちらでも受け取れるエラー用ショートカット。 */
+/**
+ * エラー用のショートカット。
+ *
+ * **Rust から来たエラーコードは、ここで表示言語の文面に直す。**
+ * 各呼び出し側で `String(e)` していると、コードが生のまま画面に出る。
+ */
 export function toastError(title: string, cause: unknown): void {
-  pushToast("error", title, cause instanceof Error ? cause.message : String(cause));
+  pushToast("error", title, errorMessage(cause));
 }

@@ -15,7 +15,7 @@ use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::library::{new_id, now_ms, open_library};
 
 #[derive(Debug, Clone, Serialize)]
@@ -52,7 +52,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
          CREATE UNIQUE INDEX IF NOT EXISTS idx_candidates_ticker
             ON candidate_stocks(ticker COLLATE NOCASE);",
     )
-    .map_err(|e| AppError::msg(format!("検討中銘柄テーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 
@@ -72,7 +72,7 @@ pub fn list_in(conn: &Connection) -> Result<Vec<CandidateStock>> {
             "SELECT id, ticker, name, genre, created_at_ms
              FROM candidate_stocks ORDER BY created_at_ms DESC, ticker ASC",
         )
-        .map_err(|e| AppError::msg(format!("検討中銘柄を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map([], |row| {
@@ -84,7 +84,7 @@ pub fn list_in(conn: &Connection) -> Result<Vec<CandidateStock>> {
                 created_at_ms: row.get(4)?,
             })
         })
-        .map_err(|e| AppError::msg(format!("検討中銘柄を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -115,7 +115,7 @@ pub fn add_many_in(
                 now_ms()
             ],
         )
-        .map_err(|e| AppError::msg(format!("検討中銘柄を保存できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     }
     list_in(conn)
 }
@@ -128,10 +128,10 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<Vec<CandidateStock>> {
 pub fn remove_in(conn: &Connection, id: &str) -> Result<Vec<CandidateStock>> {
     let changed = conn
         .execute("DELETE FROM candidate_stocks WHERE id = ?1", params![id])
-        .map_err(|e| AppError::msg(format!("検討中銘柄を削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象の銘柄が見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_in(conn)
 }
@@ -143,7 +143,7 @@ pub fn clear(app: &AppHandle) -> Result<Vec<CandidateStock>> {
 
 pub fn clear_in(conn: &Connection) -> Result<Vec<CandidateStock>> {
     conn.execute("DELETE FROM candidate_stocks", [])
-        .map_err(|e| AppError::msg(format!("検討中銘柄を削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     list_in(conn)
 }
 

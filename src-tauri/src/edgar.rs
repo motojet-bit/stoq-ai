@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 use serde::Serialize;
 use tokio::sync::OnceCell;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::html;
 use crate::http;
 
@@ -103,9 +103,7 @@ async fn throttle() {
 fn validate_user_agent(user_agent: &str) -> Result<&str> {
     let ua = user_agent.trim();
     if ua.is_empty() || !ua.contains('@') {
-        return Err(AppError::msg(
-            "SEC の User-Agent が未設定です。設定画面で「アプリ名 連絡先メールアドレス」の形式で登録してください（例: StockAnalyzer you@example.com）。SEC は連絡先の明示を必須としており、未設定だとアクセスが拒否されます。",
-        ));
+        return Err(AppError::code(code::SEC_USER_AGENT_MISSING));
     }
     Ok(ua)
 }
@@ -120,10 +118,7 @@ async fn get_text(url: &str, user_agent: &str) -> Result<String> {
         .await?;
 
     if !res.status().is_success() {
-        return Err(AppError::msg(format!(
-            "SEC EDGAR から取得できませんでした（HTTP {} / {url}）",
-            res.status().as_u16()
-        )));
+        return Err(AppError::detail(code::SEC_FETCH_FAILED, url.to_string()));
     }
     Ok(res.text().await?)
 }
@@ -158,9 +153,7 @@ async fn resolve_cik(ticker: &str, user_agent: &str) -> Result<(String, String)>
         .await?;
 
     map.get(&ticker.to_uppercase()).cloned().ok_or_else(|| {
-        AppError::msg(format!(
-            "{ticker} は SEC EDGAR に登録されていません。米国上場銘柄以外（例: 日本株）は SEC 提出書類を取得できません。"
-        ))
+        AppError::detail(code::SEC_FETCH_FAILED, ticker.to_string())
     })
 }
 
@@ -353,7 +346,7 @@ pub async fn fetch_latest_filing(
 
     let recent = json
         .pointer("/filings/recent")
-        .ok_or_else(|| AppError::msg("SEC のレスポンス形式が想定と異なります。"))?;
+        .ok_or_else(|| AppError::code(code::SEC_FETCH_FAILED))?;
 
     let form_list = str_array(recent, "form");
     let accessions = str_array(recent, "accessionNumber");
@@ -365,17 +358,14 @@ pub async fn fetch_latest_filing(
     let index = (0..form_list.len())
         .find(|i| wanted.iter().any(|w| form_list[*i].to_uppercase() == *w))
         .ok_or_else(|| {
-            AppError::msg(format!(
-                "{ticker} の直近の提出書類に {} が見つかりませんでした。",
-                forms.join(" / ")
-            ))
+            AppError::detail(code::NOT_FOUND, ticker.to_string())
         })?;
 
     let accession = accessions.get(index).cloned().unwrap_or_default();
     let accession_plain = accession.replace('-', "");
     let primary = primary_docs.get(index).cloned().unwrap_or_default();
     if primary.is_empty() {
-        return Err(AppError::msg("提出書類の本文ファイル名を特定できませんでした。"));
+        return Err(AppError::code(code::SEC_FETCH_FAILED));
     }
 
     let cik_trimmed = cik.trim_start_matches('0');

@@ -12,6 +12,7 @@ import type {
   SettingsPatch,
 } from "@/types";
 import { t } from "@/lib/i18n/i18n";
+import { errorMessage } from "@/lib/errors/errorMessage";
 
 /**
  * 設定のグローバルストア。
@@ -65,7 +66,7 @@ export async function loadSettings(): Promise<AppSettings | null> {
     syncEula(snapshot.eula);
     loadError = null;
   } catch (e) {
-    loadError = String(e);
+    loadError = errorMessage(e);
   }
   emit();
   return snapshot;

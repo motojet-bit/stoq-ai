@@ -17,7 +17,7 @@ pub mod fmp;
 
 use serde::Serialize;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::settings::Settings;
 use crate::yahoo::{self, Fundamentals};
 
@@ -135,9 +135,7 @@ pub async fn fetch_fundamentals(settings: &Settings, ticker: &str) -> Result<Fun
     let id = normalize_id(&settings.market_provider);
     let status = status_of(settings, &id);
     if !status.ready {
-        return Err(AppError::msg(
-            status.reason.unwrap_or_else(|| "取得元を利用できません。".into()),
-        ));
+        return Err(AppError::detail(code::API_KEY_MISSING, status.label.clone()));
     }
 
     match id.as_str() {
@@ -160,9 +158,7 @@ pub async fn health_check(settings: &Settings, id: &str, ticker: &str) -> Result
     let id = normalize_id(id);
     let status = status_of(settings, &id);
     if !status.ready {
-        return Err(AppError::msg(
-            status.reason.unwrap_or_else(|| "取得元を利用できません。".into()),
-        ));
+        return Err(AppError::detail(code::API_KEY_MISSING, status.label.clone()));
     }
 
     match id.as_str() {
@@ -271,13 +267,13 @@ mod tests {
     async fn キー未設定のまま取得すると理由つきで失敗する() {
         let s = settings_with("fmp", None);
         let err = fetch_fundamentals(&s, "AAPL").await.unwrap_err();
-        assert!(format!("{err:?}").contains("APIキーが未設定"));
+        assert_eq!(err.payload().code, crate::error::code::API_KEY_MISSING);
     }
 
     #[tokio::test]
     async fn キー未設定のままヘルスチェックしても通信しない() {
         let s = settings_with("alphavantage", None);
         let err = health_check(&s, "alphavantage", "AAPL").await.unwrap_err();
-        assert!(format!("{err:?}").contains("APIキーが未設定"));
+        assert_eq!(err.payload().code, crate::error::code::API_KEY_MISSING);
     }
 }

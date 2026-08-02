@@ -15,7 +15,7 @@ use std::sync::Mutex;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 
 const MODULES: &str = "price,summaryDetail,defaultKeyStatistics,financialData";
@@ -66,7 +66,7 @@ pub struct Fundamentals {
 pub async fn fetch_fundamentals(ticker: &str) -> Result<Fundamentals> {
     let symbol = ticker.trim().to_uppercase();
     if symbol.is_empty() {
-        return Err(AppError::msg("ティッカーが空です。"));
+        return Err(AppError::code(code::INVALID_INPUT));
     }
 
     // crumb 不要の chart から、銘柄名・通貨・株価を取る
@@ -127,30 +127,23 @@ async fn fetch_chart_meta(symbol: &str) -> Result<Value> {
 
     let status = res.status();
     let body: Value = res.json().await.map_err(|_| {
-        AppError::msg("Yahoo Finance のレスポンスを解析できませんでした。")
+        AppError::code(code::MARKET_FETCH_FAILED)
     })?;
 
     if let Some(desc) = body
         .pointer("/chart/error/description")
         .and_then(|v| v.as_str())
     {
-        return Err(AppError::msg(format!(
-            "「{symbol}」は Yahoo Finance で見つかりませんでした（{desc}）。ティッカーを確認してください（例: AAPL / 7203.T / ASML.AS）。"
-        )));
+        return Err(AppError::detail(code::NOT_FOUND, symbol.to_string()));
     }
     if !status.is_success() {
-        return Err(AppError::msg(format!(
-            "Yahoo Finance から取得できませんでした（HTTP {}）。",
-            status.as_u16()
-        )));
+        return Err(AppError::code(code::MARKET_FETCH_FAILED));
     }
 
     body.pointer("/chart/result/0/meta")
         .cloned()
         .ok_or_else(|| {
-            AppError::msg(format!(
-                "「{symbol}」の銘柄情報が見つかりませんでした。ティッカーを確認してください。"
-            ))
+            AppError::detail(code::NOT_FOUND, symbol.to_string())
         })
 }
 
@@ -186,7 +179,7 @@ async fn fetch_modules(symbol: &str, modules: &str) -> Result<Value> {
             return body
                 .pointer("/quoteSummary/result/0")
                 .cloned()
-                .ok_or_else(|| AppError::msg("指標データが空でした。"));
+                .ok_or_else(|| AppError::code(code::MARKET_FETCH_FAILED));
         }
 
         // crumb 期限切れは 401。1 回だけ取り直す。
@@ -196,7 +189,7 @@ async fn fetch_modules(symbol: &str, modules: &str) -> Result<Value> {
             continue;
         }
 
-        return Err(AppError::msg(format!("HTTP {}", status.as_u16())));
+        return Err(AppError::code(code::MARKET_FETCH_FAILED));
     }
 }
 
@@ -221,9 +214,7 @@ async fn crumb(force: bool) -> Result<String> {
 
     let text = res.text().await?.trim().to_string();
     if text.is_empty() || text.contains('<') {
-        return Err(AppError::msg(
-            "Yahoo Finance の認証トークン（crumb）を取得できませんでした。",
-        ));
+        return Err(AppError::code(code::MARKET_FETCH_FAILED));
     }
 
     *CRUMB.lock().unwrap() = Some(text.clone());

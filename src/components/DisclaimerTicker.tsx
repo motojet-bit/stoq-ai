@@ -1,4 +1,4 @@
-import { DISCLAIMER_TICKER_TEXT } from "@/lib/legal/disclaimer";
+import { disclaimerTickerText } from "@/lib/legal/disclaimer";
 import { openDisclaimer } from "@/lib/legal/disclaimerStore";
 import { IconWarning } from "@/components/Icons";
 import { useT } from "@/lib/i18n/i18n";
@@ -24,10 +24,10 @@ export default function DisclaimerTicker() {
 
       <span className="ticker-viewport min-w-0 flex-1 overflow-hidden">
         <span className="ticker-track">
-          <span className="ticker-item">{DISCLAIMER_TICKER_TEXT}</span>
+          <span className="ticker-item">{disclaimerTickerText()}</span>
           {/* 継ぎ目を消すための 2 枚目。読み上げには不要なので隠す */}
           <span className="ticker-item" aria-hidden="true">
-            {DISCLAIMER_TICKER_TEXT}
+            {disclaimerTickerText()}
           </span>
         </span>
       </span>

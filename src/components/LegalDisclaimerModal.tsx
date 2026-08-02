@@ -1,6 +1,6 @@
 import {
   disclaimerSections,
-  DISCLAIMER_TITLE,
+  disclaimerTitle,
 } from "@/lib/legal/disclaimer";
 import { closeDisclaimer, useDisclaimerOpen } from "@/lib/legal/disclaimerStore";
 import ModalShell from "@/components/ModalShell";
@@ -21,7 +21,7 @@ export default function LegalDisclaimerModal() {
   return (
     <ModalShell
       open={open}
-      title={DISCLAIMER_TITLE}
+      title={disclaimerTitle()}
       icon={<IconWarning className="h-4 w-4 text-amber-400" />}
       maxWidthClass="max-w-3xl"
       onClose={closeDisclaimer}

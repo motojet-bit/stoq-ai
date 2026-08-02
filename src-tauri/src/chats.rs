@@ -18,7 +18,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,7 +48,7 @@ fn db_path(app: &AppHandle) -> Result<PathBuf> {
     let dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| AppError::msg(format!("データディレクトリを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DATA_DIR, e.to_string()))?;
     std::fs::create_dir_all(&dir)?;
     Ok(dir.join("chats.db"))
 }
@@ -60,7 +60,7 @@ fn open(app: &AppHandle) -> Result<Connection> {
 /// パスを指定して開く。Tauri なしで単体テストできるよう分けてある。
 fn open_at(path: &std::path::Path) -> Result<Connection> {
     let conn = Connection::open(path)
-        .map_err(|e| AppError::msg(format!("チャット履歴データベースを開けません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_OPEN, e.to_string()))?;
     migrate(&conn)?;
     Ok(conn)
 }
@@ -86,7 +86,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
          CREATE INDEX IF NOT EXISTS idx_messages_session
             ON chat_messages(session_id, created_at_ms);",
     )
-    .map_err(|e| AppError::msg(format!("チャット履歴テーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     // 後から足した列。すでにあればエラーになるので黙って無視する。
     // 既存行は DEFAULT 0（＝アーカイブしていない）になり、会話は消えない。
@@ -112,7 +112,7 @@ fn list_sessions_in(conn: &Connection) -> Result<Vec<ChatSession>> {
              FROM chat_sessions s
              ORDER BY s.is_archived ASC, s.updated_at_ms DESC",
         )
-        .map_err(|e| AppError::msg(format!("履歴を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map([], |row| {
@@ -126,7 +126,7 @@ fn list_sessions_in(conn: &Connection) -> Result<Vec<ChatSession>> {
                 message_count: row.get(6)?,
             })
         })
-        .map_err(|e| AppError::msg(format!("履歴を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -170,7 +170,7 @@ fn create_session_in(
                 session.updated_at_ms
             ],
         )
-        .map_err(|e| AppError::msg(format!("チャットを作成できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(session)
 }
@@ -182,7 +182,7 @@ pub fn rename_session(app: &AppHandle, id: &str, title: &str) -> Result<Vec<Chat
 fn rename_session_in(conn: &Connection, id: &str, title: &str) -> Result<Vec<ChatSession>> {
     let title = title.trim();
     if title.is_empty() {
-        return Err(AppError::msg("タイトルを空にはできません。"));
+        return Err(AppError::code(code::DB_QUERY));
     }
 
     let changed = conn
@@ -190,10 +190,10 @@ fn rename_session_in(conn: &Connection, id: &str, title: &str) -> Result<Vec<Cha
             "UPDATE chat_sessions SET title = ?2 WHERE id = ?1",
             params![id, title],
         )
-        .map_err(|e| AppError::msg(format!("タイトルを変更できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_sessions_in(conn)
 }
@@ -209,10 +209,10 @@ fn set_archived_in(conn: &Connection, id: &str, archived: bool) -> Result<Vec<Ch
             "UPDATE chat_sessions SET is_archived = ?2 WHERE id = ?1",
             params![id, i64::from(archived)],
         )
-        .map_err(|e| AppError::msg(format!("アーカイブ状態を変更できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_sessions_in(conn)
 }
@@ -225,10 +225,10 @@ fn delete_session_in(conn: &Connection, id: &str) -> Result<Vec<ChatSession>> {
     // 外部キーの CASCADE でメッセージも消える
     let changed = conn
         .execute("DELETE FROM chat_sessions WHERE id = ?1", params![id])
-        .map_err(|e| AppError::msg(format!("チャットを削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_sessions_in(conn)
 }
@@ -245,7 +245,7 @@ fn load_messages_in(conn: &Connection, session_id: &str) -> Result<Vec<ChatMessa
             "SELECT id, role, content, created_at_ms
              FROM chat_messages WHERE session_id = ?1 ORDER BY created_at_ms ASC",
         )
-        .map_err(|e| AppError::msg(format!("メッセージを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map(params![session_id], |row| {
@@ -256,7 +256,7 @@ fn load_messages_in(conn: &Connection, session_id: &str) -> Result<Vec<ChatMessa
                 created_at_ms: row.get(3)?,
             })
         })
-        .map_err(|e| AppError::msg(format!("メッセージを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -288,10 +288,10 @@ fn append_message_in(
             |row| row.get(0),
         )
         .optional()
-        .map_err(|e| AppError::msg(format!("チャットを参照できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let Some(title) = exists else {
-        return Err(AppError::msg("対象のチャットが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     };
 
     let message = ChatMessage {
@@ -306,7 +306,7 @@ fn append_message_in(
          VALUES (?1, ?2, ?3, ?4, ?5)",
         params![message.id, session_id, message.role, message.content, now],
     )
-    .map_err(|e| AppError::msg(format!("メッセージを保存できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     // 未命名のセッションは、最初のユーザー発言から自動で名前をつける
     let auto_title = (title == "新しいチャット" && role == "user").then(|| summarize(content));
@@ -321,7 +321,7 @@ fn append_message_in(
             params![session_id, now],
         ),
     }
-    .map_err(|e| AppError::msg(format!("チャットを更新できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(message)
 }

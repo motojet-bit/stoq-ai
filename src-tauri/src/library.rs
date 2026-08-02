@@ -9,20 +9,20 @@ use std::path::PathBuf;
 use rusqlite::Connection;
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 pub fn db_path(app: &AppHandle) -> Result<PathBuf> {
     let dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| AppError::msg(format!("データディレクトリを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DATA_DIR, e.to_string()))?;
     std::fs::create_dir_all(&dir)?;
     Ok(dir.join("library.db"))
 }
 
 pub fn open_library(app: &AppHandle) -> Result<Connection> {
     Connection::open(db_path(app)?)
-        .map_err(|e| AppError::msg(format!("ライブラリデータベースを開けません: {e}")))
+        .map_err(|e| AppError::detail(code::DB_OPEN, e.to_string()))
 }
 
 /// 衝突しない ID を作る。時刻だけだと同一ナノ秒で重なるので連番も足す。

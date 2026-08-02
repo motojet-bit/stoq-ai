@@ -22,7 +22,7 @@ use std::sync::{Mutex, OnceLock};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::library::now_ms;
 use crate::settings;
 
@@ -133,14 +133,10 @@ async fn access_token(app: &AppHandle) -> Result<String> {
     let refresh_token = config.refresh_token.trim().to_string();
 
     if client_id.is_empty() {
-        return Err(AppError::msg(
-            "Google の OAuth クライアント ID が未設定です。設定の「クラウド同期」で登録してください。",
-        ));
+        return Err(AppError::code(code::CLOUD_CLIENT_ID_MISSING));
     }
     if refresh_token.is_empty() {
-        return Err(AppError::msg(
-            "Google と連携していません。「🌐 Google アカウントで連携」から接続してください。",
-        ));
+        return Err(AppError::code(code::CLOUD_NOT_CONNECTED));
     }
 
     let tokens = oauth::refresh(&client_id, &refresh_token, now).await?;
@@ -155,10 +151,7 @@ pub async fn connect(app: &AppHandle) -> Result<CloudStatus> {
     let mut current = settings::load(app)?;
     let client_id = current.cloud.client_id.trim().to_string();
     if client_id.is_empty() {
-        return Err(AppError::msg(
-            "先に Google の OAuth クライアント ID を登録してください。\
-             Google Cloud Console で「デスクトップアプリ」として発行できます。",
-        ));
+        return Err(AppError::code(code::CLOUD_CLIENT_ID_MISSING));
     }
 
     let verifier = pkce::generate_verifier()?;
@@ -174,28 +167,22 @@ pub async fn connect(app: &AppHandle) -> Result<CloudStatus> {
         oauth::wait_for_callback(listener, oauth::AUTH_TIMEOUT)
     })
     .await
-    .map_err(|e| AppError::msg(format!("認証の待受に失敗しました: {e}")))??;
+    .map_err(|e| AppError::detail(code::UNEXPECTED, e.to_string()))??;
 
     if let Some(error) = callback.error {
-        return Err(AppError::msg(format!(
-            "Google の連携が完了しませんでした（{error}）。"
-        )));
+        return Err(AppError::detail(code::UNEXPECTED, error.to_string()));
     }
     // state が一致しない応答は、別の誰かが投げ込んだもの
     if callback.state.as_deref() != Some(state.as_str()) {
-        return Err(AppError::msg(
-            "認証の応答が一致しませんでした。安全のため中止しました。もう一度お試しください。",
-        ));
+        return Err(AppError::code(code::CLOUD_AUTH_MISMATCH));
     }
     let code = callback
         .code
-        .ok_or_else(|| AppError::msg("認可コードを受け取れませんでした。"))?;
+        .ok_or_else(|| AppError::code(code::UNEXPECTED))?;
 
     let tokens = oauth::exchange_code(&client_id, &code, &verifier, &redirect_uri, now_ms()).await?;
     let refresh_token = tokens.refresh_token.clone().ok_or_else(|| {
-        AppError::msg(
-            "更新用トークンを受け取れませんでした。Google アカウントの権限を一度解除してから、もう一度お試しください。",
-        )
+        AppError::code(code::CLOUD_NO_REFRESH_TOKEN)
     })?;
 
     store_token(&tokens);
@@ -220,7 +207,7 @@ fn data_dir(app: &AppHandle) -> Result<PathBuf> {
     let dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| AppError::msg(format!("データディレクトリを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DATA_DIR, e.to_string()))?;
     std::fs::create_dir_all(&dir)?;
     Ok(dir)
 }
@@ -253,9 +240,7 @@ pub async fn backup(app: &AppHandle) -> Result<BackupResult> {
 
     let files = collect_files(&dir)?;
     if files.is_empty() {
-        return Err(AppError::msg(
-            "バックアップできるデータがまだありません。分析を保存してからお試しください。",
-        ));
+        return Err(AppError::code(code::CLOUD_NOTHING_TO_BACKUP));
     }
     let included: Vec<String> = files.iter().map(|(name, _)| name.clone()).collect();
 
@@ -300,7 +285,7 @@ pub async fn restore(app: &AppHandle, file_id: Option<String>) -> Result<Restore
         None => {
             let files = drive::list_backups(&token).await?;
             let latest = drive::latest_backup(&files).ok_or_else(|| {
-                AppError::msg("クラウドにバックアップがありません。先にバックアップしてください。")
+                AppError::code(code::CLOUD_NO_BACKUP)
             })?;
             (latest.id.clone(), latest.name.clone())
         }
@@ -311,7 +296,7 @@ pub async fn restore(app: &AppHandle, file_id: Option<String>) -> Result<Restore
 
     let targets = bundle::restorable(&parsed);
     if targets.is_empty() {
-        return Err(AppError::msg("バックアップに復元できるデータがありません。"));
+        return Err(AppError::code(code::BACKUP_EMPTY));
     }
 
     // 中身を全部読めてから書き始める。途中で失敗して半端に上書きしないため

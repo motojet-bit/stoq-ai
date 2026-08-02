@@ -14,7 +14,7 @@ import {
   type ThresholdValues,
 } from "@/lib/prompts/thresholds";
 import { thresholdPreview } from "@/lib/prompts/analystRoleStore";
-import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { tooltip } from "@/lib/ui/tooltipText";
 import Tooltip from "@/components/Tooltip";
 import { IconHelp } from "@/components/Icons";
 import CustomInstructionSettings from "@/components/CustomInstructionSettings";
@@ -92,7 +92,7 @@ export default function ThresholdSettings({ settings }: Props) {
         <p className="t-body leading-relaxed text-emerald-200/90">
           {t("thresholds.beginnerNote")}
         </p>
-        <Tooltip content={TOOLTIPS.thresholds} placement="left">
+        <Tooltip content={tooltip("thresholds")} placement="left">
           <span className="shrink-0 text-emerald-600">
             <IconHelp className="h-4 w-4" />
           </span>

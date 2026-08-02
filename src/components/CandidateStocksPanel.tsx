@@ -19,7 +19,7 @@ import {
   IconTrash,
 } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
-import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { tooltip } from "@/lib/ui/tooltipText";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
@@ -123,7 +123,7 @@ export default function CandidateStocksPanel({
 
       <header className="flex min-h-8 shrink-0 items-center justify-between gap-2 px-3 pt-1.5">
         {/* ヘッダーのクリックでも折りたためる */}
-        <Tooltip content={TOOLTIPS.candidates} placement="right" widthClass="w-72">
+        <Tooltip content={tooltip("candidates")} placement="right" widthClass="w-72">
           <button
             type="button"
             onClick={onToggleCollapsed}

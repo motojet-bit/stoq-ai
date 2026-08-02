@@ -12,7 +12,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,14 +37,14 @@ fn db_path(app: &AppHandle) -> Result<PathBuf> {
     let dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| AppError::msg(format!("データディレクトリを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DATA_DIR, e.to_string()))?;
     std::fs::create_dir_all(&dir)?;
     Ok(dir.join("analyses.db"))
 }
 
 fn open(app: &AppHandle) -> Result<Connection> {
     let conn = Connection::open(db_path(app)?)
-        .map_err(|e| AppError::msg(format!("分析結果データベースを開けません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_OPEN, e.to_string()))?;
     migrate(&conn)?;
     Ok(conn)
 }
@@ -62,7 +62,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
             saved_at_ms   INTEGER NOT NULL
          );",
     )
-    .map_err(|e| AppError::msg(format!("分析結果テーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     // 既存 DB への追加カラム。すでにあればエラーになるので黙って無視する。
     let _ = conn.execute(
@@ -100,7 +100,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
          CREATE INDEX IF NOT EXISTS idx_history_ticker
             ON analysis_history(ticker, saved_at_ms DESC);",
     )
-    .map_err(|e| AppError::msg(format!("分析履歴テーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     // 既存の履歴テーブルへの追加カラム
     let _ = conn.execute(
@@ -156,7 +156,7 @@ fn append_history(
             saved_at_ms
         ],
     )
-    .map_err(|e| AppError::msg(format!("分析履歴を保存できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 
@@ -175,7 +175,7 @@ pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<Archive
 
     let mut stmt = conn
         .prepare(sql)
-        .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map(params![upper], |row| {
@@ -190,7 +190,7 @@ pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<Archive
                 saved_at_ms: row.get(7)?,
             })
         })
-        .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -204,14 +204,14 @@ pub fn history_raw(app: &AppHandle, id: &str) -> Result<Option<String>> {
             |row| row.get(0),
         )
         .optional()
-        .map_err(|e| AppError::msg(format!("分析履歴を取得できません: {e}")))
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))
 }
 
 /// アーカイブ 1 件を削除する。
 pub fn history_delete(app: &AppHandle, id: &str) -> Result<()> {
     open(app)?
         .execute("DELETE FROM analysis_history WHERE id = ?1", params![id])
-        .map_err(|e| AppError::msg(format!("分析履歴を削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 
@@ -231,7 +231,7 @@ pub fn save(
 ) -> Result<SavedAnalysis> {
     let ticker = ticker.trim().to_uppercase();
     if raw.trim().is_empty() {
-        return Err(AppError::msg("保存する分析結果が空です。"));
+        return Err(AppError::code(code::INVALID_INPUT));
     }
 
     let saved_at_ms = now_ms();
@@ -259,7 +259,7 @@ pub fn save(
                 record_json, saved_at_ms
             ],
         )
-        .map_err(|e| AppError::msg(format!("分析結果を保存できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     // 最新版とは別に、上書きされない履歴も積む
     append_history(
@@ -311,7 +311,7 @@ pub fn load(app: &AppHandle, ticker: &str) -> Result<Option<SavedAnalysis>> {
             },
         )
         .optional()
-        .map_err(|e| AppError::msg(format!("分析結果を読み出せません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(row.map(
         |(raw, provider, model, prompt_tokens, notes, basis, record, saved_at_ms)| {
@@ -335,11 +335,11 @@ pub fn list(app: &AppHandle) -> Result<Vec<(String, i64)>> {
     let conn = open(app)?;
     let mut stmt = conn
         .prepare("SELECT ticker, saved_at_ms FROM analyses ORDER BY saved_at_ms DESC")
-        .map_err(|e| AppError::msg(format!("一覧を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)))
-        .map_err(|e| AppError::msg(format!("一覧を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -351,7 +351,7 @@ pub fn delete(app: &AppHandle, ticker: &str) -> Result<()> {
             "DELETE FROM analyses WHERE ticker = ?1",
             params![ticker.trim().to_uppercase()],
         )
-        .map_err(|e| AppError::msg(format!("分析結果を削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 

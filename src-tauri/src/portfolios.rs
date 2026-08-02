@@ -15,7 +15,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 use tauri::AppHandle;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::library::{new_id, now_ms, open_library};
 
 #[derive(Debug, Clone, Serialize)]
@@ -53,7 +53,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
             done_at_ms INTEGER NOT NULL
          );",
     )
-    .map_err(|e| AppError::msg(format!("ポートフォリオテーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     seed_default(conn)
 }
@@ -67,7 +67,7 @@ fn seed_default(conn: &Connection) -> Result<()> {
             |row| row.get(0),
         )
         .optional()
-        .map_err(|e| AppError::msg(format!("初期化状態を確認できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if seeded.is_some() {
         return Ok(());
@@ -79,13 +79,13 @@ fn seed_default(conn: &Connection) -> Result<()> {
          VALUES (?1, ?2, 0, ?3, ?3)",
         params![new_id("pf"), DEFAULT_NAME, now],
     )
-    .map_err(|e| AppError::msg(format!("既定のリストを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     conn.execute(
         "INSERT INTO portfolio_seed (key, done_at_ms) VALUES ('default', ?1)",
         params![now],
     )
-    .map_err(|e| AppError::msg(format!("初期化を記録できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(())
 }
@@ -107,13 +107,13 @@ pub fn list_in(conn: &Connection) -> Result<Vec<Portfolio>> {
             "SELECT id, name, created_at_ms, updated_at_ms
              FROM portfolios ORDER BY sort_order ASC, created_at_ms ASC",
         )
-        .map_err(|e| AppError::msg(format!("リストを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows: Vec<(String, String, i64, i64)> = stmt
         .query_map([], |row| {
             Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
         })
-        .map_err(|e| AppError::msg(format!("リストを取得できません: {e}")))?
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?
         .filter_map(std::result::Result::ok)
         .collect();
 
@@ -137,11 +137,11 @@ fn tickers_of(conn: &Connection, portfolio_id: &str) -> Result<Vec<String>> {
             "SELECT ticker FROM portfolio_tickers
              WHERE portfolio_id = ?1 ORDER BY added_at_ms ASC, rowid ASC",
         )
-        .map_err(|e| AppError::msg(format!("銘柄を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map(params![portfolio_id], |row| row.get::<_, String>(0))
-        .map_err(|e| AppError::msg(format!("銘柄を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -168,7 +168,7 @@ pub fn create_in(conn: &Connection, name: Option<&str>) -> Result<Vec<Portfolio>
          VALUES (?1, ?2, ?3, ?4, ?4)",
         params![new_id("pf"), name, next_order, now],
     )
-    .map_err(|e| AppError::msg(format!("リストを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     list_in(conn)
 }
@@ -180,7 +180,7 @@ pub fn rename(app: &AppHandle, id: &str, name: &str) -> Result<Vec<Portfolio>> {
 pub fn rename_in(conn: &Connection, id: &str, name: &str) -> Result<Vec<Portfolio>> {
     let name = name.trim();
     if name.is_empty() {
-        return Err(AppError::msg("リスト名を空にはできません。"));
+        return Err(AppError::code(code::DB_QUERY));
     }
 
     let changed = conn
@@ -188,10 +188,10 @@ pub fn rename_in(conn: &Connection, id: &str, name: &str) -> Result<Vec<Portfoli
             "UPDATE portfolios SET name = ?2, updated_at_ms = ?3 WHERE id = ?1",
             params![id, name, now_ms()],
         )
-        .map_err(|e| AppError::msg(format!("リスト名を変更できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象のリストが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_in(conn)
 }
@@ -204,10 +204,10 @@ pub fn remove_in(conn: &Connection, id: &str) -> Result<Vec<Portfolio>> {
     // 外部キーの CASCADE で所属銘柄も消える
     let changed = conn
         .execute("DELETE FROM portfolios WHERE id = ?1", params![id])
-        .map_err(|e| AppError::msg(format!("リストを削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象のリストが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_in(conn)
 }
@@ -219,7 +219,7 @@ pub fn add_ticker(app: &AppHandle, id: &str, ticker: &str) -> Result<Vec<Portfol
 pub fn add_ticker_in(conn: &Connection, id: &str, ticker: &str) -> Result<Vec<Portfolio>> {
     let ticker = ticker.trim().to_uppercase();
     if ticker.is_empty() {
-        return Err(AppError::msg("ティッカーが空です。"));
+        return Err(AppError::code(code::INVALID_INPUT));
     }
 
     let exists: bool = conn
@@ -229,10 +229,10 @@ pub fn add_ticker_in(conn: &Connection, id: &str, ticker: &str) -> Result<Vec<Po
             |_| Ok(true),
         )
         .optional()
-        .map_err(|e| AppError::msg(format!("リストを確認できません: {e}")))?
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?
         .unwrap_or(false);
     if !exists {
-        return Err(AppError::msg("対象のリストが見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
 
     // すでに入っていれば何もしない（重複追加でエラーにしない）
@@ -242,7 +242,7 @@ pub fn add_ticker_in(conn: &Connection, id: &str, ticker: &str) -> Result<Vec<Po
          ON CONFLICT(portfolio_id, ticker) DO NOTHING",
         params![id, ticker, now_ms()],
     )
-    .map_err(|e| AppError::msg(format!("銘柄を追加できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     list_in(conn)
 }
@@ -260,7 +260,7 @@ pub fn remove_ticker_in(
         "DELETE FROM portfolio_tickers WHERE portfolio_id = ?1 AND ticker = ?2",
         params![id, ticker.trim().to_uppercase()],
     )
-    .map_err(|e| AppError::msg(format!("銘柄を外せません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     list_in(conn)
 }

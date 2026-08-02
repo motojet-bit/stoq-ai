@@ -20,6 +20,7 @@ import LicenseSettings from "@/components/LicenseSettings";
 import CloudSyncSettings from "@/components/CloudSyncSettings";
 import ModalShell from "@/components/ModalShell";
 import { useT } from "@/lib/i18n/i18n";
+import { errorMessage } from "@/lib/errors/errorMessage";
 
 export type SettingsTab =
   | "providers"
@@ -106,7 +107,7 @@ export default function SettingsModal({
     try {
       await fn();
     } catch (e) {
-      setError(String(e));
+      setError(errorMessage(e));
     }
   };
 
@@ -128,7 +129,7 @@ export default function SettingsModal({
       setKeyDrafts({});
       setSavedAt(new Date().toLocaleTimeString("ja-JP"));
     } catch (e) {
-      setError(String(e));
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }

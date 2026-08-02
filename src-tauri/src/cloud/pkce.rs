@@ -8,7 +8,7 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 use sha2::{Digest, Sha256};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 /// アプリ専用の隠し領域だけにアクセスするスコープ。
 ///
@@ -29,7 +29,7 @@ pub const VERIFIER_LEN: usize = 96;
 pub fn generate_verifier() -> Result<String> {
     let mut bytes = [0u8; VERIFIER_LEN];
     getrandom::fill(&mut bytes)
-        .map_err(|e| AppError::msg(format!("乱数を生成できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::UNEXPECTED, e.to_string()))?;
 
     Ok(bytes
         .iter()
@@ -47,7 +47,7 @@ pub fn challenge_of(verifier: &str) -> String {
 pub fn generate_state() -> Result<String> {
     let mut bytes = [0u8; 24];
     getrandom::fill(&mut bytes)
-        .map_err(|e| AppError::msg(format!("乱数を生成できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::UNEXPECTED, e.to_string()))?;
     Ok(URL_SAFE_NO_PAD.encode(bytes))
 }
 

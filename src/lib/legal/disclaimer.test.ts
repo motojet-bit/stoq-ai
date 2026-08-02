@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   disclaimerSections,
-  DISCLAIMER_TICKER_TEXT,
-  DISCLAIMER_TITLE,
+  disclaimerTickerText,
+  disclaimerTitle,
   disclaimerPlainText,
 } from "@/lib/legal/disclaimer";
 import {
@@ -14,6 +14,13 @@ import {
 } from "@/lib/legal/disclaimerStore";
 import { MENUS, type MenuAction } from "@/components/MenuBar";
 import { setLocale, t } from "@/lib/i18n/i18n";
+
+/*
+ * 免責の文面は日本語で検証する（既定は英語なので明示的に切り替える）。
+ * **トップレベルで呼ぶ。** describe の外で組み立てられる値があるため、
+ * `beforeAll` では間に合わない。
+ */
+setLocale("ja");
 
 /**
  * 免責の文面は法的リスクの遮断が目的なので、
@@ -64,7 +71,7 @@ describe("免責事項の文面", () => {
 
   it("プレーンテキストは番号付きで全条項を含む", () => {
     const text = disclaimerPlainText();
-    expect(text).toContain(DISCLAIMER_TITLE);
+    expect(text).toContain(disclaimerTitle());
     for (let i = 0; i < disclaimerSections().length; i++) {
       expect(text).toContain(`${i + 1}. ${disclaimerSections()[i].title}`);
     }
@@ -73,7 +80,7 @@ describe("免責事項の文面", () => {
 
 describe("テロップの文面", () => {
   it("警告記号で始まる", () => {
-    expect(DISCLAIMER_TICKER_TEXT.startsWith("⚠️【免責事項】")).toBe(true);
+    expect(disclaimerTickerText().startsWith("⚠️【免責事項】")).toBe(true);
   });
 
   it("要点（非助言・誤情報・免責・自己責任）がすべて入っている", () => {
@@ -83,16 +90,16 @@ describe("テロップの文面", () => {
       "一切の責任を負いません",
       "自己責任",
     ]) {
-      expect(DISCLAIMER_TICKER_TEXT).toContain(phrase);
+      expect(disclaimerTickerText()).toContain(phrase);
     }
   });
 
   it("全文を開けることを案内している", () => {
-    expect(DISCLAIMER_TICKER_TEXT).toContain("（クリックで全文を表示）");
+    expect(disclaimerTickerText()).toContain("（クリックで全文を表示）");
   });
 
   it("流れ続けるので改行を含まない", () => {
-    expect(DISCLAIMER_TICKER_TEXT).not.toContain("\n");
+    expect(disclaimerTickerText()).not.toContain("\n");
   });
 });
 

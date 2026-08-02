@@ -14,7 +14,7 @@
 use serde_json::{json, Value};
 use tauri::ipc::Channel;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 use crate::llm::{extract_error_message, pump_sse, LlmEvent, LlmRequest, TEMPERATURE};
 
@@ -117,9 +117,7 @@ pub async fn stream(
         }
     }
 
-    Err(AppError::msg(
-        "OpenAI互換 API のパラメータを調整しましたが、リクエストが受け付けられませんでした。",
-    ))
+    Err(AppError::code(code::LLM_RESPONSE_INVALID))
 }
 
 fn build_body(model: &str, messages: &[Value], max_tokens: u32, dialect: Dialect) -> Value {
@@ -173,7 +171,5 @@ fn api_error(status: u16, detail: &str) -> AppError {
         429 => "（レート制限に達しました。しばらく待って再試行してください）",
         _ => "",
     };
-    AppError::msg(format!(
-        "OpenAI互換 API エラー (HTTP {status}){hint}: {detail}"
-    ))
+    AppError::detail(code::LLM_RESPONSE_INVALID, status.to_string())
 }

@@ -1,7 +1,7 @@
 import { APP_VERSION } from "@/lib/ui/appMeta";
 import { IconHelp } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
-import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { tooltip } from "@/lib/ui/tooltipText";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
@@ -47,7 +47,7 @@ export default function StatusBar({
 
       {/* 右: ヘルプとバージョン */}
       <div className="flex items-center justify-end gap-3">
-        <Tooltip content={TOOLTIPS.help} placement="top">
+        <Tooltip content={tooltip("help")} placement="top">
           <button
             type="button"
             onClick={onToggleHelp}

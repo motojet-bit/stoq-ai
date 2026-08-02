@@ -20,7 +20,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 const DIR_NAME: &str = "temp_documents";
 const INDEX_NAME: &str = "index.json";
@@ -47,7 +47,7 @@ fn dir(app: &AppHandle) -> Result<PathBuf> {
     let base = app
         .path()
         .app_data_dir()
-        .map_err(|e| AppError::msg(format!("データディレクトリを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DATA_DIR, e.to_string()))?;
     let dir = base.join(DIR_NAME);
     std::fs::create_dir_all(&dir)?;
     Ok(dir)
@@ -85,9 +85,7 @@ pub fn stage(
 ) -> Result<StagedDocument> {
     let trimmed = text.trim();
     if trimmed.is_empty() {
-        return Err(AppError::msg(format!(
-            "「{original_name}」からテキストを抽出できませんでした。画像だけの PDF や暗号化された PDF の可能性があります。"
-        )));
+        return Err(AppError::detail(code::IO, original_name.to_string()));
     }
 
     let id = new_id();
@@ -112,9 +110,7 @@ pub fn stage(
 pub fn read_text(app: &AppHandle, id: &str) -> Result<String> {
     let path = text_path(app, id)?;
     if !path.exists() {
-        return Err(AppError::msg(
-            "資料の本文が見つかりませんでした。削除された可能性があります。",
-        ));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     Ok(std::fs::read_to_string(&path)?)
 }
@@ -122,14 +118,14 @@ pub fn read_text(app: &AppHandle, id: &str) -> Result<String> {
 pub fn rename(app: &AppHandle, id: &str, display_name: &str) -> Result<Vec<StagedDocument>> {
     let name = display_name.trim();
     if name.is_empty() {
-        return Err(AppError::msg("表示名を空にはできません。"));
+        return Err(AppError::code(code::IO));
     }
 
     let mut docs = list(app)?;
     let entry = docs
         .iter_mut()
         .find(|d| d.id == id)
-        .ok_or_else(|| AppError::msg("対象の資料が見つかりませんでした。"))?;
+        .ok_or_else(|| AppError::code(code::NOT_FOUND))?;
     entry.display_name = name.to_string();
 
     write_index(app, &docs)?;
@@ -141,7 +137,7 @@ pub fn delete(app: &AppHandle, id: &str) -> Result<Vec<StagedDocument>> {
     let before = docs.len();
     docs.retain(|d| d.id != id);
     if docs.len() == before {
-        return Err(AppError::msg("対象の資料が見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
 
     // 本文ファイルが既に無くてもインデックスの整合は取る

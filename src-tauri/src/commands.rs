@@ -10,7 +10,7 @@ use crate::chats::{self, ChatMessage, ChatSession};
 use crate::cloud;
 use crate::documents::{self, StagedDocument};
 use crate::edgar::{self, FilingStatus, SecFiling};
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::eula::{self, EulaStatus};
 use crate::exports;
 use crate::library;
@@ -74,7 +74,7 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
 
     if let Some(provider) = patch.provider {
         if !current.has_provider(&provider) {
-            return Err(AppError::msg(format!("未知のプロバイダです: {provider}")));
+            return Err(AppError::detail(code::UNKNOWN_PROVIDER, provider.to_string()));
         }
         current.provider = provider;
     }
@@ -94,7 +94,7 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
     }
     if let Some(provider) = patch.market_provider {
         if !market::PROVIDER_IDS.contains(&provider.as_str()) {
-            return Err(AppError::msg(format!("未知のデータ取得元です: {provider}")));
+            return Err(AppError::detail(code::UNKNOWN_MARKET_PROVIDER, provider.to_string()));
         }
         current.market_provider = provider;
     }
@@ -118,7 +118,7 @@ pub fn settings_save(app: AppHandle, patch: SettingsPatch) -> Result<SettingsVie
 #[tauri::command]
 pub fn market_set_key(app: AppHandle, provider: String, api_key: String) -> Result<SettingsView> {
     if !market::PROVIDER_IDS.contains(&provider.as_str()) {
-        return Err(AppError::msg(format!("未知のデータ取得元です: {provider}")));
+        return Err(AppError::detail(code::UNKNOWN_MARKET_PROVIDER, provider.to_string()));
     }
     let mut current = settings::load(&app)?;
     let slot = market::key_id(&provider);
@@ -149,7 +149,7 @@ pub async fn market_health_check(
 pub fn settings_set_key(app: AppHandle, provider: String, api_key: String) -> Result<SettingsView> {
     let mut current = settings::load(&app)?;
     if !current.has_provider(&provider) {
-        return Err(AppError::msg(format!("未知のプロバイダです: {provider}")));
+        return Err(AppError::detail(code::UNKNOWN_PROVIDER, provider.to_string()));
     }
     let trimmed = api_key.trim();
     if trimmed.is_empty() {
@@ -192,7 +192,7 @@ pub fn settings_update_custom_provider(
         .custom_providers
         .iter_mut()
         .find(|c| c.id == id)
-        .ok_or_else(|| AppError::msg(format!("プロバイダ {id} が見つかりませんでした。")))?;
+        .ok_or_else(|| AppError::detail(code::NOT_FOUND, id.to_string()))?;
 
     if let Some(label) = patch.label {
         let label = label.trim().to_string();
@@ -429,14 +429,14 @@ pub fn eula_revoke(app: AppHandle) -> Result<EulaStatus> {
 pub fn window_set_title(app: AppHandle, title: String) -> Result<()> {
     let title = title.trim();
     if title.is_empty() {
-        return Err(AppError::msg("ウィンドウタイトルが空です。"));
+        return Err(AppError::code(code::INVALID_INPUT));
     }
     let window = app
         .get_webview_window("main")
-        .ok_or_else(|| AppError::msg("ウィンドウが見つかりません。"))?;
+        .ok_or_else(|| AppError::code(code::NOT_FOUND))?;
     window
         .set_title(title)
-        .map_err(|e| AppError::msg(format!("ウィンドウタイトルを変更できません: {e}")))
+        .map_err(|e| AppError::detail(code::INVALID_INPUT, e.to_string()))
 }
 
 // ------------------------------------------------------ クラウド同期

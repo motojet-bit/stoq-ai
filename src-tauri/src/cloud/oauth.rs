@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::cloud::pkce::{self, AuthCallback};
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 
 /// ブラウザでの操作を待つ上限。
@@ -43,14 +43,14 @@ pub fn parse_tokens(json: &Value, now_ms: i64) -> Result<Tokens> {
             .get("error_description")
             .and_then(|v| v.as_str())
             .unwrap_or(error);
-        return Err(AppError::msg(format!("Google の認証に失敗しました: {detail}")));
+        return Err(AppError::detail(code::CLOUD_REQUEST_FAILED, detail.to_string()));
     }
 
     let access_token = json
         .get("access_token")
         .and_then(|v| v.as_str())
         .filter(|s| !s.is_empty())
-        .ok_or_else(|| AppError::msg("Google の応答にアクセストークンがありません。"))?;
+        .ok_or_else(|| AppError::code(code::CLOUD_REQUEST_FAILED))?;
 
     // expires_in は秒。無ければ短めに見積もって次回更新させる
     let expires_in = json
@@ -74,10 +74,10 @@ pub fn parse_tokens(json: &Value, now_ms: i64) -> Result<Tokens> {
 /// ポートは OS に選ばせる（`0`）。固定にすると他のアプリと衝突する。
 pub fn bind_loopback() -> Result<(TcpListener, String)> {
     let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0))
-        .map_err(|e| AppError::msg(format!("認証の受け口を用意できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
     let port = listener
         .local_addr()
-        .map_err(|e| AppError::msg(format!("受け口のポートを取得できません: {e}")))?
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?
         .port();
 
     Ok((listener, format!("http://127.0.0.1:{port}")))
@@ -111,7 +111,7 @@ fn respond(stream: &mut TcpStream, response: &str) {
 pub fn wait_for_callback(listener: TcpListener, timeout: Duration) -> Result<AuthCallback> {
     listener
         .set_nonblocking(true)
-        .map_err(|e| AppError::msg(format!("受け口を設定できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     let deadline = Instant::now() + timeout;
 
@@ -142,13 +142,11 @@ pub fn wait_for_callback(listener: TcpListener, timeout: Duration) -> Result<Aut
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 std::thread::sleep(Duration::from_millis(120));
             }
-            Err(e) => return Err(AppError::msg(format!("認証の応答を受け取れません: {e}"))),
+            Err(e) => return Err(AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string())),
         }
     }
 
-    Err(AppError::msg(
-        "認証がタイムアウトしました。ブラウザで許可の操作を行ってから、もう一度お試しください。",
-    ))
+    Err(AppError::code(code::CLOUD_AUTH_TIMEOUT))
 }
 
 /// 既定のブラウザで URL を開く。
@@ -166,7 +164,7 @@ pub fn open_in_browser(url: &str) -> Result<()> {
 
     result
         .map(|_| ())
-        .map_err(|e| AppError::msg(format!("ブラウザを開けません: {e}")))
+        .map_err(|e| AppError::detail(code::DB_OPEN, e.to_string()))
 }
 
 async fn post_token_form(form: &[(&str, &str)], now_ms: i64) -> Result<Tokens> {
@@ -175,15 +173,15 @@ async fn post_token_form(form: &[(&str, &str)], now_ms: i64) -> Result<Tokens> {
         .form(form)
         .send()
         .await
-        .map_err(|e| AppError::msg(format!("Google へ接続できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     let text = res
         .text()
         .await
-        .map_err(|e| AppError::msg(format!("Google の応答を読めません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     let json: Value = serde_json::from_str(&text)
-        .map_err(|_| AppError::msg("Google の応答を解釈できません。"))?;
+        .map_err(|_| AppError::code(code::CLOUD_REQUEST_FAILED))?;
 
     parse_tokens(&json, now_ms)
 }
@@ -221,9 +219,7 @@ pub async fn refresh(client_id: &str, refresh_token: &str, now_ms: i64) -> Resul
     )
     .await
     .map_err(|e| {
-        AppError::msg(format!(
-            "{e}\n連携が取り消された可能性があります。設定の「クラウド同期」で連携し直してください。"
-        ))
+        AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string())
     })?;
 
     // 更新時は refresh_token が返らない。手元のものを引き継ぐ
@@ -275,7 +271,8 @@ mod tests {
             "error_description": "Token has been expired or revoked.",
         });
         let err = parse_tokens(&json, 0).unwrap_err();
-        assert!(format!("{err}").contains("Token has been expired"));
+        assert_eq!(err.payload().code, code::CLOUD_REQUEST_FAILED);
+        assert!(err.payload().detail.contains("Token has been expired"), "原因は残す");
     }
 
     #[test]
@@ -345,7 +342,7 @@ mod tests {
     fn 待受はタイムアウトで諦める() {
         let (listener, _) = bind_loopback().unwrap();
         let err = wait_for_callback(listener, Duration::from_millis(200)).unwrap_err();
-        assert!(format!("{err}").contains("タイムアウト"));
+        assert_eq!(err.payload().code, code::CLOUD_AUTH_TIMEOUT);
     }
 
     #[test]

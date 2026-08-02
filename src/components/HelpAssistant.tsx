@@ -9,6 +9,7 @@ import { useBindings } from "@/lib/ui/shortcutStore";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { IconClose, IconHelp } from "@/components/Icons";
 import { featureRequestUrl } from "@/lib/ui/tooltipText";
+import { errorMessage } from "@/lib/errors/errorMessage";
 
 interface Props {
   open: boolean;
@@ -97,7 +98,7 @@ export default function HelpAssistant({
     } catch (e) {
       patch(replyId, {
         streaming: false,
-        error: String(e instanceof Error ? e.message : e),
+        error: errorMessage(e),
       });
     } finally {
       setSending(false);

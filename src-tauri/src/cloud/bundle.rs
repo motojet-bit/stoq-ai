@@ -12,7 +12,7 @@ use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 /// 束の形式バージョン。読めない形式で壊さないための番号。
 pub const BUNDLE_VERSION: u32 = 1;
@@ -69,25 +69,20 @@ pub fn build(created_at_ms: i64, app_version: &str, files: Vec<(String, Vec<u8>)
 /// 送信できるバイト列にする。
 pub fn encode(bundle: &BackupBundle) -> Result<Vec<u8>> {
     serde_json::to_vec(bundle)
-        .map_err(|e| AppError::msg(format!("バックアップを組み立てられません: {e}")))
+        .map_err(|e| AppError::detail(code::BACKUP_FORMAT, e.to_string()))
 }
 
 /// 受け取ったバイト列を束として読む。
 pub fn decode(bytes: &[u8]) -> Result<BackupBundle> {
     let bundle: BackupBundle = serde_json::from_slice(bytes).map_err(|_| {
-        AppError::msg(
-            "バックアップの形式が違います。StoQ が作成したバックアップか確認してください。",
-        )
+        AppError::code(code::BACKUP_FORMAT)
     })?;
 
     if bundle.version > BUNDLE_VERSION {
-        return Err(AppError::msg(format!(
-            "このバックアップは新しい形式（v{}）です。アプリを更新してから復元してください。",
-            bundle.version
-        )));
+        return Err(AppError::code(code::BACKUP_TOO_NEW));
     }
     if bundle.entries.is_empty() {
-        return Err(AppError::msg("バックアップに復元できるデータがありません。"));
+        return Err(AppError::code(code::BACKUP_EMPTY));
     }
     Ok(bundle)
 }
@@ -96,15 +91,10 @@ pub fn decode(bytes: &[u8]) -> Result<BackupBundle> {
 pub fn decode_entry(entry: &BundleEntry) -> Result<Vec<u8>> {
     let bytes = STANDARD
         .decode(entry.data.as_bytes())
-        .map_err(|_| AppError::msg(format!("{} の中身が壊れています。", entry.name)))?;
+        .map_err(|_| AppError::code(code::BACKUP_CORRUPT))?;
 
     if bytes.len() as u64 != entry.size_bytes {
-        return Err(AppError::msg(format!(
-            "{} のサイズが合いません（記録 {} / 実際 {}）。転送中に壊れた可能性があります。",
-            entry.name,
-            entry.size_bytes,
-            bytes.len()
-        )));
+        return Err(AppError::code(code::BACKUP_SIZE_MISMATCH));
     }
     Ok(bytes)
 }
@@ -192,7 +182,7 @@ mod tests {
         bundle.entries[0].size_bytes = 9999;
 
         let err = decode_entry(&bundle.entries[0]).unwrap_err();
-        assert!(format!("{err}").contains("サイズ"));
+        assert_eq!(err.payload().code, code::BACKUP_SIZE_MISMATCH);
     }
 
     #[test]
@@ -205,7 +195,7 @@ mod tests {
     fn 中身が空の束は弾く() {
         let bundle = build(1, "0.1.0", vec![]);
         let err = decode(&encode(&bundle).unwrap()).unwrap_err();
-        assert!(format!("{err}").contains("復元できるデータがありません"));
+        assert_eq!(err.payload().code, code::BACKUP_EMPTY);
     }
 
     #[test]
@@ -214,7 +204,7 @@ mod tests {
         bundle.version = BUNDLE_VERSION + 1;
 
         let err = decode(&encode(&bundle).unwrap()).unwrap_err();
-        assert!(format!("{err}").contains("アプリを更新"));
+        assert_eq!(err.payload().code, code::BACKUP_TOO_NEW);
     }
 
     #[test]

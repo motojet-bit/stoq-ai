@@ -16,7 +16,7 @@ import {
 } from "@/lib/ui/shortcutStore";
 import { IconClose, IconHelp } from "@/components/Icons";
 import Tooltip from "@/components/Tooltip";
-import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { tooltip } from "@/lib/ui/tooltipText";
 import { useT } from "@/lib/i18n/i18n";
 
 /**
@@ -66,7 +66,7 @@ export default function ShortcutSettings() {
           {t("shortcut.intro")}
         </p>
         <span className="flex shrink-0 items-center gap-2">
-          <Tooltip content={TOOLTIPS.shortcuts} placement="left" widthClass="w-72">
+          <Tooltip content={tooltip("shortcuts")} placement="left" widthClass="w-72">
             <span className="text-slate-600">
               <IconHelp className="h-4 w-4" />
             </span>

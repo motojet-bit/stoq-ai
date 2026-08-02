@@ -1,4 +1,5 @@
 import { appName } from "@/lib/ui/appMeta";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 初心者向けの案内文。
@@ -6,35 +7,36 @@ import { appName } from "@/lib/ui/appMeta";
  * **表示場所ごとに散らさず 1 か所にまとめる。**
  * 同じ機能の説明が画面によって食い違うのを防ぐため。
  */
-export const TOOLTIPS = {
-  help:
-    "操作で迷ったらここをクリック！\n" +
-    "AIアシスタントが使い方を何でも案内します",
+/**
+ * 初心者向けの案内文。
+ *
+ * **表示場所ごとに散らさず 1 か所にまとめる。**
+ * 同じ機能の説明が画面によって食い違うのを防ぐため。
+ * **定数にしない**（読み込み時に固めると言語切替に追従しない）。
+ */
+export function tooltips(): Record<TooltipId, string> {
+  return {
+    help: t("tooltip.help"),
+    shortcuts: t("tooltip.shortcuts"),
+    promptRole: t("tooltip.promptRole"),
+    candidates: t("tooltip.candidates"),
+    ticker: t("tooltip.ticker"),
+    thresholds: t("tooltip.thresholds"),
+  };
+}
 
-  shortcuts:
-    "💡 ヒント: 無理に全部覚える必要はありません。\n" +
-    "一度設定をクリアして、よく使う操作だけを\n" +
-    "好きなキーに割り当てるのがおすすめです",
+export type TooltipId =
+  | "help"
+  | "shortcuts"
+  | "promptRole"
+  | "candidates"
+  | "ticker"
+  | "thresholds";
 
-  promptRole:
-    "💡 提示される数値だけでなく、CAPEX（設備投資）過多による\n" +
-    "業界全体の価格競争（泥沼化）リスクなど、\n" +
-    "定性面も考慮して総合判断しましょう",
-
-  candidates:
-    "AIで出したティッカーリスト（AAPL|Apple|Phone など）を\n" +
-    "そのまま貼り付けて一括ストックできます",
-
-  ticker:
-    "💡 米国株は `AAPL` や `NVDA`、\n" +
-    "日本株は `7203.T`（トヨタ）や `9984.T` のように\n" +
-    "末尾に `.T` を付けて入力してください",
-
-  thresholds:
-    "AI が合格/不合格を判定する基準です。\n" +
-    "成長株を探すなら成長率を高く、割安株なら PER を低く。\n" +
-    "設定した数値はそのままプロンプトに埋め込まれます",
-} as const;
+/** 1 件だけ引く。 */
+export function tooltip(id: TooltipId): string {
+  return t(`tooltip.${id}`);
+}
 
 /**
  * 機能リクエストの宛先。ヘルプ画面から案内する。
@@ -45,6 +47,6 @@ export const FEATURE_REQUEST_EMAIL = "xxxx@xxx.com";
 export function featureRequestUrl(): string {
   return (
     `mailto:${FEATURE_REQUEST_EMAIL}` +
-    `?subject=${encodeURIComponent(`【${appName()}】機能リクエスト`)}`
+    `?subject=${encodeURIComponent(t("tooltip.featureRequest", { app: appName() }))}`
   );
 }

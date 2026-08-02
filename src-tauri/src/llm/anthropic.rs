@@ -10,7 +10,7 @@
 use serde_json::json;
 use tauri::ipc::Channel;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 use crate::llm::{ensure_success, pump_sse, LlmEvent, LlmRequest};
 
@@ -80,9 +80,7 @@ pub async fn stream(
                         .pointer("/delta/stop_details/category")
                         .and_then(|v| v.as_str())
                         .unwrap_or("不明");
-                    return Err(AppError::msg(format!(
-                        "Claude が安全性の判定によりこのリクエストへの応答を拒否しました（分類: {category}）。内容を変えて再試行してください。"
-                    )));
+                    return Err(AppError::detail(code::LLM_RESPONSE_INVALID, category.to_string()));
                 }
                 Ok(None)
             }
@@ -91,7 +89,7 @@ pub async fn stream(
                     .pointer("/error/message")
                     .and_then(|v| v.as_str())
                     .unwrap_or("詳細不明のエラー");
-                Err(AppError::msg(format!("Anthropic API エラー: {message}")))
+                Err(AppError::detail(code::LLM_RESPONSE_INVALID, message.to_string()))
             }
             _ => Ok(None),
         }

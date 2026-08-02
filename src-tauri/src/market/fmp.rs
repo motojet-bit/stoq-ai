@@ -12,7 +12,7 @@
 
 use serde_json::Value;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 use crate::market::MarketDataProvider;
 use crate::yahoo::{fmt_money, fmt_pct, fmt_price, fmt_ratio, Fundamentals, Metric, MetricGroup};
@@ -34,34 +34,30 @@ impl Fmp {
             .get(&url)
             .send()
             .await
-            .map_err(|e| AppError::msg(format!("FMP へ接続できません: {e}")))?;
+            .map_err(|e| AppError::detail(code::MARKET_FETCH_FAILED, e.to_string()))?;
 
         let status = res.status();
         let body = res
             .text()
             .await
-            .map_err(|e| AppError::msg(format!("FMP の応答を読めません: {e}")))?;
+            .map_err(|e| AppError::detail(code::MARKET_FETCH_FAILED, e.to_string()))?;
 
         if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
-            return Err(AppError::msg(
-                "FMP の APIキーが受け付けられませんでした。設定画面でキーを確認してください。",
-            ));
+            return Err(AppError::code(code::MARKET_FETCH_FAILED));
         }
         if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-            return Err(AppError::msg(
-                "FMP の利用上限に達しました。しばらく待つか、プランを確認してください。",
-            ));
+            return Err(AppError::code(code::MARKET_FETCH_FAILED));
         }
         if !status.is_success() {
-            return Err(AppError::msg(format!("FMP がエラーを返しました（{status}）")));
+            return Err(AppError::detail(code::MARKET_FETCH_FAILED, status.to_string()));
         }
 
         let json: Value = serde_json::from_str(&body)
-            .map_err(|e| AppError::msg(format!("FMP の応答を解釈できません: {e}")))?;
+            .map_err(|e| AppError::detail(code::MARKET_FETCH_FAILED, e.to_string()))?;
 
         // エラーは 200 で本文に入ってくることがある
         if let Some(message) = json.get("Error Message").and_then(|v| v.as_str()) {
-            return Err(AppError::msg(format!("FMP: {message}")));
+            return Err(AppError::detail(code::MARKET_FETCH_FAILED, message.to_string()));
         }
         Ok(json)
     }
@@ -89,14 +85,12 @@ impl MarketDataProvider for Fmp {
     async fn fundamentals(&self, ticker: &str) -> Result<Fundamentals> {
         let symbol = ticker.trim().to_uppercase();
         if symbol.is_empty() {
-            return Err(AppError::msg("ティッカーが空です。"));
+            return Err(AppError::code(code::INVALID_INPUT));
         }
 
         let profile = self.get_first(&format!("profile/{symbol}")).await?;
         if profile.is_null() {
-            return Err(AppError::msg(format!(
-                "FMP に {symbol} のデータがありませんでした。ティッカーをご確認ください。"
-            )));
+            return Err(AppError::detail(code::MARKET_FETCH_FAILED, symbol.to_string()));
         }
 
         // 指標は取れなくても致命的ではないので、失敗したら空で続ける
@@ -139,9 +133,7 @@ impl MarketDataProvider for Fmp {
         let symbol = ticker.trim().to_uppercase();
         let profile = self.get_first(&format!("profile/{symbol}")).await?;
         if profile.is_null() {
-            return Err(AppError::msg(format!(
-                "キーは有効ですが、{symbol} のデータが見つかりませんでした。"
-            )));
+            return Err(AppError::detail(code::NOT_FOUND, symbol.to_string()));
         }
         Ok(format!(
             "FMP に接続できました（{} / {}）",

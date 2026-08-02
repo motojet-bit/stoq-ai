@@ -7,7 +7,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::http;
 
 const FILES_ENDPOINT: &str = "https://www.googleapis.com/drive/v3/files";
@@ -107,12 +107,8 @@ pub fn multipart_body(boundary: &str, name: &str, contents: &[u8]) -> Vec<u8> {
 
 fn auth_error(status: reqwest::StatusCode) -> Option<AppError> {
     match status {
-        reqwest::StatusCode::UNAUTHORIZED => Some(AppError::msg(
-            "Google の認証が切れています。設定の「クラウド同期」で連携し直してください。",
-        )),
-        reqwest::StatusCode::FORBIDDEN => Some(AppError::msg(
-            "Google Drive へのアクセスが拒否されました。連携時にアクセスを許可したかご確認ください。",
-        )),
+        reqwest::StatusCode::UNAUTHORIZED => Some(AppError::code(code::CLOUD_AUTH_EXPIRED)),
+        reqwest::StatusCode::FORBIDDEN => Some(AppError::code(code::CLOUD_AUTH_DENIED)),
         _ => None,
     }
 }
@@ -130,7 +126,7 @@ pub async fn list_backups(access_token: &str) -> Result<Vec<BackupFile>> {
         ])
         .send()
         .await
-        .map_err(|e| AppError::msg(format!("Google Drive へ接続できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     let status = res.status();
     if let Some(err) = auth_error(status) {
@@ -140,16 +136,14 @@ pub async fn list_backups(access_token: &str) -> Result<Vec<BackupFile>> {
     let body = res
         .text()
         .await
-        .map_err(|e| AppError::msg(format!("応答を読めません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     if !status.is_success() {
-        return Err(AppError::msg(format!(
-            "バックアップ一覧を取得できません（{status}）"
-        )));
+        return Err(AppError::detail(code::CLOUD_REQUEST_FAILED, status.to_string()));
     }
 
     let json: Value = serde_json::from_str(&body)
-        .map_err(|e| AppError::msg(format!("応答を解釈できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
     Ok(parse_file_list(&json))
 }
 
@@ -169,7 +163,7 @@ pub async fn upload(access_token: &str, name: &str, contents: Vec<u8>) -> Result
         .body(body)
         .send()
         .await
-        .map_err(|e| AppError::msg(format!("Google Drive へ接続できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     let status = res.status();
     if let Some(err) = auth_error(status) {
@@ -179,20 +173,18 @@ pub async fn upload(access_token: &str, name: &str, contents: Vec<u8>) -> Result
     let text = res
         .text()
         .await
-        .map_err(|e| AppError::msg(format!("応答を読めません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     if !status.is_success() {
-        return Err(AppError::msg(format!(
-            "バックアップをアップロードできません（{status}）"
-        )));
+        return Err(AppError::detail(code::CLOUD_REQUEST_FAILED, status.to_string()));
     }
 
     let json: Value = serde_json::from_str(&text)
-        .map_err(|e| AppError::msg(format!("応答を解釈できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
     json.get("id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
-        .ok_or_else(|| AppError::msg("アップロードの応答に ID がありません。"))
+        .ok_or_else(|| AppError::code(code::CLOUD_REQUEST_FAILED))
 }
 
 /// ファイルの中身を取る。
@@ -203,22 +195,20 @@ pub async fn download(access_token: &str, file_id: &str) -> Result<Vec<u8>> {
         .query(&[("alt", "media")])
         .send()
         .await
-        .map_err(|e| AppError::msg(format!("Google Drive へ接続できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?;
 
     let status = res.status();
     if let Some(err) = auth_error(status) {
         return Err(err);
     }
     if !status.is_success() {
-        return Err(AppError::msg(format!(
-            "バックアップを取得できません（{status}）"
-        )));
+        return Err(AppError::detail(code::CLOUD_REQUEST_FAILED, status.to_string()));
     }
 
     Ok(res
         .bytes()
         .await
-        .map_err(|e| AppError::msg(format!("バックアップを読めません: {e}")))?
+        .map_err(|e| AppError::detail(code::CLOUD_REQUEST_FAILED, e.to_string()))?
         .to_vec())
 }
 

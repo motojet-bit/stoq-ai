@@ -8,7 +8,7 @@ import {
   shortcutTable,
 } from "@/lib/prompts/helpKnowledge";
 import { mergeBindings, SHORTCUTS } from "@/lib/ui/shortcutStore";
-import { TOOLTIPS } from "@/lib/ui/tooltipText";
+import { tooltip } from "@/lib/ui/tooltipText";
 
 const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
   provider: "anthropic",
@@ -199,10 +199,10 @@ describe("ティッカー形式の案内", () => {
     const text = prompt();
     // ツールチップが挙げる 3 例が、ナレッジ側にもすべてある
     for (const example of ["AAPL", "NVDA", "7203.T", "9984.T"]) {
-      expect(TOOLTIPS.ticker).toContain(example);
+      expect(tooltip("ticker")).toContain(example);
       expect(text).toContain(example);
     }
-    expect(TOOLTIPS.ticker).toContain(".T");
+    expect(tooltip("ticker")).toContain(".T");
   });
 });
 

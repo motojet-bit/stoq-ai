@@ -6,7 +6,7 @@
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 /// 一般的なブラウザを装った UA。Yahoo Finance は既定の reqwest UA を弾くことがある。
 pub const BROWSER_UA: &str =
@@ -25,6 +25,6 @@ pub fn client() -> Result<&'static reqwest::Client> {
         .connect_timeout(Duration::from_secs(15))
         .user_agent(BROWSER_UA)
         .build()
-        .map_err(|e| AppError::msg(format!("HTTP クライアントの初期化に失敗しました: {e}")))?;
+        .map_err(|e| AppError::detail(code::HTTP, e.to_string()))?;
     Ok(CLIENT.get_or_init(|| built))
 }

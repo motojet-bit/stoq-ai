@@ -14,7 +14,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 /// 組み込みプロバイダの ID。
 pub const BUILTIN_PROVIDERS: [&str; 3] = ["openai", "anthropic", "gemini"];
@@ -236,10 +236,7 @@ impl Settings {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .ok_or_else(|| {
-                AppError::msg(format!(
-                    "「{}」の APIキーが未設定です。設定画面から登録してください。",
-                    self.label_for(provider)
-                ))
+                AppError::code(code::API_KEY_MISSING)
             })
     }
 
@@ -301,9 +298,7 @@ impl Settings {
         let before = self.custom_providers.len();
         self.custom_providers.retain(|c| c.id != id);
         if self.custom_providers.len() == before {
-            return Err(AppError::msg(format!(
-                "プロバイダ {id} が見つかりませんでした。"
-            )));
+            return Err(AppError::detail(code::NOT_FOUND, id.to_string()));
         }
         // 対応する APIキーも一緒に破棄する
         self.keys.remove(id);
@@ -343,7 +338,7 @@ fn settings_path(app: &AppHandle) -> Result<PathBuf> {
     let dir = app
         .path()
         .app_config_dir()
-        .map_err(|e| AppError::msg(format!("設定ディレクトリを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::SETTINGS_DIR, e.to_string()))?;
     std::fs::create_dir_all(&dir)?;
     Ok(dir.join("settings.json"))
 }

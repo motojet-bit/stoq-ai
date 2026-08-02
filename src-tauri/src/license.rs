@@ -8,7 +8,7 @@
 
 use serde::Serialize;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -102,17 +102,14 @@ pub fn status_of(stored: &str) -> LicenseStatus {
 pub fn activate(key: &str) -> Result<LicenseStatus> {
     let key = normalize_key(key);
     if key.is_empty() {
-        return Err(AppError::msg("ライセンスキーを入力してください。"));
+        return Err(AppError::code(code::LICENSE_EMPTY));
     }
     // マスターキーは形式チェックを通さない（UUID 形ではないため）
     if is_master_key(&key) {
         return Ok(status_of(&key));
     }
     if !is_valid_format(&key) {
-        return Err(AppError::msg(
-            "ライセンスキーの形式が違います。\
-             XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX の形で入力してください。",
-        ));
+        return Err(AppError::code(code::LICENSE_FORMAT));
     }
     Ok(status_of(&key))
 }
@@ -193,6 +190,6 @@ mod tests {
         assert!(activate("").is_err());
 
         let err = activate("not-a-key").unwrap_err();
-        assert!(format!("{err:?}").contains("形式"));
+        assert_eq!(err.payload().code, code::LICENSE_FORMAT);
     }
 }

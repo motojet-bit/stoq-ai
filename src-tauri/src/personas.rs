@@ -16,7 +16,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 use tauri::AppHandle;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::library::{new_id, now_ms, open_library};
 
 #[derive(Debug, Clone, Serialize)]
@@ -71,7 +71,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
             done_at_ms INTEGER NOT NULL
          );",
     )
-    .map_err(|e| AppError::msg(format!("プロンプトテーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     seed_defaults(conn)?;
     rename_legacy_defaults(conn)
@@ -89,7 +89,7 @@ fn rename_legacy_defaults(conn: &Connection) -> Result<()> {
          WHERE builtin = 1 AND title = 'テンバガー発掘アナリスト'",
         params![title, body],
     )
-    .map_err(|e| AppError::msg(format!("既定の役割を更新できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 
@@ -102,7 +102,7 @@ fn seed_defaults(conn: &Connection) -> Result<()> {
             |row| row.get(0),
         )
         .optional()
-        .map_err(|e| AppError::msg(format!("プロンプトの初期化状態を確認できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if seeded.is_some() {
         return Ok(());
@@ -115,14 +115,14 @@ fn seed_defaults(conn: &Connection) -> Result<()> {
              VALUES (?1, ?2, ?3, 1, ?4, ?4)",
             params![new_id("prompt"), title, body, now],
         )
-        .map_err(|e| AppError::msg(format!("既定の役割を追加できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     }
 
     conn.execute(
         "INSERT INTO prompt_seed (key, done_at_ms) VALUES ('defaults', ?1)",
         params![now],
     )
-    .map_err(|e| AppError::msg(format!("プロンプトの初期化を記録できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(())
 }
@@ -143,7 +143,7 @@ pub fn list_in(conn: &Connection) -> Result<Vec<StoredPrompt>> {
             "SELECT id, title, body, builtin, created_at_ms, updated_at_ms
              FROM prompts ORDER BY builtin DESC, created_at_ms ASC",
         )
-        .map_err(|e| AppError::msg(format!("役割を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map([], |row| {
@@ -156,7 +156,7 @@ pub fn list_in(conn: &Connection) -> Result<Vec<StoredPrompt>> {
                 updated_at_ms: row.get(5)?,
             })
         })
-        .map_err(|e| AppError::msg(format!("役割を取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -180,10 +180,10 @@ pub fn save_in(
     let title = title.trim();
     let body = body.trim();
     if title.is_empty() {
-        return Err(AppError::msg("役割の名前を入力してください。"));
+        return Err(AppError::code(code::DB_QUERY));
     }
     if body.is_empty() {
-        return Err(AppError::msg("役割の内容（システムプロンプト）を入力してください。"));
+        return Err(AppError::code(code::DB_QUERY));
     }
 
     let now = now_ms();
@@ -194,9 +194,9 @@ pub fn save_in(
                     "UPDATE prompts SET title = ?2, body = ?3, updated_at_ms = ?4 WHERE id = ?1",
                     params![id, title, body, now],
                 )
-                .map_err(|e| AppError::msg(format!("役割を更新できません: {e}")))?;
+                .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
             if changed == 0 {
-                return Err(AppError::msg("対象の役割が見つかりませんでした。"));
+                return Err(AppError::code(code::NOT_FOUND));
             }
         }
         None => {
@@ -205,7 +205,7 @@ pub fn save_in(
                  VALUES (?1, ?2, ?3, 0, ?4, ?4)",
                 params![new_id("prompt"), title, body, now],
             )
-            .map_err(|e| AppError::msg(format!("役割を追加できません: {e}")))?;
+            .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
         }
     }
 
@@ -219,10 +219,10 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<Vec<StoredPrompt>> {
 pub fn remove_in(conn: &Connection, id: &str) -> Result<Vec<StoredPrompt>> {
     let changed = conn
         .execute("DELETE FROM prompts WHERE id = ?1", params![id])
-        .map_err(|e| AppError::msg(format!("役割を削除できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     if changed == 0 {
-        return Err(AppError::msg("対象の役割が見つかりませんでした。"));
+        return Err(AppError::code(code::NOT_FOUND));
     }
     list_in(conn)
 }

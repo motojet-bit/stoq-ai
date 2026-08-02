@@ -13,7 +13,7 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::settings::Settings;
 
 /// 中断が要求されたリクエスト ID。
@@ -127,7 +127,7 @@ pub async fn send(
         .unwrap_or_else(|| settings.provider.clone());
 
     if request.messages.is_empty() {
-        return Err(AppError::msg("送信するメッセージがありません。"));
+        return Err(AppError::code(code::LLM_NO_MESSAGES));
     }
 
     let model = settings.model_for(&provider);
@@ -156,19 +156,13 @@ pub async fn send(
         "gemini" => gemini::stream(&api_key, &model, &request, max_tokens, &channel).await,
         // それ以外はユーザーが追加した OpenAI互換プロバイダ
         id => match settings.custom(id) {
-            None => Err(AppError::msg(format!("未知のプロバイダです: {id}"))),
+            None => Err(AppError::detail(code::UNKNOWN_PROVIDER, id.to_string())),
             Some(custom) => {
                 let base = custom.base_url.trim().trim_end_matches('/');
                 if base.is_empty() {
-                    Err(AppError::msg(format!(
-                        "「{}」の Base URL が未設定です。設定画面から登録してください。",
-                        custom.label
-                    )))
+                    Err(AppError::code(code::UNEXPECTED))
                 } else if model.trim().is_empty() {
-                    Err(AppError::msg(format!(
-                        "「{}」のモデル名が未設定です。設定画面から登録してください。",
-                        custom.label
-                    )))
+                    Err(AppError::code(code::UNEXPECTED))
                 } else {
                     openai::stream(base, &api_key, &model, &request, max_tokens, &channel).await
                 }
@@ -218,9 +212,7 @@ pub async fn ensure_success(res: reqwest::Response, provider: &str) -> Result<re
         _ => "",
     };
 
-    Err(AppError::msg(format!(
-        "{provider} API エラー (HTTP {status}){hint}: {detail}"
-    )))
+    Err(AppError::detail(code::UNEXPECTED, provider.to_string()))
 }
 
 pub fn extract_error_message(body: &str) -> Option<String> {

@@ -14,7 +14,7 @@ use rusqlite::{params, Connection};
 use serde::Serialize;
 use tauri::AppHandle;
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 use crate::library::open_library;
 
 #[derive(Debug, Clone, Serialize)]
@@ -33,7 +33,7 @@ pub fn migrate(conn: &Connection) -> Result<()> {
             binding TEXT NOT NULL
          );",
     )
-    .map_err(|e| AppError::msg(format!("ショートカットテーブルを作成できません: {e}")))?;
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 
@@ -50,7 +50,7 @@ pub fn list(app: &AppHandle) -> Result<Vec<ShortcutOverride>> {
 pub fn list_in(conn: &Connection) -> Result<Vec<ShortcutOverride>> {
     let mut stmt = conn
         .prepare("SELECT action, binding FROM shortcuts ORDER BY action ASC")
-        .map_err(|e| AppError::msg(format!("ショートカットを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     let rows = stmt
         .query_map([], |row| {
@@ -59,7 +59,7 @@ pub fn list_in(conn: &Connection) -> Result<Vec<ShortcutOverride>> {
                 binding: row.get(1)?,
             })
         })
-        .map_err(|e| AppError::msg(format!("ショートカットを取得できません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
     Ok(rows.filter_map(std::result::Result::ok).collect())
 }
@@ -80,7 +80,7 @@ pub fn set_in(
 ) -> Result<Vec<ShortcutOverride>> {
     let action = action.trim();
     if action.is_empty() {
-        return Err(AppError::msg("アクションを指定してください。"));
+        return Err(AppError::code(code::DB_QUERY));
     }
 
     match binding {
@@ -90,11 +90,11 @@ pub fn set_in(
                  ON CONFLICT(action) DO UPDATE SET binding = ?2",
                 params![action, binding.trim()],
             )
-            .map_err(|e| AppError::msg(format!("ショートカットを保存できません: {e}")))?;
+            .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
         }
         None => {
             conn.execute("DELETE FROM shortcuts WHERE action = ?1", params![action])
-                .map_err(|e| AppError::msg(format!("ショートカットを戻せません: {e}")))?;
+                .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
         }
     }
 
@@ -108,7 +108,7 @@ pub fn reset(app: &AppHandle) -> Result<Vec<ShortcutOverride>> {
 
 pub fn reset_in(conn: &Connection) -> Result<Vec<ShortcutOverride>> {
     conn.execute("DELETE FROM shortcuts", [])
-        .map_err(|e| AppError::msg(format!("ショートカットを戻せません: {e}")))?;
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     list_in(conn)
 }
 

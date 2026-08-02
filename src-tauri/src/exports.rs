@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use tauri::{AppHandle, Manager};
 
-use crate::error::{AppError, Result};
+use crate::error::{code, AppError, Result};
 
 /// 保存先ディレクトリ。ダウンロード → デスクトップ → アプリデータの順に試す。
 fn output_dir(app: &AppHandle) -> Result<PathBuf> {
@@ -17,7 +17,7 @@ fn output_dir(app: &AppHandle) -> Result<PathBuf> {
         .download_dir()
         .or_else(|_| path.desktop_dir())
         .or_else(|_| path.app_data_dir())
-        .map_err(|e| AppError::msg(format!("保存先を決められません: {e}")))?;
+        .map_err(|e| AppError::detail(code::FILE_WRITE, e.to_string()))?;
 
     std::fs::create_dir_all(&dir)?;
     Ok(dir)
@@ -66,14 +66,14 @@ fn unique_path(dir: &std::path::Path, file_name: &str) -> PathBuf {
 /// 書き出して、保存したフルパスを返す。
 pub fn write_file(app: &AppHandle, file_name: &str, contents: &str) -> Result<String> {
     if contents.is_empty() {
-        return Err(AppError::msg("書き出す内容がありません。"));
+        return Err(AppError::code(code::FILE_WRITE));
     }
 
     let dir = output_dir(app)?;
     let path = unique_path(&dir, &sanitize(file_name));
 
     std::fs::write(&path, contents)
-        .map_err(|e| AppError::msg(format!("ファイルを書き出せません: {e}")))?;
+        .map_err(|e| AppError::detail(code::FILE_WRITE, e.to_string()))?;
 
     Ok(path.to_string_lossy().to_string())
 }

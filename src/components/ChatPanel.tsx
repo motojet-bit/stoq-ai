@@ -28,6 +28,7 @@ import {
 } from "@/lib/chat/chatAttachments";
 import { IconClose, IconPaperclip } from "@/components/Icons";
 import { useT } from "@/lib/i18n/i18n";
+import { errorMessage } from "@/lib/errors/errorMessage";
 
 interface Props {
   settings: AppSettings | null;
@@ -159,7 +160,7 @@ ${draft.text}`));
     } catch (e) {
       patchMessage(replyId, {
         streaming: false,
-        error: String(e instanceof Error ? e.message : e),
+        error: errorMessage(e),
       });
     } finally {
       setSending(false);
