@@ -7,12 +7,12 @@
 
 ## 公開する前に必ず差し替えるもの
 
-`index.html` の中に、まだ**確定していない値をプレースホルダで置いてある**。
-このまま公開すると購入ボタンとお問い合わせが機能しない。
+`index.html` に置いていたプレースホルダは**すべて実値に差し替え済み**。
+下表は履歴として残す（再び差し替えが要るときの目印）。
 
 | プレースホルダ | 何を入れるか |
 | --- | --- |
-| `__LEMONSQUEEZY_CHECKOUT_URL__` | Lemon Squeezy の商品チェックアウト URL |
+| ~~`__LEMONSQUEEZY_CHECKOUT_URL__`~~ | 設定済み（Lemon Squeezy のチェックアウト URL） |
 | ~~`__SUPPORT_EMAIL__`~~ | 設定済み（`superpuzanoza@gmail.com`） |
 
 > アプリ側（`src/lib/ui/tooltipText.ts` の `FEATURE_REQUEST_EMAIL`）も
