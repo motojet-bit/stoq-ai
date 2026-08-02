@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 /**
  * 無料体験の利用制限。
  *
@@ -127,13 +128,13 @@ export function registerTicker(usedTickers: string[], ticker: string): string[] 
 /** 残り枠の案内文。 */
 export function remainingLabel(result: AccessResult): string {
   if (result.remaining === null) return "";
-  if (result.reason === "trialExpired") return "無料体験期間が終了しました";
-  if (result.remaining === 0) return "無料版の分析枠を使い切りました";
-  return `無料版であと ${result.remaining} 銘柄を分析できます`;
+  if (result.reason === "trialExpired") return t("freeTier.trialOver");
+  if (result.remaining === 0) return t("freeTier.quotaUsedUp");
+  return t("freeTier.remaining", { count: result.remaining });
 }
 
 /** 体験期間の残りを伝える文。期限切れ・ライセンス有効なら空。 */
 export function trialLabel(remainingDays: number, activated: boolean): string {
   if (activated || remainingDays <= 0) return "";
-  return `無料体験はあと ${remainingDays} 日です`;
+  return t("freeTier.daysLeft", { count: remainingDays });
 }

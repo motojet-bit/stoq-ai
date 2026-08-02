@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
   backupTimestampOf,
   clientIdError,
@@ -13,6 +13,10 @@ import {
   STALE_BACKUP_DAYS,
 } from "@/lib/cloud/cloudBackup";
 import type { CloudBackupFile } from "@/types";
+import { setLocale } from "@/lib/i18n/i18n";
+
+// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
+beforeAll(() => setLocale("ja"));
 
 const VALID_ID = "123456789012-abcdefghijklmnop.apps.googleusercontent.com";
 

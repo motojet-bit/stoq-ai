@@ -1,4 +1,5 @@
 import { FREE_TICKER_LIMIT, TRIAL_DAYS, type BlockReason } from "@/lib/license/freeTier";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 制限に引っかかったときの文面。
@@ -7,40 +8,46 @@ import { FREE_TICKER_LIMIT, TRIAL_DAYS, type BlockReason } from "@/lib/license/f
  * 枠を使い切ったのかが分からず、何をすれば直るのかも伝わらない。
  */
 
+/** 体験期間の長さを「週」で表す（文面に埋め込む）。 */
+const TRIAL_WEEKS = TRIAL_DAYS / 7;
+
 /** ダイアログの見出し。 */
 export function lockTitle(reason: BlockReason): string {
   if (reason === "trialExpired") {
-    return `⏳ ${TRIAL_DAYS / 7}週間の無料体験期間が終了しました`;
+    return t("lock.trial.title", { weeks: TRIAL_WEEKS });
   }
-  return `🔒 無料版の分析上限（${FREE_TICKER_LIMIT}銘柄）に達しました`;
+  return t("lock.limit.title", { limit: FREE_TICKER_LIMIT });
 }
 
 /** ダイアログの本文。 */
 export function lockBody(reason: BlockReason): string {
   if (reason === "trialExpired") {
-    return (
-      `${TRIAL_DAYS / 7}週間の無料体験期間が終了しました。` +
-      "全機能を継続して利用するにはライセンスキーを入力してください。"
-    );
+    return t("lock.trial.body", { weeks: TRIAL_WEEKS });
   }
-  return (
-    `無料体験では ${FREE_TICKER_LIMIT} 銘柄まで分析できます。` +
-    `${FREE_TICKER_LIMIT + 1} 銘柄目以降の無制限分析を行うには、ライセンスキーを有効化してください。`
-  );
+  return t("lock.limit.body", {
+    limit: FREE_TICKER_LIMIT,
+    next: FREE_TICKER_LIMIT + 1,
+  });
 }
 
-/** ボタンのホバーに出す一行。 */
-export const LOCK_HINT: Record<Exclude<BlockReason, "none">, string> = {
-  trialExpired: `⏳ ${TRIAL_DAYS / 7}週間の無料体験期間が終了しました。全機能を継続して利用するにはライセンスキーを入力してください`,
-  tickerLimit: `🔒 無料版の分析上限（${FREE_TICKER_LIMIT}銘柄）に達しました。ライセンスキーを入力すると無制限になります`,
-};
+/**
+ * ボタンのホバーに出す一行。
+ * **定数にしない**（読み込み時に固めると言語切替に追従しない）。
+ */
+export function lockHint(reason: Exclude<BlockReason, "none">): string {
+  return reason === "trialExpired"
+    ? t("lock.trial.hint", { weeks: TRIAL_WEEKS })
+    : t("lock.limit.hint", { limit: FREE_TICKER_LIMIT });
+}
 
 /**
  * 期限切れでも失われないもの。ダイアログで必ず伝える。
  * 「もう何も見られない」と誤解されると、単に不信感だけが残る。
  */
-export const KEPT_ON_LOCK = [
-  "保存済みの分析結果の閲覧",
-  "分析済み銘柄の再分析",
-  "過去ログ・ポートフォリオの参照",
-];
+export function keptOnLock(): string[] {
+  return [
+    t("lock.kept.viewSaved"),
+    t("lock.kept.reanalyze"),
+    t("lock.kept.history"),
+  ];
+}

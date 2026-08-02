@@ -6,6 +6,7 @@ import {
   renderExport,
   type ExportFormat,
 } from "@/lib/export/exportAnalysis";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 分析結果をファイルへ書き出す。
@@ -18,7 +19,7 @@ export async function exportRecords(
   format: ExportFormat,
 ): Promise<void> {
   if (records.length === 0) {
-    toastError("エクスポートできません", "書き出す分析結果がありません。");
+    toastError(t("toast.export.cannot"), t("toast.export.noData"));
     return;
   }
 
@@ -26,14 +27,14 @@ export async function exportRecords(
   const fileName = exportFileName(records, format, Date.now());
 
   if (!isTauri()) {
-    toastError("エクスポートできません", "アプリ内でのみ利用できます。");
+    toastError(t("toast.export.cannot"), t("toast.export.appOnly"));
     return;
   }
 
   try {
     const path = await invoke<string>("export_write_file", { fileName, contents });
-    toastSuccess("書き出しました", path);
+    toastSuccess(t("toast.export.done"), path);
   } catch (e) {
-    toastError("書き出せませんでした", e);
+    toastError(t("toast.export.failed"), e);
   }
 }

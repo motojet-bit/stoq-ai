@@ -8,6 +8,7 @@ import type {
   CloudRestoreResult,
   CloudStatus,
 } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * クラウド同期の状態。
@@ -66,7 +67,7 @@ export async function loadCloudStatus(): Promise<void> {
   try {
     replace(await invoke<CloudStatus>("cloud_status"));
   } catch (e) {
-    toastError("クラウド同期の状態を確認できませんでした", e);
+    toastError(t("toast.cloud.statusFailed"), e);
   }
 }
 
@@ -74,10 +75,10 @@ export async function loadCloudStatus(): Promise<void> {
 export async function setClientId(clientId: string): Promise<boolean> {
   try {
     replace(await invoke<CloudStatus>("cloud_set_client_id", { clientId }));
-    toastSuccess("クライアント ID を保存しました");
+    toastSuccess(t("toast.cloud.clientIdSaved"));
     return true;
   } catch (e) {
-    toastError("クライアント ID を保存できませんでした", e);
+    toastError(t("toast.cloud.clientIdFailed"), e);
     return false;
   }
 }
@@ -86,10 +87,10 @@ export async function setClientId(clientId: string): Promise<boolean> {
 export async function connect(): Promise<boolean> {
   try {
     replace(await invoke<CloudStatus>("cloud_connect"));
-    toastSuccess("Google Drive と連携しました");
+    toastSuccess(t("toast.cloud.connected"));
     return true;
   } catch (e) {
-    toastError("Google Drive と連携できませんでした", e);
+    toastError(t("toast.cloud.connectFailed"), e);
     return false;
   }
 }
@@ -98,9 +99,9 @@ export async function connect(): Promise<boolean> {
 export async function disconnect(): Promise<void> {
   try {
     replace(await invoke<CloudStatus>("cloud_disconnect"));
-    toastSuccess("連携を解除しました");
+    toastSuccess(t("toast.cloud.disconnected"));
   } catch (e) {
-    toastError("連携を解除できませんでした", e);
+    toastError(t("toast.cloud.disconnectFailed"), e);
   }
 }
 
@@ -108,7 +109,7 @@ export async function setAutoBackup(enabled: boolean): Promise<void> {
   try {
     replace(await invoke<CloudStatus>("cloud_set_auto_backup", { enabled }));
   } catch (e) {
-    toastError("自動バックアップの設定を保存できませんでした", e);
+    toastError(t("toast.cloud.autoBackupFailed"), e);
   }
 }
 
@@ -117,10 +118,10 @@ export async function backup(): Promise<CloudBackupResult | null> {
   try {
     const result = await invoke<CloudBackupResult>("cloud_backup");
     await loadCloudStatus();
-    toastSuccess("クラウドへバックアップしました");
+    toastSuccess(t("toast.cloud.backedUp"));
     return result;
   } catch (e) {
-    toastError("バックアップできませんでした", e);
+    toastError(t("toast.cloud.backupFailed"), e);
     return null;
   }
 }
@@ -139,7 +140,7 @@ export async function restore(fileId?: string): Promise<CloudRestoreResult | nul
     toastSuccess(describeRestore(result.restored));
     return result;
   } catch (e) {
-    toastError("復元できませんでした", e);
+    toastError(t("toast.cloud.restoreFailed"), e);
     return null;
   }
 }
@@ -148,7 +149,7 @@ export async function listBackups(): Promise<CloudBackupFile[]> {
   try {
     return await invoke<CloudBackupFile[]>("cloud_list_backups");
   } catch (e) {
-    toastError("バックアップ一覧を取得できませんでした", e);
+    toastError(t("toast.cloud.listFailed"), e);
     return [];
   }
 }

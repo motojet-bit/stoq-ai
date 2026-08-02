@@ -3,7 +3,7 @@ import type { AppSettings } from "@/types";
 import { saveSettings } from "@/lib/config/settingsStore";
 import { toastError, toastSuccess } from "@/lib/ui/toastStore";
 import {
-  CUSTOM_INSTRUCTION_HINT,
+  customInstructionHint,
   MAX_CUSTOM_INSTRUCTION,
   customInstructionError,
 } from "@/lib/prompts/customInstruction";
@@ -53,10 +53,10 @@ export default function CustomInstructionSettings({ settings }: Props) {
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-1.5">
           <h3 className="t-body font-medium text-slate-200">{t("customInstruction.title")}</h3>
-          <Tooltip content={CUSTOM_INSTRUCTION_HINT} placement="top">
+          <Tooltip content={customInstructionHint()} placement="top">
             <span
               tabIndex={0}
-              aria-label={CUSTOM_INSTRUCTION_HINT}
+              aria-label={customInstructionHint()}
               className="flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full text-slate-500 hover:text-emerald-300"
             >
               <IconHelp className="h-3.5 w-3.5" />

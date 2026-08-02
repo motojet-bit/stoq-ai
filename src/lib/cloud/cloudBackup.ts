@@ -1,4 +1,5 @@
 import type { CloudBackupFile } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * クラウド同期の表示まわりの純粋ロジック。
@@ -26,9 +27,9 @@ export function isLikelyClientId(value: string): boolean {
 
 /** 入力が使えない理由。問題なければ null。 */
 export function clientIdError(value: string): string | null {
-  if (value.trim().length === 0) return "クライアント ID を入力してください。";
+  if (value.trim().length === 0) return t("cloud.err.clientIdEmpty");
   if (!isLikelyClientId(value)) {
-    return `クライアント ID は ${CLIENT_ID_SUFFIX} で終わる形式です。Google Cloud Console で「デスクトップアプリ」として発行してください。`;
+    return t("cloud.err.clientIdFormat", { suffix: CLIENT_ID_SUFFIX });
   }
   return null;
 }
@@ -43,20 +44,20 @@ export function formatBytes(bytes: number): string {
 
 /** 最終バックアップの表示。未実施なら催促する。 */
 export function formatLastBackup(lastBackupMs: number, nowMs: number): string {
-  if (!lastBackupMs || lastBackupMs <= 0) return "まだバックアップしていません";
+  if (!lastBackupMs || lastBackupMs <= 0) return t("cloud.neverBackedUp");
 
   const diff = nowMs - lastBackupMs;
-  if (diff < 0) return "たった今";
+  if (diff < 0) return t("time.justNow");
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "たった今";
-  if (minutes < 60) return `${minutes} 分前`;
+  if (minutes < 1) return t("time.justNow");
+  if (minutes < 60) return t("time.minutesAgo", { count: minutes });
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 時間前`;
+  if (hours < 24) return t("time.hoursAgo", { count: hours });
 
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} 日前`;
-  return new Date(lastBackupMs).toLocaleDateString("ja-JP");
+  if (days < 30) return t("time.daysAgo", { count: days });
+  return new Date(lastBackupMs).toLocaleDateString();
 }
 
 /**
@@ -87,13 +88,16 @@ export function sortBackups(files: CloudBackupFile[]): CloudBackupFile[] {
 export function describeBackup(file: CloudBackupFile): string {
   const stamp = backupTimestampOf(file.name);
   const when = stamp
-    ? new Date(stamp).toLocaleString("ja-JP")
-    : file.modifiedTime || "日時不明";
+    ? new Date(stamp).toLocaleString()
+    : file.modifiedTime || t("cloud.unknownDate");
   return `${when}（${formatBytes(file.sizeBytes)}）`;
 }
 
 /** 復元結果を日本語で伝える。 */
 export function describeRestore(restored: string[]): string {
-  if (restored.length === 0) return "復元できるデータがありませんでした";
-  return `${restored.length} 件のデータを復元しました（${restored.join(" / ")}）`;
+  if (restored.length === 0) return t("cloud.restore.nothing");
+  return t("cloud.restore.done", {
+    count: restored.length,
+    files: restored.join(" / "),
+  });
 }

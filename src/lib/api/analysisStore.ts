@@ -4,6 +4,7 @@ import { fetchFilingStatus } from "@/lib/api/sec";
 import { invoke, isTauri } from "@/lib/tauri";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type { QuarterlySeries, TickerAnalysis } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * ティッカーごとの取得結果を保持するストア。
@@ -98,12 +99,12 @@ async function loadFundamentals(ticker: string): Promise<void> {
     patch(ticker, { fundamentals, fundamentalsLoading: false, fundamentalsError: null });
 
     if (fundamentals.warning) {
-      pushToast("warning", `${ticker}: 指標を一部取得できませんでした`, fundamentals.warning);
+      pushToast("warning", t("toast.analysis.partialMetrics", { ticker }), fundamentals.warning);
     }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     patch(ticker, { fundamentalsLoading: false, fundamentalsError: message });
-    toastError(`${ticker} の株価データを取得できませんでした`, e);
+    toastError(t("toast.analysis.priceFailed", { ticker }), e);
   }
 }
 
@@ -114,6 +115,6 @@ async function loadFiling(ticker: string): Promise<void> {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     patch(ticker, { filingLoading: false, filingError: message });
-    toastError(`${ticker} の SEC 提出状況を確認できませんでした`, e);
+    toastError(t("toast.analysis.secStatusFailed", { ticker }), e);
   }
 }

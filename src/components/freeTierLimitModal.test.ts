@@ -84,7 +84,7 @@ describe("上限モーダルの中身", () => {
 
   it("**既存銘柄は使い続けられる**ことを伝えている", () => {
     // 「上限です」だけだと、既存銘柄まで止まったのかが分からず不安になる
-    expect(MODAL).toContain("KEPT_ON_LOCK");
+    expect(MODAL).toContain("keptOnLock");
     // ライセンスを入れてもデータが消えないことを先に伝える
     expect(MODAL).toContain("freeTier.dataKept");
   });

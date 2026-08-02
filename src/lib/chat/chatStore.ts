@@ -3,6 +3,7 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
 import { clearChatAttachments } from "@/lib/chat/chatAttachments";
 import type { ChatSession, DisplayMessage, StoredChatMessage } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * チャット履歴のストア。実体は Rust 側の SQLite（`chats.db`）。
@@ -73,7 +74,7 @@ export async function loadChatSessions(): Promise<void> {
       await selectSession(sessions[0].id);
     }
   } catch (e) {
-    toastError("チャット履歴を読み込めませんでした", e);
+    toastError(t("toast.chat.loadFailed"), e);
   }
 }
 
@@ -93,7 +94,7 @@ export async function selectSession(id: string): Promise<void> {
     });
     messages = stored.map((m) => ({ id: m.id, role: m.role, content: m.content }));
   } catch (e) {
-    toastError("チャットを読み込めませんでした", e);
+    toastError(t("toast.chat.openFailed"), e);
   } finally {
     loadingMessages = false;
     emit();
@@ -114,7 +115,7 @@ export async function createSession(ticker?: string | null): Promise<string | nu
     emit();
     return session.id;
   } catch (e) {
-    toastError("チャットを作成できませんでした", e);
+    toastError(t("toast.chat.createFailed"), e);
     return null;
   }
 }
@@ -125,7 +126,7 @@ export async function renameSession(id: string, title: string): Promise<void> {
     sessions = await invoke<ChatSession[]>("chat_rename_session", { id, title });
     emit();
   } catch (e) {
-    toastError("タイトルを変更できませんでした", e);
+    toastError(t("toast.chat.renameFailed"), e);
   }
 }
 
@@ -139,7 +140,7 @@ export async function archiveSession(id: string, archived: boolean): Promise<voi
     sessions = await invoke<ChatSession[]>("chat_set_archived", { id, archived });
     emit();
   } catch (e) {
-    toastError("アーカイブ状態を変更できませんでした", e);
+    toastError(t("toast.chat.archiveFailed"), e);
   }
 }
 
@@ -157,7 +158,7 @@ export async function deleteSession(id: string): Promise<void> {
     }
     emit();
   } catch (e) {
-    toastError("チャットを削除できませんでした", e);
+    toastError(t("toast.chat.deleteFailed"), e);
   }
 }
 
@@ -195,7 +196,7 @@ export async function persistMessage(
     sessions = await invoke<ChatSession[]>("chat_list_sessions");
     emit();
   } catch (e) {
-    toastError("メッセージを保存できませんでした", e);
+    toastError(t("toast.chat.messageFailed"), e);
   }
   return sessionId;
 }

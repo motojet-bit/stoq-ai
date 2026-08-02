@@ -1,4 +1,5 @@
 import type { Portfolio } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 「分析結果をどのリストに保存するか」の選択ロジック。
@@ -71,8 +72,8 @@ export function hasChanges(plan: SavePlan): boolean {
 /** 保存後に出す一言。 */
 export function saveSummary(ticker: string, plan: SavePlan): string {
   const parts: string[] = [];
-  if (plan.add.length > 0) parts.push(`${plan.add.length} 件のリストに追加`);
-  if (plan.remove.length > 0) parts.push(`${plan.remove.length} 件から削除`);
-  if (parts.length === 0) return "変更はありません";
-  return `${ticker.toUpperCase()} を${parts.join("・")}しました`;
+  if (plan.add.length > 0) parts.push(t("saveTarget.added", { count: plan.add.length }));
+  if (plan.remove.length > 0) parts.push(t("saveTarget.removed", { count: plan.remove.length }));
+  if (parts.length === 0) return t("saveTarget.noChange");
+  return t("saveTarget.done", { ticker: ticker.toUpperCase(), summary: parts.join(t("saveTarget.joiner")) });
 }

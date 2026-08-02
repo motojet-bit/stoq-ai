@@ -8,6 +8,7 @@ import {
   registerTicker,
   type AccessResult,
 } from "@/lib/license/freeTier";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 無料版の使用状況。
@@ -130,7 +131,7 @@ export async function useTicker(ticker: string): Promise<void> {
   try {
     await invoke<AppSettings>("free_tier_set", { tickers: next });
   } catch (e) {
-    toastError("利用状況を保存できませんでした", e);
+    toastError(t("toast.freeTier.saveFailed"), e);
   }
 }
 

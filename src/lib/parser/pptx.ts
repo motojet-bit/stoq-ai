@@ -1,4 +1,5 @@
 import { unzipSync, strFromU8 } from "fflate";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * PPTX からテキストを抽出する。
@@ -15,7 +16,7 @@ export function extractPptxText(data: ArrayBuffer): string {
     .sort((a, b) => slideNumber(a) - slideNumber(b));
 
   if (slides.length === 0) {
-    throw new Error("PPTX のスライド（ppt/slides/）が見つかりませんでした。");
+    throw new Error(t("parser.pptxMissing"));
   }
 
   const sections: string[] = [];
@@ -30,7 +31,8 @@ export function extractPptxText(data: ArrayBuffer): string {
 
     let section = `--- Slide ${no} ---`;
     if (body) section += `\n${body}`;
-    if (notes) section += `\n[発表者ノート] ${notes}`;
+    if (notes) section += `
+${t("parser.speakerNotes")} ${notes}`;
     sections.push(section);
   }
 

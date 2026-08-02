@@ -11,6 +11,7 @@ import type {
   ProviderId,
   SettingsPatch,
 } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 設定のグローバルストア。
@@ -53,7 +54,7 @@ export function useSettingsError(): string | null {
 export async function loadSettings(): Promise<AppSettings | null> {
   if (!isTauri()) {
     loadError =
-      "ブラウザで実行中のため設定を読み込めません。`npm run tauri:dev` で起動してください。";
+      t("err.browserSettings");
     emit();
     return null;
   }

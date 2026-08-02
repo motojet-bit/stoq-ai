@@ -9,7 +9,7 @@ import AnalystRoleMenu from "@/components/AnalystRoleMenu";
 import ExportMenu from "@/components/ExportMenu";
 import { buildAnalysisRecord } from "@/lib/export/analysisRecord";
 import { useAccess } from "@/lib/license/freeTierStore";
-import { LOCK_HINT } from "@/lib/license/lockMessages";
+import { lockHint } from "@/lib/license/lockMessages";
 import {
   IconBookmark,
   IconChart,
@@ -75,7 +75,9 @@ export default function AnalysisPanel({
   // 体験期間切れ・銘柄上限。**既存の結果を開いているだけなら止めない**
   const access = useAccess(ticker);
   const locked = !access.allowed && access.reason !== "none";
-  const lockedReason = locked ? LOCK_HINT[access.reason as "trialExpired" | "tickerLimit"] : "";
+  const lockedReason = locked
+    ? lockHint(access.reason as "trialExpired" | "tickerLimit")
+    : "";
 
   // ストリーミング中は末尾を追いかける
   useEffect(() => {

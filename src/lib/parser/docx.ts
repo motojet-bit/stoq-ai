@@ -1,4 +1,5 @@
 import { unzipSync, strFromU8 } from "fflate";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * DOCX からテキストを抽出する。
@@ -10,7 +11,7 @@ export function extractDocxText(data: ArrayBuffer): string {
   const files = unzipSync(new Uint8Array(data));
   const entry = files["word/document.xml"];
   if (!entry) {
-    throw new Error("DOCX の本文（word/document.xml）が見つかりませんでした。");
+    throw new Error(t("parser.docxMissing"));
   }
 
   return xmlToText(strFromU8(entry));

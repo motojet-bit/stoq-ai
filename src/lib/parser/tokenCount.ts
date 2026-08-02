@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 /**
  * 概算トークン数と、入力上限に対する消費量の判定。
  *
@@ -47,10 +48,10 @@ export function tokenUsage(tokens: number, limit: number): TokenUsage {
   const level: TokenLevel = ratio >= 1 ? "over" : ratio >= 0.75 ? "warning" : "ok";
   const label =
     level === "over"
-      ? "入力上限を超過"
+      ? t("token.over")
       : level === "warning"
-        ? "入力上限に接近"
-        : "余裕あり";
+        ? t("token.near")
+        : t("token.ok");
 
   return { tokens, limit: safeLimit, ratio, level, label };
 }

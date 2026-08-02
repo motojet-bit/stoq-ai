@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
 import type { AnalystRole } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 20項目分析の「役割」。
@@ -84,7 +85,7 @@ export async function loadAnalystRoles(): Promise<void> {
     if (!roles.some((r) => r.id === activeId)) setActiveRole(DEFAULT_ROLE_ID);
     else emit();
   } catch (e) {
-    toastError("分析の役割を読み込めませんでした", e);
+    toastError(t("toast.role.loadFailed"), e);
   }
 }
 
@@ -111,7 +112,7 @@ export async function systemPromptTokens(
 export async function thresholdPreview(
   thresholds: Record<string, number>,
 ): Promise<string> {
-  if (!isTauri()) return "（アプリ内でのみ表示できます）";
+  if (!isTauri()) return t("toast.role.appOnly");
   try {
     return await invoke<string>("analysis_threshold_preview", { thresholds });
   } catch (e) {

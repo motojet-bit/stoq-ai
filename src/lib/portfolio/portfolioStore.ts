@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
 import type { ArchiveEntry, Portfolio } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * ポートフォリオ（銘柄リスト）と分析アーカイブのストア。
@@ -66,7 +67,7 @@ export async function loadPortfolios(): Promise<void> {
   try {
     replace(await invoke<Portfolio[]>("portfolios_list"));
   } catch (e) {
-    toastError("ポートフォリオを読み込めませんでした", e);
+    toastError(t("toast.portfolio.loadFailed"), e);
   }
 }
 
@@ -78,7 +79,7 @@ export async function loadArchive(): Promise<void> {
   try {
     archive = await invoke<ArchiveEntry[]>("analysis_history", { ticker: null });
   } catch (e) {
-    toastError("分析アーカイブを読み込めませんでした", e);
+    toastError(t("toast.portfolio.archiveFailed"), e);
   } finally {
     loading = false;
     emit();
@@ -89,7 +90,7 @@ export async function createPortfolio(name?: string): Promise<void> {
   try {
     replace(await invoke<Portfolio[]>("portfolios_create", { name: name ?? null }));
   } catch (e) {
-    toastError("リストを作成できませんでした", e);
+    toastError(t("toast.portfolio.createFailed"), e);
   }
 }
 
@@ -97,7 +98,7 @@ export async function renamePortfolio(id: string, name: string): Promise<void> {
   try {
     replace(await invoke<Portfolio[]>("portfolios_rename", { id, name }));
   } catch (e) {
-    toastError("リスト名を変更できませんでした", e);
+    toastError(t("toast.portfolio.renameFailed"), e);
   }
 }
 
@@ -105,7 +106,7 @@ export async function removePortfolio(id: string): Promise<void> {
   try {
     replace(await invoke<Portfolio[]>("portfolios_remove", { id }));
   } catch (e) {
-    toastError("リストを削除できませんでした", e);
+    toastError(t("toast.portfolio.deleteFailed"), e);
   }
 }
 
@@ -113,7 +114,7 @@ export async function addTickerToPortfolio(id: string, ticker: string): Promise<
   try {
     replace(await invoke<Portfolio[]>("portfolios_add_ticker", { id, ticker }));
   } catch (e) {
-    toastError("銘柄を追加できませんでした", e);
+    toastError(t("toast.portfolio.addFailed"), e);
   }
 }
 
@@ -124,6 +125,6 @@ export async function removeTickerFromPortfolio(
   try {
     replace(await invoke<Portfolio[]>("portfolios_remove_ticker", { id, ticker }));
   } catch (e) {
-    toastError("銘柄を外せませんでした", e);
+    toastError(t("toast.portfolio.removeFailed"), e);
   }
 }

@@ -1,6 +1,6 @@
 import { FREE_TICKER_LIMIT, type BlockReason } from "@/lib/license/freeTier";
 import { useUsedTickers } from "@/lib/license/freeTierStore";
-import { KEPT_ON_LOCK, lockBody, lockTitle } from "@/lib/license/lockMessages";
+import { keptOnLock, lockBody, lockTitle } from "@/lib/license/lockMessages";
 import ModalShell from "@/components/ModalShell";
 import { IconBadge, IconKey } from "@/components/Icons";
 import { appName } from "@/lib/ui/appMeta";
@@ -93,7 +93,7 @@ export default function FreeTierLimitModal({
             ))}
           </div>
           <ul className="mt-2 space-y-0.5 t-label leading-relaxed text-slate-500">
-            {KEPT_ON_LOCK.map((item) => (
+            {keptOnLock().map((item: string) => (
               <li key={item}>✓ {item}は制限なく続けられます</li>
             ))}
           </ul>

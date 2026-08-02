@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
 import type { StoredPrompt } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * AI の役割設定（システムプロンプト）ライブラリのストア。
@@ -98,7 +99,7 @@ export async function loadPrompts(): Promise<void> {
   try {
     replace(await invoke<StoredPrompt[]>("prompts_list"));
   } catch (e) {
-    toastError("役割ライブラリを読み込めませんでした", e);
+    toastError(t("toast.promptLib.loadFailed"), e);
   }
 }
 
@@ -111,7 +112,7 @@ export async function savePrompt(
   try {
     replace(await invoke<StoredPrompt[]>("prompts_save", { id, title, body }));
   } catch (e) {
-    toastError("役割を保存できませんでした", e);
+    toastError(t("toast.promptLib.saveFailed"), e);
     throw e;
   }
 }
@@ -120,6 +121,6 @@ export async function removePrompt(id: string): Promise<void> {
   try {
     replace(await invoke<StoredPrompt[]>("prompts_remove", { id }));
   } catch (e) {
-    toastError("役割を削除できませんでした", e);
+    toastError(t("toast.promptLib.deleteFailed"), e);
   }
 }

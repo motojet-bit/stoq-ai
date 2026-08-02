@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
   evaluateAccess,
   FREE_TICKER_LIMIT,
@@ -9,7 +9,11 @@ import {
   trialLabel,
   uniqueTickers,
 } from "@/lib/license/freeTier";
-import { KEPT_ON_LOCK, LOCK_HINT, lockBody, lockTitle } from "@/lib/license/lockMessages";
+import { keptOnLock, lockBody, lockHint, lockTitle } from "@/lib/license/lockMessages";
+import { setLocale } from "@/lib/i18n/i18n";
+
+// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
+beforeAll(() => setLocale("ja"));
 
 const free = (usedTickers: string[], ticker: string, trialExpired = false) =>
   evaluateAccess({ activated: false, usedTickers, ticker, trialExpired });
@@ -181,14 +185,14 @@ describe("ロック時の文面", () => {
   });
 
   it("ボタンのホバー文も理由ごとに分かれる", () => {
-    expect(LOCK_HINT.trialExpired).toContain("3週間");
-    expect(LOCK_HINT.tickerLimit).toContain("10銘柄");
+    expect(lockHint("trialExpired")).toContain("3週間");
+    expect(lockHint("tickerLimit")).toContain("10銘柄");
   });
 
   it("**止まらないもの**を明示する（もう何も見られないと誤解させない）", () => {
-    expect(KEPT_ON_LOCK.length).toBeGreaterThanOrEqual(3);
-    expect(KEPT_ON_LOCK.join("")).toContain("閲覧");
-    expect(KEPT_ON_LOCK.join("")).toContain("再分析");
+    expect(keptOnLock().length).toBeGreaterThanOrEqual(3);
+    expect(keptOnLock().join("")).toContain("閲覧");
+    expect(keptOnLock().join("")).toContain("再分析");
   });
 });
 

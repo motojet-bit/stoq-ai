@@ -3,6 +3,7 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
 import { isBlocked } from "@/lib/legal/eula";
 import type { EulaStatus } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 免責事項への同意状態。
@@ -62,7 +63,7 @@ export async function loadEula(): Promise<void> {
   try {
     replace(await invoke<EulaStatus>("eula_status"));
   } catch (e) {
-    toastError("免責事項の同意状態を確認できませんでした", e);
+    toastError(t("toast.eula.statusFailed"), e);
   }
 }
 
@@ -72,7 +73,7 @@ export async function agreeEula(): Promise<boolean> {
     replace(await invoke<EulaStatus>("eula_agree"));
     return true;
   } catch (e) {
-    toastError("同意を保存できませんでした", e);
+    toastError(t("toast.eula.agreeFailed"), e);
     return false;
   }
 }
@@ -88,7 +89,7 @@ export async function revokeEula(): Promise<boolean> {
     replace(await invoke<EulaStatus>("eula_revoke"));
     return true;
   } catch (e) {
-    toastError("同意を撤回できませんでした", e);
+    toastError(t("toast.eula.revokeFailed"), e);
     return false;
   }
 }

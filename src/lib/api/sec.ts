@@ -1,5 +1,6 @@
 import { invoke, isTauri } from "@/lib/tauri";
 import type { FilingStatus } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * SEC EDGAR の提出状況（10-K / 10-Q の有無と最終提出日）を確認する。
@@ -10,7 +11,7 @@ import type { FilingStatus } from "@/types";
 export async function fetchFilingStatus(ticker: string): Promise<FilingStatus> {
   if (!isTauri()) {
     throw new Error(
-      "ブラウザで実行中のため SEC のデータを取得できません。`npm run tauri:dev` で起動してください。",
+      t("err.browserSec"),
     );
   }
   return invoke<FilingStatus>("sec_filing_status", { ticker });
@@ -35,15 +36,15 @@ export interface FilingSignalInfo {
  */
 export function filingSignal(status: FilingStatus | null): FilingSignalInfo {
   if (!status) {
-    return { signal: "yellow", emoji: "🟡", label: "未取得", detail: "まだ確認していません。" };
+    return { signal: "yellow", emoji: "🟡", label: t("sec.state.unknown"), detail: t("sec.state.unknownWhy") };
   }
 
   if (status.status === "notInEdgar") {
     return {
       signal: "red",
       emoji: "🔴",
-      label: "取得不可",
-      detail: status.message ?? "SEC EDGAR に登録がありません。",
+      label: t("sec.state.unavailable"),
+      detail: status.message ?? t("sec.state.unavailableWhy"),
     };
   }
 
@@ -51,8 +52,8 @@ export function filingSignal(status: FilingStatus | null): FilingSignalInfo {
     return {
       signal: "yellow",
       emoji: "🟡",
-      label: "要設定",
-      detail: status.message ?? "SEC の User-Agent が未設定です。",
+      label: t("sec.state.needsSetup"),
+      detail: status.message ?? t("sec.state.needsSetupWhy"),
     };
   }
 
@@ -60,8 +61,8 @@ export function filingSignal(status: FilingStatus | null): FilingSignalInfo {
     return {
       signal: "yellow",
       emoji: "🟡",
-      label: "書類なし",
-      detail: status.message ?? "10-K / 10-Q が見つかりませんでした。",
+      label: t("sec.state.none"),
+      detail: status.message ?? t("sec.state.noneWhy"),
     };
   }
 
@@ -72,17 +73,20 @@ export function filingSignal(status: FilingStatus | null): FilingSignalInfo {
     return {
       signal: "green",
       emoji: "🟢",
-      label: "準備完了",
-      detail: `10-K (${status.latest10k?.filed}) と 10-Q (${status.latest10q?.filed}) を取得できます。`,
+      label: t("sec.state.ready"),
+      detail: t("sec.state.readyWhy", {
+      tenK: status.latest10k?.filed ?? "",
+      tenQ: status.latest10q?.filed ?? "",
+    }),
     };
   }
 
   return {
     signal: "yellow",
     emoji: "🟡",
-    label: "一部のみ",
+    label: t("sec.state.partial"),
     detail: has10k
-      ? `10-K (${status.latest10k?.filed}) のみ取得できます。`
-      : `10-Q (${status.latest10q?.filed}) のみ取得できます。`,
+      ? t("sec.state.onlyTenK", { filed: status.latest10k?.filed ?? "" })
+      : t("sec.state.onlyTenQ", { filed: status.latest10q?.filed ?? "" }),
   };
 }

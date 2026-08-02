@@ -22,6 +22,7 @@ import type {
   SecFilingText,
   StagedDocument,
 } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /** 1 銘柄分の分析実行状態 */
 export interface AnalysisRun {
@@ -37,7 +38,7 @@ export interface AnalysisRun {
   error: string | null;
   /** プロンプトの切り詰めなどの注記 */
   notes: string[];
-  /** 分析に使ったデータ元（例: "財務指標(YF)", "SEC開示書類 10-Q (2026-07-31)"） */
+  /** 分析に使ったデータ元（例: t("basis.metrics"), "SEC開示書類 10-Q (2026-07-31)"） */
   basis: string[];
   promptTokens: number;
   model: string | null;
@@ -123,8 +124,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
   if (!isTauri()) {
     pushToast(
       "warning",
-      "ブラウザでは分析を実行できません",
-      "`npm run tauri:dev` で起動してください。",
+      t("toast.analysis.browserOnly"),
+      t("toast.analysis.browserHint"),
     );
     return;
   }
@@ -171,8 +172,10 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       } catch (e) {
         pushToast(
           "warning",
-          "SEC 提出書類を取得できませんでした",
-          `${e instanceof Error ? e.message : String(e)} 財務指標と添付資料のみで分析します。`,
+          t("toast.analysis.secFailed"),
+          t("toast.analysis.secFallback", {
+        reason: e instanceof Error ? e.message : String(e),
+      }),
         );
       }
     }
@@ -200,20 +203,20 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
 
     // 何をもとに分析したかを記録し、UI に出す
     const basis: string[] = [];
-    if (options.fundamentals) basis.push("財務指標(YF)");
+    if (options.fundamentals) basis.push(t("basis.metrics"));
     if (options.quarterly && options.quarterly.quarters.length > 0) {
-      basis.push(`四半期推移 ${options.quarterly.quarters.length}Q`);
+      basis.push(t("basis.quarterly", { count: options.quarterly.quarters.length }));
     }
-    if (filing) basis.push(`SEC開示書類 ${filing.form} (${filing.filed})`);
+    if (filing) basis.push(t("basis.filing", { form: filing.form, filed: filing.filed }));
     if (documents.length > 0) {
       const names = documents.map((d) => d.name);
       basis.push(
         documents.length === 1
-          ? `添付資料: ${names[0]}`
-          : `添付資料: ${names[0]} ほか (${documents.length}件)`,
+          ? t("basis.document", { name: names[0] })
+          : t("basis.documents", { name: names[0], count: documents.length - 1 }),
       );
     }
-    if (basis.length === 0) basis.push("データ元なし");
+    if (basis.length === 0) basis.push(t("basis.none"));
 
     patch(ticker, {
       phase: "streaming",
@@ -283,18 +286,18 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       } catch (e) {
         pushToast(
           "warning",
-          "分析結果を保存できませんでした",
-          `画面には表示されていますが、次回起動時には復元されません。${
-            e instanceof Error ? e.message : String(e)
-          }`,
+          t("toast.analysis.saveFailed"),
+          t("toast.analysis.saveFailedHint", {
+            reason: e instanceof Error ? e.message : String(e),
+          }),
         );
       }
     }
 
     if (cancelled) {
-      pushToast("info", "分析を中断しました", "途中までの結果は保存しています。");
+      pushToast("info", t("toast.analysis.cancelled"), t("toast.analysis.cancelledHint"));
     } else {
-      pushToast("success", `${ticker} の分析が完了しました`);
+      pushToast("success", t("toast.analysis.done", { ticker }));
     }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -304,7 +307,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       requestId: null,
       finishedAtMs: Date.now(),
     });
-    toastError(`${ticker} の分析に失敗しました`, e);
+    toastError(t("toast.analysis.failed", { ticker }), e);
   }
 }
 
@@ -369,8 +372,8 @@ export async function clearAnalysis(rawTicker: string): Promise<void> {
   if (!isTauri()) return;
   try {
     await invoke("analysis_delete", { ticker });
-    pushToast("info", `${ticker} の分析結果を削除しました`);
+    pushToast("info", t("toast.analysis.deleted", { ticker }));
   } catch (e) {
-    toastError("分析結果を削除できませんでした", e);
+    toastError(t("toast.analysis.deleteFailed"), e);
   }
 }

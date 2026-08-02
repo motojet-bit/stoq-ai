@@ -1,4 +1,5 @@
 import type { AppSettings, BuiltinProviderId, ProviderId } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /** 組み込みプロバイダのメタ情報。 */
 export interface BuiltinProviderMeta {
@@ -17,21 +18,21 @@ export const BUILTIN_PROVIDERS: BuiltinProviderMeta[] = [
     id: "openai",
     label: "OpenAI",
     keyPlaceholder: "sk-proj-…",
-    modelHint: "例: gpt-5.6 / gpt-4o",
+    modelHint: t("provider.hint.openai"),
     keySource: "platform.openai.com/api-keys",
   },
   {
     id: "anthropic",
     label: "Anthropic (Claude)",
     keyPlaceholder: "sk-ant-…",
-    modelHint: "例: claude-opus-5 / claude-sonnet-5",
+    modelHint: t("provider.hint.anthropic"),
     keySource: "console.anthropic.com",
   },
   {
     id: "gemini",
     label: "Google (Gemini)",
     keyPlaceholder: "AIza…",
-    modelHint: "例: gemini-2.5-pro / gemini-2.5-flash",
+    modelHint: t("provider.hint.gemini"),
     keySource: "aistudio.google.com/apikey",
   },
 ];
@@ -61,16 +62,16 @@ export function providerReadiness(
   settings: AppSettings | null,
   id: ProviderId,
 ): { ready: boolean; reason: string | null } {
-  if (!settings) return { ready: false, reason: "設定を読み込めていません。" };
+  if (!settings) return { ready: false, reason: t("provider.err.noSettings") };
 
   const configured = settings.keys.find((k) => k.provider === id)?.configured ?? false;
-  if (!configured) return { ready: false, reason: "APIキーが未設定です。" };
+  if (!configured) return { ready: false, reason: t("provider.err.noKey") };
 
   if (isBuiltin(id)) return { ready: true, reason: null };
 
   const custom = settings.customProviders.find((c) => c.id === id);
-  if (!custom) return { ready: false, reason: "プロバイダが見つかりません。" };
-  if (!custom.baseUrl.trim()) return { ready: false, reason: "Base URL が未設定です。" };
-  if (!custom.model.trim()) return { ready: false, reason: "モデル名が未設定です。" };
+  if (!custom) return { ready: false, reason: t("provider.err.notFound") };
+  if (!custom.baseUrl.trim()) return { ready: false, reason: t("provider.err.noBaseUrl") };
+  if (!custom.model.trim()) return { ready: false, reason: t("provider.err.noModel") };
   return { ready: true, reason: null };
 }

@@ -1,12 +1,16 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
-  CUSTOM_INSTRUCTION_HINT,
+  customInstructionHint,
   customInstructionError,
   MAX_CUSTOM_INSTRUCTION,
   normalizeCustomInstruction,
 } from "@/lib/prompts/customInstruction";
+import { setLocale } from "@/lib/i18n/i18n";
+
+// 文面は日本語で検証する（既定は英語なので明示的に切り替える）
+beforeAll(() => setLocale("ja"));
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf-8");
 
@@ -57,7 +61,7 @@ describe("正規化", () => {
 
 describe("案内文", () => {
   it("**指定どおりのツールチップ文言**", () => {
-    expect(CUSTOM_INSTRUCTION_HINT).toBe(
+    expect(customInstructionHint()).toBe(
       "ℹ️ 上級者向け（※初〜中級者はプリセットプロンプトの使用を推奨します）",
     );
   });
@@ -98,7 +102,7 @@ describe("画面への配置", () => {
 
   it("ヘルプアイコンにツールチップが付いている", () => {
     const ui = read("src/components/CustomInstructionSettings.tsx");
-    expect(ui).toContain("CUSTOM_INSTRUCTION_HINT");
+    expect(ui).toContain("customInstructionHint");
     expect(ui).toContain("<Tooltip");
     expect(ui).toContain("IconHelp");
   });

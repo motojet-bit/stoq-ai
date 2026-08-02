@@ -1,5 +1,5 @@
 import { Channel, invoke, isTauri } from "@/lib/tauri";
-import { getLocale } from "@/lib/i18n/i18n";
+import { t, getLocale  } from "@/lib/i18n/i18n";
 import type { ChatMessage, LlmEvent, ProviderId } from "@/types";
 
 export interface LlmRequest {
@@ -59,7 +59,7 @@ export async function streamChat(
 ): Promise<StreamResult> {
   if (!isTauri()) {
     throw new Error(
-      "ブラウザで実行中のため LLM を呼び出せません。`npm run tauri:dev` で起動してください。",
+      t("err.browserLlm"),
     );
   }
 
@@ -107,7 +107,7 @@ export async function streamChat(
   // invoke は解決したが done/error が届かなかった場合の保険
   if (!settled) {
     settled = true;
-    rejectResult(new Error("LLM からの応答が完了しませんでした。"));
+    rejectResult(new Error(t("err.llmIncomplete")));
   }
 
   return result;

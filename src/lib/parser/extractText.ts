@@ -1,5 +1,6 @@
 import { extractDocxText } from "@/lib/parser/docx";
 import { extractPptxText } from "@/lib/parser/pptx";
+import { t } from "@/lib/i18n/i18n";
 
 /** 取り込めるファイルの拡張子。ファイル選択ダイアログの accept にも使う。 */
 export const SUPPORTED_EXTENSIONS = [
@@ -54,7 +55,10 @@ export async function extractText(file: File): Promise<string> {
         return file.text();
       default:
         throw new Error(
-          `「${file.name}」は未対応の形式です。対応: ${SUPPORTED_EXTENSIONS.join(" / ")}`,
+          t("parser.unsupported", {
+        name: file.name,
+        formats: SUPPORTED_EXTENSIONS.join(" / "),
+      }),
         );
     }
   })();
@@ -62,7 +66,7 @@ export async function extractText(file: File): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) {
     throw new Error(
-      `「${file.name}」からテキストを抽出できませんでした。画像だけの PDF や暗号化された PDF の可能性があります。`,
+      t("parser.noText", { name: file.name }),
     );
   }
   return trimmed;

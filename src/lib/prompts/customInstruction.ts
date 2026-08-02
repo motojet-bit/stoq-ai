@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 /**
  * 分析への追加指示（自由記述）の入力チェック。
  *
@@ -8,9 +9,13 @@
 /** 受け付ける最大文字数。Rust 側の `MAX_CUSTOM_INSTRUCTION` と揃える。 */
 export const MAX_CUSTOM_INSTRUCTION = 2000;
 
-/** ヘルプアイコンに出す案内。 */
-export const CUSTOM_INSTRUCTION_HINT =
-  "ℹ️ 上級者向け（※初〜中級者はプリセットプロンプトの使用を推奨します）";
+/**
+ * ヘルプアイコンに出す案内。
+ * **定数にしない**（読み込み時に固めると言語切替に追従しない）。
+ */
+export function customInstructionHint(): string {
+  return t("customInstruction.hint");
+}
 
 /**
  * 入力が使えない理由。問題なければ null。
@@ -21,7 +26,7 @@ export const CUSTOM_INSTRUCTION_HINT =
 export function customInstructionError(value: string): string | null {
   const length = value.trim().length;
   if (length > MAX_CUSTOM_INSTRUCTION) {
-    return `${MAX_CUSTOM_INSTRUCTION} 文字までです（現在 ${length} 文字）。超えたぶんは送信時に切り詰められます。`;
+    return t("customInstruction.tooLong", { max: MAX_CUSTOM_INSTRUCTION, length });
   }
   return null;
 }

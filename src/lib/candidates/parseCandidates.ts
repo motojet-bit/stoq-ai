@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n/i18n";
 /**
  * 「ティッカー|社名|ジャンル」形式のテキストを解析する。
  *
@@ -54,11 +55,11 @@ export function parseCandidates(input: string): CandidateParseResult {
   function push(line: number, text: string, raw: string, name: string, genre: string) {
     const ticker = raw.toUpperCase();
     if (ticker === "") {
-      errors.push({ line, text, reason: "ティッカーが空です" });
+      errors.push({ line, text, reason: t("parse.tickerEmpty") });
       return;
     }
     if (!TICKER_PATTERN.test(ticker)) {
-      errors.push({ line, text, reason: `ティッカーとして扱えません: ${ticker}` });
+      errors.push({ line, text, reason: t("parse.tickerInvalid", { ticker }) });
       return;
     }
 
@@ -92,7 +93,7 @@ export function parseCandidates(input: string): CandidateParseResult {
       errors.push({
         line: i + 1,
         text: line,
-        reason: "項目が多すぎます（ティッカー|社名|ジャンル の 3 つまで）",
+        reason: t("parse.tooManyFields"),
       });
       return;
     }

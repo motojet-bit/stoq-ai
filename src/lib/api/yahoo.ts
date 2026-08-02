@@ -1,5 +1,6 @@
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Fundamentals } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * Yahoo Finance から主要指標を取得する。
@@ -9,7 +10,7 @@ import type { Fundamentals } from "@/types";
 export async function fetchFundamentals(ticker: string): Promise<Fundamentals> {
   if (!isTauri()) {
     throw new Error(
-      "ブラウザで実行中のため財務データを取得できません。`npm run tauri:dev` で起動してください。",
+      t("err.browserYahoo"),
     );
   }
   return invoke<Fundamentals>("yahoo_fetch_fundamentals", { ticker });

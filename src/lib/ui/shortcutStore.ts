@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toastError } from "@/lib/ui/toastStore";
 import { normalizeBinding } from "@/lib/ui/shortcutKeys";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * ショートカットキーの管理基盤。
@@ -41,44 +42,44 @@ export interface ShortcutDefinition {
 export const SHORTCUTS: ShortcutDefinition[] = [
   {
     action: "chat.new",
-    label: "新規チャット",
-    hint: "新しい会話を作って履歴に追加する",
+    label: t("shortcut.chatNew"),
+    hint: t("shortcut.chatNewHint"),
     defaultBinding: "Ctrl+N",
   },
   {
     action: "candidates.add",
-    label: "検討中銘柄を追加",
-    hint: "パイプ区切りの一括インポートを開く",
+    label: t("shortcut.candidateAdd"),
+    hint: t("shortcut.candidateAddHint"),
     defaultBinding: "Ctrl+Shift+A",
   },
   {
     action: "ticker.focus",
-    label: "ティッカー入力へ移動",
-    hint: "上部の入力欄にカーソルを移す",
+    label: t("shortcut.tickerFocus"),
+    hint: t("shortcut.tickerFocusHint"),
     defaultBinding: "Ctrl+L",
   },
   {
     action: "analysis.run",
-    label: "AI分析を実行",
-    hint: "開いている銘柄の 20 項目評価を開始する",
+    label: t("shortcut.analysisRun"),
+    hint: t("shortcut.analysisRunHint"),
     defaultBinding: "Ctrl+Shift+Enter",
   },
   {
     action: "sidebar.toggle",
-    label: "サイドバーの開閉",
-    hint: "チャット履歴と検討中銘柄の表示を切り替える",
+    label: t("shortcut.sidebarToggle"),
+    hint: t("shortcut.sidebarToggleHint"),
     defaultBinding: "Ctrl+B",
   },
   {
     action: "app.settings",
-    label: "設定を開く",
-    hint: "APIキー・モデル・ショートカットの設定",
+    label: t("shortcut.settingsOpen"),
+    hint: t("shortcut.settingsOpenHint"),
     defaultBinding: "Ctrl+,",
   },
   {
     action: "chat.send",
-    label: "チャットを送信",
-    hint: "入力欄で押すと送信する（Enter は改行）",
+    label: t("shortcut.chatSend"),
+    hint: t("shortcut.chatSendHint"),
     defaultBinding: "Ctrl+Enter",
     allowInInput: true,
     handledLocally: true,
@@ -151,7 +152,7 @@ export async function loadShortcuts(): Promise<void> {
   try {
     replace(await invoke<StoredOverride[]>("shortcuts_list"));
   } catch (e) {
-    toastError("ショートカット設定を読み込めませんでした", e);
+    toastError(t("toast.shortcut.loadFailed"), e);
   }
 }
 
@@ -168,7 +169,7 @@ export async function setShortcut(
       }),
     );
   } catch (e) {
-    toastError("ショートカットを保存できませんでした", e);
+    toastError(t("toast.shortcut.saveFailed"), e);
   }
 }
 
@@ -176,7 +177,7 @@ export async function resetShortcuts(): Promise<void> {
   try {
     replace(await invoke<StoredOverride[]>("shortcuts_reset"));
   } catch (e) {
-    toastError("ショートカットを戻せませんでした", e);
+    toastError(t("toast.shortcut.resetFailed"), e);
   }
 }
 

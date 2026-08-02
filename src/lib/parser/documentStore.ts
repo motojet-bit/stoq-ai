@@ -3,6 +3,7 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { extractText } from "@/lib/parser/extractText";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type { IngestingFile, StagedDocument } from "@/types";
+import { t } from "@/lib/i18n/i18n";
 
 /**
  * 一時保存（ステージング）中の資料のストア。
@@ -58,7 +59,7 @@ export async function loadStagedDocuments(): Promise<void> {
   try {
     commit(await invoke<StagedDocument[]>("documents_list"));
   } catch (e) {
-    toastError("一時保存中の資料を読み込めませんでした", e);
+    toastError(t("toast.docs.loadFailed"), e);
   }
 }
 
@@ -73,8 +74,8 @@ export async function ingestFiles(files: File[]): Promise<void> {
   if (!isTauri()) {
     pushToast(
       "warning",
-      "ブラウザでは資料を保存できません",
-      "`npm run tauri:dev` で起動すると一時保存が有効になります。",
+      t("toast.docs.browserOnly"),
+      t("toast.docs.browserHint"),
     );
     return;
   }
@@ -98,14 +99,14 @@ export async function ingestFiles(files: File[]): Promise<void> {
       commit([...documents, staged]);
       succeeded += 1;
     } catch (e) {
-      toastError(`「${file.name}」を取り込めませんでした`, e);
+      toastError(t("toast.docs.ingestFailed", { name: file.name }), e);
     } finally {
       setIngesting(ingesting.filter((j) => j.id !== jobId));
     }
   }
 
   if (succeeded > 0) {
-    pushToast("success", `${succeeded} 件の資料を一時保存しました`);
+    pushToast("success", t("toast.docs.staged", { count: succeeded }));
   }
 }
 
@@ -113,7 +114,7 @@ export async function renameDocument(id: string, displayName: string): Promise<v
   try {
     commit(await invoke<StagedDocument[]>("documents_rename", { id, displayName }));
   } catch (e) {
-    toastError("表示名を変更できませんでした", e);
+    toastError(t("toast.docs.renameFailed"), e);
   }
 }
 
@@ -121,16 +122,16 @@ export async function deleteDocument(id: string): Promise<void> {
   try {
     commit(await invoke<StagedDocument[]>("documents_delete", { id }));
   } catch (e) {
-    toastError("資料を削除できませんでした", e);
+    toastError(t("toast.docs.deleteFailed"), e);
   }
 }
 
 export async function clearDocuments(): Promise<void> {
   try {
     commit(await invoke<StagedDocument[]>("documents_clear"));
-    pushToast("info", "一時保存中の資料をすべて破棄しました");
+    pushToast("info", t("toast.docs.cleared"));
   } catch (e) {
-    toastError("資料を一括削除できませんでした", e);
+    toastError(t("toast.docs.clearFailed"), e);
   }
 }
 
