@@ -42,7 +42,7 @@ export function tooltip(id: TooltipId): string {
  * 機能リクエストの宛先。ヘルプ画面から案内する。
  * `mailto:` なので、押すと利用者の既定メーラーが件名つきで立ち上がる。
  */
-export const FEATURE_REQUEST_EMAIL = "xxxx@xxx.com";
+export const FEATURE_REQUEST_EMAIL = "superpuzanoza@gmail.com";
 /** 件名には**そのときの表示名**を入れるので、定数ではなく関数にする。 */
 export function featureRequestUrl(): string {
   return (
