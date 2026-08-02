@@ -432,6 +432,131 @@
         </div>
       </section>
 
+      <!-- ========================================================== BYOK（API・外部データ） -->
+      <!--
+        価格の**手前**に置く。買ったあとで「別途 API 費用が要る」と知るのが
+        いちばん不満の残る順番なので、金額を見る前に前提を読ませる。
+      -->
+      <section id="byok" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-4xl px-5">
+          <h2 class="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <span data-en>Important: API keys and external data (BYOK)</span>
+            <span data-ja>APIキーおよび外部データに関する重要事項（BYOK方式）</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-400">
+            <span data-en>
+              Please read this before you buy. It is the one thing that surprises people.
+            </span>
+            <span data-ja>ご購入の前に、ここだけは目を通してください。</span>
+          </p>
+
+          <div class="mt-12 grid gap-6 md:grid-cols-2">
+            <!-- AI 利用料金 -->
+            <article class="rounded-2xl border border-slate-800 bg-slate-900/40 p-7">
+              <div class="flex items-center gap-2.5">
+                <span
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-sm font-bold text-emerald-400"
+                  aria-hidden="true"
+                  >1</span
+                >
+                <h3 class="text-base font-semibold text-white">
+                  <span data-en>AI usage fees (API costs)</span>
+                  <span data-ja>AI利用料金（API費用）について</span>
+                </h3>
+              </div>
+              <ul class="mt-5 space-y-3.5 text-sm leading-relaxed text-slate-400">
+                <li class="flex gap-2.5">
+                  <span class="mt-0.5 text-emerald-400" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    This is a <strong class="text-slate-200">BYOK (Bring Your Own Key)</strong> tool:
+                    you set up your own API key from OpenAI, Anthropic, Google, and so on.
+                  </span>
+                  <span data-ja>
+                    本ツールは OpenAI / Anthropic / Google などの APIキーをユーザーご自身で設定して
+                    利用する<strong class="text-slate-200">「BYOK（Bring Your Own Key）」方式</strong>です。
+                  </span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="mt-0.5 text-emerald-400" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    OpenAI, Anthropic and others require you to pre-purchase credit on their own
+                    platform before the key will work.
+                  </span>
+                  <span data-ja>
+                    OpenAI や Anthropic 等のご利用には、各社プラットフォームにて事前チャージ
+                    （クレジット買い切り決済など）が必要です。
+                  </span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="mt-0.5 text-emerald-400" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    Turn <strong class="text-slate-200">Auto-recharge off</strong> in your provider's
+                    dashboard and no unexpected charge can occur.
+                  </span>
+                  <span data-ja>
+                    各社ダッシュボードで従量課金（<strong class="text-slate-200">Auto-recharge</strong>）を
+                    OFF にしておけば、予期せぬ自動課金は発生しません。
+                  </span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="mt-0.5 text-emerald-400" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    Prefer to spend little or nothing? You can point the app at a third-party model
+                    or a provider with a free tier instead.
+                  </span>
+                  <span data-ja>
+                    無料または極めて安価に利用したい場合は、対応するサードパーティ製AI（中華系モデル等）や
+                    無料枠のあるプロバイダーのAPIを選択することも可能です。
+                  </span>
+                </li>
+              </ul>
+            </article>
+
+            <!-- 財務・市場データ -->
+            <article class="rounded-2xl border border-slate-800 bg-slate-900/40 p-7">
+              <div class="flex items-center gap-2.5">
+                <span
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-sm font-bold text-emerald-400"
+                  aria-hidden="true"
+                  >2</span
+                >
+                <h3 class="text-base font-semibold text-white">
+                  <span data-en>Financial and market data</span>
+                  <span data-ja>財務データ・市場データについて</span>
+                </h3>
+              </div>
+              <ul class="mt-5 space-y-3.5 text-sm leading-relaxed text-slate-400">
+                <li class="flex gap-2.5">
+                  <span class="mt-0.5 text-emerald-400" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    To pull quarterly metrics and SEC filings, a separate data-provider API key
+                    (FMP and similar) may be required &mdash; either a free tier or a paid
+                    subscription &mdash; if a provider changes its terms or you want deeper data.
+                  </span>
+                  <span data-ja>
+                    四半期財務指標や SEC 提出書類等の取得にあたり、データプロバイダー（FMP 等）の
+                    仕様変更や高度なデータ取得のために、別途データプロバイダー側の APIキー
+                    （無料枠あり、または有料サブスクリプション）が必要となる場合があります。
+                  </span>
+                </li>
+              </ul>
+              <p
+                class="mt-5 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs leading-relaxed text-slate-300"
+              >
+                <span data-en>
+                  The app ships with a step-by-step key setup guide built in, and it opens
+                  automatically on first run while no key is configured.
+                </span>
+                <span data-ja>
+                  アプリ内に「APIキー設定ガイド」を同梱しています。
+                  キーが未設定のうちは、ヘルプを開くとこのガイドが最初に表示されます。
+                </span>
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <!-- ========================================================== 価格 -->
       <section id="pricing" class="border-t border-slate-900 bg-slate-900/20 py-20 sm:py-24">
         <div class="mx-auto max-w-5xl px-5">
@@ -678,6 +803,195 @@
         </div>
       </div>
     </footer>
+
+    <!-- ========================================================== 購入前の確認と同意 -->
+    <!--
+      決済ページへ直接飛ばさず、ここを必ず通す。
+      「投資助言ではない」「API 費用は別」「個別サポートは無い」「言語は 2 つだけ」の
+      4 点は、**買ったあとで知ると返金要求になる**種類の前提なので、
+      チェックを入れてもらってから通す。
+    -->
+    <div
+      id="consent"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="consent-title"
+    >
+      <div
+        class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl sm:p-8"
+      >
+        <h2 id="consent-title" class="text-lg font-bold text-white sm:text-xl">
+          <span data-en>Before you buy</span>
+          <span data-ja>ご購入前の確認と同意</span>
+        </h2>
+        <p class="mt-2 text-sm text-slate-400">
+          <span data-en>Please confirm all four before continuing to checkout.</span>
+          <span data-ja>以下の 4 点にご同意のうえ、購入手続きへお進みください。</span>
+        </p>
+
+        <div class="mt-6 space-y-3">
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand this is a decision-support tool and does not provide investment advice or
+              recommend specific securities.
+            </span>
+            <span data-ja>
+              本ツールは投資判断の支援ツールであり、投資助言や特定の銘柄推奨を行うものではないことに
+              同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand I must obtain and configure the AI and data API keys myself, and that the
+              providers may charge me separately.
+            </span>
+            <span data-ja>
+              AIおよびデータ利用に必要なAPIキーはユーザー自身で取得・設定する必要があり、
+              別途プロバイダー側で費用が発生する場合があることに同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that individual technical support for obtaining and configuring API keys
+              is not provided.
+            </span>
+            <span data-ja>
+              APIキーの取得および設定手順について、当方による個別技術サポートは提供されないことに
+              同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand the interface is currently available in Japanese and English only.
+            </span>
+            <span data-ja>
+              現時点での対応インターフェース言語は「日本語」および「英語」のみであることに同意します。
+            </span>
+          </label>
+        </div>
+
+        <div class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            id="consent-cancel"
+            class="rounded-lg border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800"
+          >
+            <span data-en>Cancel</span><span data-ja>キャンセル</span>
+          </button>
+          <button
+            type="button"
+            id="consent-proceed"
+            disabled
+            class="rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
+          >
+            <span data-en>I agree &mdash; continue to checkout</span>
+            <span data-ja>上記に同意して購入手続きへ進む</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /*
+       * 購入前の同意モーダル。
+       *
+       * `href` は残したまま `preventDefault` で止める。
+       * こうしておくと、**JS が動かない環境でも決済ページには行ける**
+       * （同意を取り損ねるより、買えなくなるほうが損失が大きい）。
+       */
+      (function () {
+        var modal = document.getElementById("consent");
+        var proceed = document.getElementById("consent-proceed");
+        var boxes = modal.querySelectorAll("[data-consent]");
+        var url = null;
+        var opener = null;
+
+        function sync() {
+          var all = true;
+          for (var i = 0; i < boxes.length; i++) {
+            if (!boxes[i].checked) all = false;
+          }
+          proceed.disabled = !all;
+        }
+
+        function close() {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          // 開き直したときに前回のチェックが残っていると、同意を取った意味が無い
+          for (var i = 0; i < boxes.length; i++) boxes[i].checked = false;
+          sync();
+          if (opener) opener.focus();
+        }
+
+        function open(href, from) {
+          url = href;
+          opener = from;
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+          if (boxes.length > 0) boxes[0].focus();
+        }
+
+        for (var i = 0; i < boxes.length; i++) {
+          boxes[i].addEventListener("change", sync);
+        }
+
+        var links = document.querySelectorAll("[data-checkout]");
+        for (var j = 0; j < links.length; j++) {
+          links[j].addEventListener("click", function (event) {
+            event.preventDefault();
+            open(this.getAttribute("href"), this);
+          });
+        }
+
+        proceed.addEventListener("click", function () {
+          if (proceed.disabled || !url) return;
+          window.location.href = url;
+        });
+
+        document.getElementById("consent-cancel").addEventListener("click", close);
+
+        // 背景のクリックで閉じる（中身のクリックでは閉じない）
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) close();
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && !modal.classList.contains("hidden")) close();
+        });
+      })();
+    </script>
 
     <script>
       /*
