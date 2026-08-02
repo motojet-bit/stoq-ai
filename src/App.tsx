@@ -51,6 +51,16 @@ import TabBar from "@/components/TabBar";
 import WorkspacePanel from "@/components/WorkspacePanel";
 import ResizableSplit from "@/components/ResizableSplit";
 import AnalysisWithDebate from "@/components/AnalysisWithDebate";
+import FiscalPeriodDialog from "@/components/FiscalPeriodDialog";
+import {
+  detectFiscalPeriod,
+  periodKey,
+  type FiscalPeriod,
+} from "@/lib/parser/fiscalPeriod";
+import { useArchive } from "@/lib/portfolio/portfolioStore";
+import { getConfirmedPeriod, setConfirmedPeriod } from "@/lib/parser/periodStore";
+import { readDocumentText } from "@/lib/parser/documentStore";
+import { pushToast } from "@/lib/ui/toastStore";
 import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
 import SettingsModal, { type SettingsTab } from "@/components/SettingsModal";
@@ -78,6 +88,8 @@ const TOUR_SEEN_KEY = "stockanalyzer.tourSeen";
 
 export default function App() {
   const t = useT();
+  // 期中の追加分析として記録できるかを判断するために履歴を見る
+  const archive = useArchive();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sessions = useChatSessions();
   const activeSessionId = useActiveSessionId();
@@ -131,6 +143,16 @@ export default function App() {
 
   // 一次資料が無い状態で分析を実行しようとしたときの確認
   const [confirmingNoDocs, setConfirmingNoDocs] = useState(false);
+  /*
+   * 決算期の確認待ち。
+   * **資料があるときは必ず 1 回通す。** 自動特定は「読み取れたが間違っている」
+   * ことがあり、期を取り違えると別の期の株価と突き合わされた分析が
+   * 正しそうな顔で出てくる。人が一目見れば分かるので確認を挟む。
+   */
+  const [periodAsk, setPeriodAsk] = useState<{
+    detected: FiscalPeriod | null;
+    documentName: string;
+  } | null>(null);
 
   const settings = useSettings();
   const settingsError = useSettingsError();
@@ -174,10 +196,61 @@ export default function App() {
       setConfirmingNoDocs(true);
       return;
     }
+    // 資料があるなら、決算期を確認してから進む（確定済みなら聞き直さない）
+    if (!getConfirmedPeriod(activeTicker)) {
+      void askFiscalPeriod();
+      return;
+    }
     startAnalysis();
   };
 
-  const startAnalysis = () => {
+  /**
+   * 資料の本文から決算期を読み取り、確認ダイアログを出す。
+   *
+   * **読み取れなくてもダイアログは出す。**「分かりませんでした、選んでください」
+   * と聞けば期を記録できる。黙って期なしで進めると、
+   * あとからヒートマップの期と突き合わせられない。
+   */
+  const askFiscalPeriod = async () => {
+    const first = documents[0];
+    let detected: FiscalPeriod | null = null;
+    try {
+      detected = detectFiscalPeriod(await readDocumentText(first.id));
+    } catch {
+      // 読めなくても手動で選べるようにダイアログは出す
+    }
+    setPeriodAsk({ detected, documentName: first.displayName });
+  };
+
+  const confirmFiscalPeriod = (
+    fiscalYear: number,
+    quarter: 1 | 2 | 3 | 4 | null,
+    parentId: string | null,
+  ) => {
+    if (!activeTicker) return;
+    const entry = setConfirmedPeriod(activeTicker, fiscalYear, quarter, periodAsk?.detected ?? null);
+    setPeriodAsk(null);
+    pushToast("info", t("toast.period.recorded", { key: entry.key }), "");
+    startAnalysis(parentId);
+  };
+
+  /*
+   * すでにこの期の本体が保存されているか。
+   * あれば「期中の追加分析として記録する」を選べるようにする。
+   */
+  const existingForPeriod = (() => {
+    if (!activeTicker || !periodAsk) return null;
+    const key = periodKey(
+      periodAsk.detected?.fiscalYear ?? new Date().getFullYear(),
+      periodAsk.detected?.quarter ?? null,
+    );
+    const mine = archive.filter(
+      (e) => e.ticker === activeTicker.toUpperCase() && e.parentId === null,
+    );
+    return mine.find((e) => e.periodLabel === key) ?? mine[0] ?? null;
+  })();
+
+  const startAnalysis = (parentId: string | null = null) => {
     if (!activeTicker) return;
     void runAnalysis({
       ticker: activeTicker,
@@ -185,8 +258,10 @@ export default function App() {
       fundamentals: activeAnalysis?.fundamentals ?? null,
       quarterly: activeAnalysis?.quarterly ?? null,
       // EDGAR に登録がある銘柄のときだけ本文を取りに行く
-      fetchFiling: activeAnalysis?.filing?.status === "ok",
+      filingStatus: activeAnalysis?.filing ?? null,
       documents,
+      confirmedPeriodKey: getConfirmedPeriod(activeTicker)?.key ?? null,
+      parentId,
     });
   };
 
@@ -610,6 +685,20 @@ export default function App() {
           setHelpOpen(false);
           setTourOpen(true);
         }}
+      />
+
+      <FiscalPeriodDialog
+        open={periodAsk !== null}
+        detected={periodAsk?.detected ?? null}
+        documentName={periodAsk?.documentName ?? null}
+        existing={existingForPeriod}
+        existingChildCount={
+          existingForPeriod
+            ? archive.filter((e) => e.parentId === existingForPeriod.id).length
+            : 0
+        }
+        onConfirm={confirmFiscalPeriod}
+        onCancel={() => setPeriodAsk(null)}
       />
 
       <WelcomeTour

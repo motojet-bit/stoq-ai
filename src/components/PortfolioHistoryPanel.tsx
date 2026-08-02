@@ -7,6 +7,7 @@ import {
   useArchiveLoading,
 } from "@/lib/portfolio/portfolioStore";
 import { groupByTicker, periodLabelOf } from "@/lib/portfolio/archive";
+import { branchLabel, buildArchiveTree } from "@/lib/portfolio/archiveTree";
 import { buildTransferText } from "@/lib/portfolio/heatmap";
 import {
   buildAnalysisRecord,
@@ -272,7 +273,11 @@ export default function PortfolioHistoryPanel({
 
             {selected && (
               <ul className="space-y-1.5">
-                {selected.entries.map((entry) => {
+                {/*
+                  期中のアドホック分析は四半期の下にぶら下げる。
+                  **親が消えた子も根として出す**（画面から消えたように見せない）。
+                */}
+                {buildArchiveTree(selected.entries).map(({ entry, children }) => {
                   const label = periodLabelOf(entry);
                   const expanded = openEntry === entry.id;
                   const record = parseAnalysisRecord(entry.record ?? "{}");
@@ -329,6 +334,51 @@ export default function PortfolioHistoryPanel({
                         <IconTrash className="h-3.5 w-3.5" />
                       </button>
                       </div>
+
+                      {children.length > 0 && (
+                        <ul className="space-y-1 border-t border-slate-800/70 px-2.5 py-1.5">
+                          <li className="t-label text-slate-600">
+                            {t("history.adhocCount", { count: children.length })}
+                          </li>
+                          {children.map((child) => (
+                            <li key={child.id} className="flex items-center gap-2 pl-3">
+                              <span className="shrink-0 text-slate-700" aria-hidden="true">
+                                &#9492;
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void openLog(child.id)}
+                                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                              >
+                                <span className="shrink-0 font-mono t-label text-amber-400/80">
+                                  {branchLabel(entry.periodLabel, child.branchNo)}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate t-label text-slate-500">
+                                  {new Date(child.savedAtMs).toLocaleString()}
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPendingDelete({
+                                    id: child.id,
+                                    ticker: selected.ticker,
+                                    label: branchLabel(entry.periodLabel, child.branchNo),
+                                  })
+                                }
+                                title={t("history.delete")}
+                                aria-label={t("history.deleteAria", {
+                                  ticker: selected.ticker,
+                                  label: branchLabel(entry.periodLabel, child.branchNo),
+                                })}
+                                className="shrink-0 px-1 text-slate-700 transition-colors hover:text-red-400"
+                              >
+                                <IconTrash className="h-3 w-3" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
 
                       {expanded && (
                         <div className="border-t border-slate-800 px-2.5 py-2">

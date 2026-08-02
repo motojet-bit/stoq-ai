@@ -108,6 +108,24 @@ pub fn migrate(conn: &Connection) -> Result<()> {
         [],
     );
 
+    /*
+     * アドホック分析（決算の合間に出る適時開示・プレスリリース）を、
+     * 四半期の分析へぶら下げるための親子関係。
+     *
+     * **親を消しても子は残す（`ON DELETE` を張らない）。**
+     * 四半期の分析をやり直したくて消しただけなのに、
+     * 期中に積み上げた開示の分析まで巻き添えで消えると取り返しがつかない。
+     * 親を失った子は期の直下（親なし）として一覧に出る。
+     */
+    let _ = conn.execute("ALTER TABLE analysis_history ADD COLUMN parent_id TEXT", []);
+    /*
+     * 表示用の枝番（`Q2-01` の `01` の部分）。
+     * **保存時に採番して持たせる。** 表示のたびに数え直すと、
+     * 途中の 1 件を消した瞬間に既存の番号がずれて、
+     * 「Q2-02 の件」と控えていたものが別物を指す。
+     */
+    let _ = conn.execute("ALTER TABLE analysis_history ADD COLUMN branch_no INTEGER", []);
+
     Ok(())
 }
 
@@ -125,7 +143,28 @@ pub struct ArchiveEntry {
     pub period_label: Option<String>,
     /// 構造化した分析データ（JSON 文字列）
     pub record: String,
+    /// 親（四半期本体の分析）の ID。単独の分析なら None
+    pub parent_id: Option<String>,
+    /// 親の下での枝番（1 始まり）。親が無ければ None
+    pub branch_no: Option<i64>,
     pub saved_at_ms: i64,
+}
+
+/// 親の下で次に使う枝番を求める。
+///
+/// **いま存在する最大値の次**にする。件数 + 1 にすると、
+/// 途中を削除したときに既存の番号と衝突する。
+pub fn next_branch_no(conn: &Connection, parent_id: &str) -> Result<i64> {
+    let max: Option<i64> = conn
+        .query_row(
+            "SELECT MAX(branch_no) FROM analysis_history WHERE parent_id = ?1",
+            params![parent_id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?
+        .flatten();
+    Ok(max.unwrap_or(0) + 1)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -138,12 +177,19 @@ fn append_history(
     average_score: Option<f64>,
     period_label: Option<&str>,
     record: &str,
+    parent_id: Option<&str>,
     saved_at_ms: i64,
 ) -> Result<()> {
+    let branch_no = match parent_id {
+        Some(parent) => Some(next_branch_no(conn, parent)?),
+        None => None,
+    };
+
     conn.execute(
         "INSERT INTO analysis_history
-            (id, ticker, raw, provider, model, average_score, period_label, record, saved_at_ms)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            (id, ticker, raw, provider, model, average_score, period_label, record,
+             parent_id, branch_no, saved_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
         params![
             format!("hist-{saved_at_ms}-{ticker}"),
             ticker,
@@ -153,6 +199,8 @@ fn append_history(
             average_score,
             period_label,
             record,
+            parent_id,
+            branch_no,
             saved_at_ms
         ],
     )
@@ -168,7 +216,7 @@ pub fn history(app: &AppHandle, ticker: Option<String>) -> Result<Vec<ArchiveEnt
 pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<ArchiveEntry>> {
     let upper = ticker.map(|t| t.trim().to_uppercase());
     let sql = "SELECT id, ticker, provider, model, average_score, period_label,
-                      record, saved_at_ms
+                      record, parent_id, branch_no, saved_at_ms
                FROM analysis_history
                WHERE (?1 IS NULL OR ticker = ?1)
                ORDER BY saved_at_ms DESC";
@@ -187,7 +235,9 @@ pub fn history_in(conn: &Connection, ticker: Option<&str>) -> Result<Vec<Archive
                 average_score: row.get(4)?,
                 period_label: row.get(5)?,
                 record: row.get(6)?,
-                saved_at_ms: row.get(7)?,
+                parent_id: row.get(7)?,
+                branch_no: row.get(8)?,
+                saved_at_ms: row.get(9)?,
             })
         })
         .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
@@ -228,6 +278,8 @@ pub fn save(
     average_score: Option<f64>,
     period_label: Option<&str>,
     record: Option<&str>,
+    // 親（四半期本体の分析）の ID。アドホック分析ならここに親を指定する
+    parent_id: Option<&str>,
 ) -> Result<SavedAnalysis> {
     let ticker = ticker.trim().to_uppercase();
     if raw.trim().is_empty() {
@@ -240,6 +292,13 @@ pub fn save(
     let record_json = record.unwrap_or("{}");
 
     let conn = open(app)?;
+
+    /*
+     * **アドホック分析は `analyses`（銘柄ごとの最新 1 件）を上書きしない。**
+     * 期中のプレスリリース 1 本で、四半期決算の分析が画面から消えてしまう。
+     * 履歴にだけ積む。
+     */
+    if parent_id.is_none() {
     conn
         .execute(
             "INSERT INTO analyses
@@ -260,6 +319,7 @@ pub fn save(
             ],
         )
         .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
+    }
 
     // 最新版とは別に、上書きされない履歴も積む
     append_history(
@@ -271,6 +331,7 @@ pub fn save(
         average_score,
         period_label,
         record_json,
+        parent_id,
         saved_at_ms,
     )?;
 

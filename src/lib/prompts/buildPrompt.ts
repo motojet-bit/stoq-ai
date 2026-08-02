@@ -24,6 +24,12 @@ export interface PromptSources {
   fundamentals: Fundamentals | null;
   quarterly: QuarterlySeries | null;
   filing: PromptFiling | null;
+  /**
+   * 提出書類が自動取得されたものか。
+   * **プロンプトにも明記する。** ユーザーが渡していない資料であることを
+   * AI 側にも伝えておかないと、「添付いただいた資料」と書いてしまう。
+   */
+  filingAuto?: boolean;
   documents: PromptDocument[];
   /** 入力トークンの上限（設定の maxPromptTokens） */
   tokenLimit: number;
@@ -124,7 +130,12 @@ export function buildAnalysisPrompt(sources: PromptSources): BuiltPrompt {
   }
 
   const documentsSection = buildDocumentsSection(sources.documents, docsBudget, notes);
-  const filingSection = buildFilingSection(sources.filing, filingBudget, notes);
+  const filingSection = buildFilingSection(
+    sources.filing,
+    filingBudget,
+    notes,
+    sources.filingAuto ?? false,
+  );
 
   const built = finish(
     sources.systemTokens,
@@ -229,8 +240,14 @@ function buildFilingSection(
   filing: PromptFiling | null,
   budget: number,
   notes: string[],
+  auto: boolean,
 ): string {
   if (!filing) return "";
+
+  // 自動取得なら、その旨を本文の直前に置く（「添付いただいた資料」と書かせない）
+  const autoNote = auto ? `${t("prompt.filingAutoNote")}
+
+` : "";
 
   const head = `${t("prompt.filingHeading", {
     form: filing.form,
@@ -238,7 +255,7 @@ function buildFilingSection(
     period: filing.period,
   })}
 
-出典: ${filing.url}
+${autoNote}出典: ${filing.url}
 
 `;
 

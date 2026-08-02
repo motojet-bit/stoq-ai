@@ -22,6 +22,7 @@ const LOCALIZED = [
   "src/components/ChatHistoryItem.tsx",
   "src/components/ChatPanel.tsx",
   "src/components/AnalysisWithDebate.tsx",
+  "src/components/FiscalPeriodDialog.tsx",
   "src/components/CloudSyncGuide.tsx",
   "src/components/DebatePanel.tsx",
   "src/components/DebateSettings.tsx",
@@ -133,6 +134,9 @@ const LOCALIZED = [
   // --- 67章: 残りの日本語 ---
   "src/lib/prompts/helpKnowledge.ts",
   "src/lib/prompts/promptLibrary.ts",
+  "src/lib/parser/periodStore.ts",
+  "src/lib/portfolio/archiveTree.ts",
+  "src/lib/prompts/secFallback.ts",
   "src/lib/parser/fiscalPeriod.ts",
   "src/lib/prompts/citations.ts",
   "src/lib/prompts/periodLink.ts",

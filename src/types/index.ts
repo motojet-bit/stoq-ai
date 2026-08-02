@@ -252,6 +252,10 @@ export interface ArchiveEntry {
   periodLabel: string | null;
   /** 構造化した分析データ（JSON 文字列）。未保存なら `{}` */
   record: string;
+  /** 親（四半期本体の分析）の ID。単独の分析なら null */
+  parentId: string | null;
+  /** 親の下での枝番（1 始まり）。親が無ければ null */
+  branchNo: number | null;
   savedAtMs: number;
 }
 

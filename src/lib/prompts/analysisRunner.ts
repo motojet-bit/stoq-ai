@@ -13,9 +13,11 @@ import {
 } from "@/lib/export/analysisRecord";
 import { parseAnalysis, type AnalysisResult } from "@/lib/prompts/parseAnalysis";
 import { readDocumentText } from "@/lib/parser/documentStore";
+import { isAutoFallback, planFilingFetch } from "@/lib/prompts/secFallback";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type {
   AppSettings,
+  FilingStatus,
   Fundamentals,
   QuarterlySeries,
   SavedAnalysis,
@@ -105,9 +107,19 @@ export interface RunOptions {
   settings: AppSettings | null;
   fundamentals: Fundamentals | null;
   quarterly: QuarterlySeries | null;
-  /** SEC 提出書類を取りに行くか（提出状況が ok のときだけ true） */
-  fetchFiling: boolean;
+  /**
+   * SEC の提出状況。取りに行くかは `planFilingFetch` が決める。
+   * **添付が無ければ自動で補う**ので、呼び出し側で判断させない。
+   */
+  filingStatus: FilingStatus | null;
   documents: StagedDocument[];
+  /**
+   * ユーザーが確認・確定した決算期（`FY2023-Q3`）。
+   * **自動特定より優先する。** 人が直した内容を機械が上書きしては意味が無い。
+   */
+  confirmedPeriodKey?: string | null;
+  /** 親（四半期本体）の履歴 ID。期中のアドホック分析ならここに指定する */
+  parentId?: string | null;
 }
 
 /** 応答のために空けておくトークン数 */
@@ -156,12 +168,23 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       }
     }
 
+    /*
+     * 添付が 1 件も無ければ SEC から自動で補う。
+     * **自動取得したことは画面と結果に必ず出す。**
+     * ユーザーが渡していない資料が根拠に入るので、黙って使ってはいけない。
+     */
+    const filingPlan = planFilingFetch({
+      documentCount: documents.length,
+      status: options.filingStatus,
+    });
+
     let filing = null;
-    if (options.fetchFiling) {
+    let filingAuto = false;
+    if (filingPlan.mode !== "skip") {
       try {
         const fetched = await invoke<SecFilingText>("sec_fetch_latest_filing", {
           ticker,
-          forms: ["10-Q", "10-K"],
+          forms: filingPlan.forms,
         });
         filing = {
           form: fetched.form,
@@ -170,6 +193,14 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           url: fetched.url,
           text: fetched.text,
         };
+        filingAuto = isAutoFallback(filingPlan);
+        if (filingAuto) {
+          pushToast(
+            "info",
+            t("toast.analysis.secAuto"),
+            t("toast.analysis.secAutoWhy", { form: fetched.form, filed: fetched.filed }),
+          );
+        }
       } catch (e) {
         pushToast(
           "warning",
@@ -196,6 +227,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       fundamentals: options.fundamentals,
       quarterly: options.quarterly,
       filing,
+      filingAuto,
       documents,
       tokenLimit: settings?.maxPromptTokens ?? 180_000,
       reserveForOutput: RESERVE_FOR_OUTPUT,
@@ -208,7 +240,13 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     if (options.quarterly && options.quarterly.quarters.length > 0) {
       basis.push(t("basis.quarterly", { count: options.quarterly.quarters.length }));
     }
-    if (filing) basis.push(t("basis.filing", { form: filing.form, filed: filing.filed }));
+    if (filing) {
+      basis.push(
+        filingAuto
+          ? t("basis.filingAuto", { form: filing.form, filed: filing.filed })
+          : t("basis.filing", { form: filing.form, filed: filing.filed }),
+      );
+    }
     if (documents.length > 0) {
       const names = documents.map((d) => d.name);
       basis.push(
@@ -269,7 +307,10 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           basis: current?.basis ?? [],
           // アーカイブ一覧に出すため、平均スコアと対象四半期も一緒に残す
           averageScore: current?.result?.averageScore ?? null,
-          periodLabel: options.quarterly?.quarters.at(-1)?.label ?? null,
+          // 人が確定した期を最優先。無ければ直近四半期のラベルで代用する
+          periodLabel:
+            options.confirmedPeriodKey ?? options.quarterly?.quarters.at(-1)?.label ?? null,
+          parentId: options.parentId ?? null,
           // 構造化データも一緒に残す（エクスポートのたびに解析し直さない）
           record: serializeAnalysisRecord(
             buildAnalysisRecord({

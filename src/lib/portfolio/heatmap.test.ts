@@ -19,6 +19,8 @@ function entry(over: Partial<ArchiveEntry> & { ticker: string }): ArchiveEntry {
     averageScore: null,
     periodLabel: null,
     record: "{}",
+    parentId: null,
+    branchNo: null,
     savedAtMs: 0,
     ...over,
   };

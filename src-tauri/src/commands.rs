@@ -318,6 +318,8 @@ pub fn analysis_save(
     period_label: Option<String>,
     // record: 構造化した分析データ（JSON 文字列）
     record: Option<String>,
+    // parent_id: 親（四半期本体）の履歴 ID。期中のアドホック分析ならここに指定する
+    parent_id: Option<String>,
 ) -> Result<SavedAnalysis> {
     analyses::save(
         &app,
@@ -331,6 +333,7 @@ pub fn analysis_save(
         average_score,
         period_label.as_deref(),
         record.as_deref(),
+        parent_id.as_deref(),
     )
 }
 
