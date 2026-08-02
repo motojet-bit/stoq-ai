@@ -33,6 +33,17 @@ const TARGETS = [
   },
 ];
 
+/**
+ * GitHub がアセットに付ける名前へ直す。
+ *
+ * **アップロード時に空白はドットへ置き換えられる。**
+ * ローカルのファイル名をそのまま（`%20` で）URL に書くと 404 になり、
+ * 更新のダウンロードだけが静かに失敗する。
+ */
+function assetName(fileName) {
+  return fileName.replace(/\s+/g, ".");
+}
+
 async function readVersion() {
   const conf = JSON.parse(
     await readFile(join(ROOT, "src-tauri", "tauri.conf.json"), "utf-8"),
@@ -76,7 +87,7 @@ async function main() {
     }
     platforms[target.platform] = {
       signature: found.signature,
-      url: `${REPO}/${tag}/${encodeURIComponent(found.installer)}`,
+      url: `${REPO}/${tag}/${assetName(found.installer)}`,
     };
     await copyFile(found.path, join(OUT, found.installer));
     console.log(`ok  ${target.platform}  ${found.installer}`);
