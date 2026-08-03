@@ -1207,5 +1207,8 @@
   "settings.key.localNotNeeded": "No API key needed (runs locally)",
   "settings.key.local": "Local (no key)",
   "diagnose.restart": "Start over",
-  "diagnose.restartHint": "Discards the saved progress and starts again from the first step."
+  "diagnose.restartHint": "Discards the saved progress and starts again from the first step.",
+  "prompt.continueTask": "The previous output hit the limit. Continue from immediately after the text below, keeping the same format, and output **only the continuation**. Do not repeat what is already written, and do not add any preamble.",
+  "prompt.continueHeading": "--- WHAT HAS BEEN WRITTEN SO FAR ---",
+  "step.continuing": "Continuing a long output ({{attempt}} of {{max}})…"
 }

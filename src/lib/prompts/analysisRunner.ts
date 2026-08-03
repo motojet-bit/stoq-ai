@@ -23,6 +23,12 @@ import {
   usableSteps,
 } from "@/lib/prompts/analysisSteps";
 import { diagnose } from "@/lib/errors/diagnose";
+import {
+  canContinue,
+  continuationPrompt,
+  joinContinuation,
+  MAX_CONTINUATIONS,
+} from "@/lib/llm/continuation";
 import { appendUsageLog } from "@/lib/usage/usageStore";
 import {
   mapInstruction,
@@ -542,6 +548,50 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       inputTokens += result.usage?.input ?? 0;
       outputTokens += result.usage?.output ?? 0;
 
+      /*
+       * --- 出力上限で切れたら、続きを取りに行く -------------------
+       *
+       * **切れたまま終わらせない。** 評価テーブルが途中で止まると
+       * パーサが行を拾えず、その回の分析がまるごと使えなくなる。
+       * 上限は 3 回。それでも終わらないなら、1 回に詰め込みすぎている
+       * （分割の対象）と考えるほうが正しい。
+       */
+      let merged = result.text || stepRaw;
+      for (let attempt = 0; result.truncated && canContinue(attempt); attempt += 1) {
+        patch(ticker, {
+          currentStepLabel: t("step.continuing", {
+            attempt: attempt + 1,
+            max: MAX_CONTINUATIONS,
+          }),
+        });
+
+        const more = await streamChat(
+          {
+            requestId,
+            analysisPreset: { roleId, thresholds },
+            messages: [
+              { role: "user", content: prompt.user },
+              { role: "user", content: stepInstruction(step, context) },
+              { role: "user", content: continuationPrompt(merged) },
+            ],
+            maxTokens: RESERVE_FOR_OUTPUT,
+          },
+          {
+            onDelta: (delta) => {
+              const preview = joinContinuation(merged, delta);
+              const view = mergeSteps([...parts, { id: step.id, raw: preview }]);
+              patch(ticker, { raw: view, result: parseAnalysis(view) });
+            },
+          },
+        );
+
+        inputTokens += more.usage?.input ?? 0;
+        outputTokens += more.usage?.output ?? 0;
+        merged = joinContinuation(merged, more.text);
+        if (more.cancelled) break;
+        if (!more.truncated) break;
+      }
+
 
       // **中断されたら、その段は確定させない。** 途中までの行を保存すると、
       // 次に再開したときに欠けた表を土台にしてしまう
@@ -550,8 +600,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         break;
       }
 
-      parts.push({ id: step.id, raw: result.text || stepRaw });
-      await saveCheckpoint(ticker, step.id, result.text || stepRaw, result.usage);
+      parts.push({ id: step.id, raw: merged });
+      await saveCheckpoint(ticker, step.id, merged, result.usage);
       patch(ticker, {
         completedSteps: parts.length,
         inputTokens,

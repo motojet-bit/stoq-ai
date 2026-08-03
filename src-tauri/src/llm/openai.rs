@@ -51,6 +51,7 @@ pub async fn stream(
     max_tokens: u32,
     channel: &Channel<LlmEvent>,
     usage: &mut TokenUsage,
+    truncated: &mut bool,
 ) -> Result<String> {
     let mut messages = Vec::new();
     if let Some(system) = request.system.as_ref().filter(|s| !s.trim().is_empty()) {
@@ -89,7 +90,7 @@ pub async fn stream(
 
         if res.status().is_success() {
             let request_id = request.request_id.as_deref().unwrap_or_default();
-            return pump_sse(res, request_id, channel, usage, |payload| {
+            return pump_sse(res, request_id, channel, usage, truncated, |payload| {
                 let value: Value = match serde_json::from_str(payload) {
                     Ok(v) => v,
                     // ハートビートなど JSON でない行は無視する

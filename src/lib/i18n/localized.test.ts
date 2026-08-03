@@ -155,6 +155,7 @@ const LOCALIZED = [
   "src/lib/portfolio/quarterCompare.ts",
   "src/lib/chat/contextGauge.ts",
   "src/lib/prompts/mapReduce.ts",
+  "src/lib/llm/continuation.ts",
   "src/lib/config/providerPresets.ts",
   "src/lib/ui/collapsedSections.ts",
   "src/lib/usage/usageLog.ts",

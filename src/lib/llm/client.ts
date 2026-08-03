@@ -63,6 +63,8 @@ export interface StreamResult {
   cancelled: boolean;
   /** 実測の消費トークン。**推定で埋めない**（請求額とかけ離れた数字を出さないため） */
   usage?: TokenUsage;
+  /** 出力上限で打ち切られたか */
+  truncated?: boolean;
 }
 
 /** 生成中の呼び出しを中断する。それまでのテキストは破棄されない。 */
@@ -111,6 +113,7 @@ export async function streamChat(
           text: event.text,
           cancelled: event.cancelled,
           usage: event.usage,
+          truncated: event.truncated,
         });
         break;
       case "error":

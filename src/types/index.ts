@@ -222,6 +222,8 @@ export type LlmEvent =
       cancelled: boolean;
       /** 実測の消費トークン。取得できなければ 0 */
       usage: { input: number; output: number };
+      /** 出力上限で打ち切られたか。続きを取りに行くかの判断に使う */
+      truncated: boolean;
     }
   | { type: "error"; message: string };
 

@@ -25,6 +25,7 @@ pub async fn stream(
     max_tokens: u32,
     channel: &Channel<LlmEvent>,
     usage: &mut TokenUsage,
+    truncated: &mut bool,
 ) -> Result<String> {
     let messages: Vec<_> = request
         .messages
@@ -63,6 +64,7 @@ pub async fn stream(
         request.request_id.as_deref().unwrap_or_default(),
         channel,
         usage,
+        truncated,
         |payload| {
         let value: serde_json::Value = match serde_json::from_str(payload) {
             Ok(v) => v,

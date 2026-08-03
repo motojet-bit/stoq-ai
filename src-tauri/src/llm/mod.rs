@@ -159,6 +159,28 @@ fn read_usage(payload: &serde_json::Value) -> Option<TokenUsage> {
     (input > 0 || output > 0).then_some(TokenUsage { input, output })
 }
 
+/// 出力上限で打ち切られたかを、SSE のペイロードから読む。
+///
+/// **3 社で名前も値も違う。** 1 か所で見ておかないと、
+/// プロバイダを足すたびに検知漏れが出る。
+fn read_truncated(payload: &serde_json::Value) -> bool {
+    let reasons = [
+        "/choices/0/finish_reason",       // OpenAI 互換
+        "/delta/stop_reason",             // Anthropic（message_delta）
+        "/candidates/0/finishReason",     // Gemini
+    ];
+
+    reasons.iter().any(|path| {
+        payload
+            .pointer(path)
+            .and_then(serde_json::Value::as_str)
+            .is_some_and(|v| {
+                let v = v.to_lowercase();
+                v == "length" || v == "max_tokens" || v == "maxtokens"
+            })
+    })
+}
+
 /// ストリーミングでフロントへ返すイベント。
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -171,6 +193,8 @@ pub enum LlmEvent {
         cancelled: bool,
         /// 消費トークン。取得できなければ 0
         usage: TokenUsage,
+        /// 出力上限で打ち切られたか。**続きを取りに行くかの判断に使う**
+        truncated: bool,
     },
     Error { message: String },
 }
@@ -244,6 +268,7 @@ pub async fn send(
     });
 
     let mut usage = TokenUsage::default();
+    let mut truncated = false;
     let result = match provider.as_str() {
         "openai" => {
             openai::stream(
@@ -254,14 +279,33 @@ pub async fn send(
                 max_tokens,
                 &channel,
                 &mut usage,
+                &mut truncated,
             )
             .await
         }
         "anthropic" => {
-            anthropic::stream(&api_key, &model, &request, max_tokens, &channel, &mut usage).await
+            anthropic::stream(
+                &api_key,
+                &model,
+                &request,
+                max_tokens,
+                &channel,
+                &mut usage,
+                &mut truncated,
+            )
+            .await
         }
         "gemini" => {
-            gemini::stream(&api_key, &model, &request, max_tokens, &channel, &mut usage).await
+            gemini::stream(
+                &api_key,
+                &model,
+                &request,
+                max_tokens,
+                &channel,
+                &mut usage,
+                &mut truncated,
+            )
+            .await
         }
         // それ以外はユーザーが追加した OpenAI互換プロバイダ
         id => match settings.custom(id) {
@@ -273,8 +317,17 @@ pub async fn send(
                 } else if model.trim().is_empty() {
                     Err(AppError::code(code::UNEXPECTED))
                 } else {
-                    openai::stream(base, &api_key, &model, &request, max_tokens, &channel, &mut usage)
-                        .await
+                    openai::stream(
+                        base,
+                        &api_key,
+                        &model,
+                        &request,
+                        max_tokens,
+                        &channel,
+                        &mut usage,
+                        &mut truncated,
+                    )
+                    .await
                 }
             }
         },
@@ -289,6 +342,7 @@ pub async fn send(
                 text,
                 cancelled,
                 usage,
+                truncated,
             });
             Ok(())
         }
@@ -298,6 +352,7 @@ pub async fn send(
                 text: String::new(),
                 cancelled: true,
                 usage,
+                truncated,
             });
             Ok(())
         }
@@ -349,6 +404,7 @@ pub async fn pump_sse<F>(
     request_id: &str,
     channel: &Channel<LlmEvent>,
     usage: &mut TokenUsage,
+    truncated: &mut bool,
     mut extract: F,
 ) -> Result<String>
 where
@@ -399,6 +455,10 @@ where
                 if let Some(found) = read_usage(&value) {
                     usage.absorb(found);
                 }
+                // 一度でも上限で切れたと分かれば倒さない
+                if read_truncated(&value) {
+                    *truncated = true;
+                }
             }
 
             if let Some(text) = extract(payload)? {
@@ -447,6 +507,30 @@ mod tests {
         usage.absorb(TokenUsage { input: 0, output: 40 });
         assert_eq!(usage.input, 100);
         assert_eq!(usage.output, 40);
+    }
+
+    /// **3 社で名前も値も違う。** どれも拾えること。
+    #[test]
+    fn 打ち切りの終了理由を三社ぶん拾う() {
+        let openai = serde_json::json!({ "choices": [{ "finish_reason": "length" }] });
+        let anthropic = serde_json::json!({ "delta": { "stop_reason": "max_tokens" } });
+        let gemini = serde_json::json!({ "candidates": [{ "finishReason": "MAX_TOKENS" }] });
+
+        assert!(read_truncated(&openai));
+        assert!(read_truncated(&anthropic));
+        assert!(read_truncated(&gemini));
+    }
+
+    /// 正常終了を打ち切りと取り違えない（無駄な継続呼び出しを増やさない）。
+    #[test]
+    fn 正常終了は打ち切りにしない() {
+        let stop = serde_json::json!({ "choices": [{ "finish_reason": "stop" }] });
+        let delta = serde_json::json!({ "choices": [{ "delta": { "content": "x" } }] });
+        let end = serde_json::json!({ "candidates": [{ "finishReason": "STOP" }] });
+
+        assert!(!read_truncated(&stop));
+        assert!(!read_truncated(&delta));
+        assert!(!read_truncated(&end));
     }
 
     /// 壊れた値でも 0 として扱い、例外にしない。

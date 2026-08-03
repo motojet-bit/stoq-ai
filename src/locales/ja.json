@@ -1207,5 +1207,8 @@
   "settings.key.localNotNeeded": "ローカルのため APIキー不要",
   "settings.key.local": "ローカル（キー不要）",
   "diagnose.restart": "最初からやり直す",
-  "diagnose.restartHint": "保存済みの途中経過を捨てて、最初の段からやり直します。"
+  "diagnose.restartHint": "保存済みの途中経過を捨てて、最初の段からやり直します。",
+  "prompt.continueTask": "前回の出力が上限に達しました。以下の文の直後から、フォーマットを崩さずに**続きのみ**を出力してください。すでに書いた部分を繰り返さず、前置きも書かないでください。",
+  "prompt.continueHeading": "--- 途中まで書いた内容 ---",
+  "step.continuing": "長文出力を継続中（{{attempt}} / {{max}}）…"
 }
