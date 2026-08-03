@@ -1067,5 +1067,17 @@
   "prompt.step.ruleNoRepeat": "- 既に書いた行は繰り返さない",
   "prompt.step.ruleNoSections": "- 強み・リスク・総合判断などの節はまだ書かない（最後にまとめて書く）",
   "prompt.step.tableHeader": "| # | 項目 | スコア | 評価 | 根拠 |",
-  "prompt.step.tableHeading": "## 評価テーブル"
+  "prompt.step.tableHeading": "## 評価テーブル",
+  "prompt.step.ruleIndependent": "- 担当範囲の行だけを書く。他の行は別途評価しているので触れない",
+  "period.detectedFromName": "本文からは読み取れなかったため、ファイル名から判定しました。",
+  "period.kind": "資料の種類",
+  "period.kindMain": "本決算（実績）",
+  "period.kindMainHint": "その期の本体として記録します。同じ期の既存の分析は置き換えます。",
+  "period.kindAdhoc": "追加資料 / 見通し（アドホック）",
+  "period.kindAdhocHint": "決算の合間に出た開示として、該当四半期の下にぶら下げます。本体は上書きしません。",
+  "diagnose.modalTitle": "エラーの詳細",
+  "diagnose.modalHint": "問い合わせの際は、この内容をそのまま貼り付けてください。",
+  "diagnose.rawLog": "生ログ",
+  "diagnose.copy": "コピー",
+  "diagnose.copied": "コピーしました"
 }

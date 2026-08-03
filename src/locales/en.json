@@ -1067,5 +1067,17 @@
   "prompt.step.ruleNoRepeat": "- Do not repeat rows already written",
   "prompt.step.ruleNoSections": "- Do not write the strengths / risks / conclusion sections yet (they come last)",
   "prompt.step.tableHeader": "| # | 項目 | スコア | 評価 | 根拠 |",
-  "prompt.step.tableHeading": "## 評価テーブル"
+  "prompt.step.tableHeading": "## 評価テーブル",
+  "prompt.step.ruleIndependent": "- Write only the rows in your range. The other rows are being scored separately; do not touch them.",
+  "period.detectedFromName": "The text did not contain a period, so it was read from the file name.",
+  "period.kind": "Type of document",
+  "period.kindMain": "Earnings report (actuals)",
+  "period.kindMainHint": "Recorded as the main analysis for that period, replacing any existing one.",
+  "period.kindAdhoc": "Supplementary or guidance (interim)",
+  "period.kindAdhocHint": "Filed under the quarter as an interim disclosure. The main analysis is not overwritten.",
+  "diagnose.modalTitle": "Error detail",
+  "diagnose.modalHint": "Paste this as-is when getting in touch.",
+  "diagnose.rawLog": "Raw log",
+  "diagnose.copy": "Copy",
+  "diagnose.copied": "Copied"
 }

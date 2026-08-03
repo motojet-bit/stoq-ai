@@ -18,6 +18,7 @@ import {
   ANALYSIS_STEPS,
   mergeSteps,
   nextStep,
+  scoreRowsOnly,
   stepInstruction,
   usableSteps,
 } from "@/lib/prompts/analysisSteps";
@@ -398,7 +399,13 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         completedSteps: parts.length,
       });
 
-      const previous = mergeSteps(parts);
+      /*
+       * **採点段には直前の出力を渡さない。**
+       * 段を追うごとに前段の本文が積み上がり、資料と合わせて
+       * 10 万トークンを超えて切断されていた。
+       * 最終段だけは矛盾を見るために評価テーブルの行を渡す。
+       */
+      const context = step.range === null ? scoreRowsOnly(mergeSteps(parts)) : "";
       let stepRaw = "";
       const result = await streamChat(
         {
@@ -407,7 +414,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           analysisPreset: { roleId, thresholds },
           messages: [
             { role: "user", content: prompt.user },
-            { role: "user", content: stepInstruction(step, previous) },
+            { role: "user", content: stepInstruction(step, context) },
           ],
           maxTokens: RESERVE_FOR_OUTPUT,
         },

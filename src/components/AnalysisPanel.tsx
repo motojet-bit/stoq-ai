@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AnalysisRun } from "@/lib/prompts/analysisRunner";
 import type { TickerAnalysis } from "@/types";
 import { CRITERIA } from "@/lib/prompts/criteria";
@@ -6,7 +6,9 @@ import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
 import AnalysisProgress from "@/components/AnalysisProgress";
+import ScoreCountUp from "@/components/ScoreCountUp";
 import AnalysisFailure from "@/components/AnalysisFailure";
+import ErrorDetailModal from "@/components/ErrorDetailModal";
 import { estimateCost, formatJpy, formatTokens, formatUsd } from "@/lib/llm/cost";
 import AnalystRoleMenu from "@/components/AnalystRoleMenu";
 import ExportMenu from "@/components/ExportMenu";
@@ -72,6 +74,8 @@ export default function AnalysisPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = useT();
   const debateOpen = useDebatePaneOpen();
+  // エラーの生ログを見せるモーダル
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const streaming = run?.phase === "streaming" || run?.phase === "collecting";
 
@@ -142,11 +146,11 @@ export default function AnalysisPanel({
               🔥
             </button>
 
-            {result && result.averageScore !== null && (
-              <span className="t-label shrink-0 font-mono text-emerald-400">
-                {t("analysis.averageScore", { score: result.averageScore.toFixed(1) })}
-              </span>
-            )}
+            {/* 生成中は出さない。全段そろってからカウントアップで確定させる */}
+            <ScoreCountUp
+              score={run?.phase === "done" ? (result?.averageScore ?? null) : null}
+              running={streaming}
+            />
 
             {/*
               消費トークンと概算コスト。**実測値だけを出す。**
@@ -267,6 +271,23 @@ export default function AnalysisPanel({
         </div>
       )}
 
+      {/*
+        **進捗と消費トークンは固定する。** 長い分析本文をスクロールしている間も
+        「いまどの段か」「いくらかかっているか」は見えている必要がある。
+        スクロール領域の外に置くので、そもそも流れない。
+      */}
+      {run && (streaming || run.completedSteps > 0) && run.phase !== "done" && (
+        <div className="shrink-0 border-b border-slate-800/80 bg-slate-950 px-4 pt-2">
+          <AnalysisProgress
+            completedSteps={run.completedSteps}
+            currentStepLabel={run.currentStepLabel}
+            running={streaming}
+            tokens={run.inputTokens + run.outputTokens}
+            cost={cost}
+          />
+        </div>
+      )}
+
       <div ref={scrollRef} className="panel-scroll px-4 py-3">
           {!ticker ? (
             <p className="t-body text-slate-500">
@@ -300,20 +321,13 @@ export default function AnalysisPanel({
                 </ul>
               )}
 
-              {/* 4 段の直列実行。どこまで終わったかを見せる */}
-              {(streaming || run.completedSteps > 0) && run.phase !== "done" && (
-                <AnalysisProgress
-                  completedSteps={run.completedSteps}
-                  currentStepLabel={run.currentStepLabel}
-                  running={streaming}
-                />
-              )}
 
               {run.diagnosis ? (
                 <div className="mb-3">
                   <AnalysisFailure
                     diagnosis={run.diagnosis}
                     completedSteps={run.completedSteps}
+                    onShowDetail={() => setDetailOpen(true)}
                     onRetry={onRun}
                     onOpenSettings={onOpenSettings}
                   />
@@ -383,6 +397,18 @@ export default function AnalysisPanel({
             </>
           )}
       </div>
+      <ErrorDetailModal
+        open={detailOpen}
+        diagnosis={run?.diagnosis ?? null}
+        context={{
+          ticker,
+          provider: run?.provider ?? null,
+          model: run?.model ?? null,
+          completedSteps: run?.completedSteps ?? 0,
+        }}
+        onClose={() => setDetailOpen(false)}
+      />
+
     </section>
   );
 }

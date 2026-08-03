@@ -145,6 +145,11 @@ export default function FiscalPeriodDialog({
               <span className="mt-1 block font-mono text-xs text-slate-600">
                 {t("period.detectedFrom", { text: detected.matchedText })}
               </span>
+              {detected.matchedBy === "fileName" && (
+                <span className="mt-1 block text-xs text-amber-400/80">
+                  {t("period.detectedFromName")}
+                </span>
+              )}
             </>
           ) : (
             t("period.unknownBody", { document: documentName ?? "-" })
@@ -207,10 +212,15 @@ export default function FiscalPeriodDialog({
           )}
         </p>
 
-        {/* ------------------------------------------------ 記録の仕方 */}
-        {existing && (
+        {/* ------------------------------------------------ 資料の種類 */}
+        {/*
+          **既存の有無に関わらず選ばせる。** 見通し資料を本決算として記録すると、
+          あとから実績と見分けが付かなくなる。
+          ぶら下げ先が無いときは、親なしのアドホックとして残す。
+        */}
+        {mode === "document" && (
           <div className="mt-4">
-            <span className="mb-1.5 block text-xs text-slate-500">{t("period.recordAs")}</span>
+            <span className="mb-1.5 block text-xs text-slate-500">{t("period.kind")}</span>
             <div className="space-y-1.5">
               {[false, true].map((adhoc) => (
                 <label
@@ -228,16 +238,21 @@ export default function FiscalPeriodDialog({
                     className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-500"
                   />
                   <span className="min-w-0">
-                    {adhoc
-                      ? t("period.asAdhoc", {
-                          label: branchLabel(periodKey(year, quarter), existingChildCount + 1),
-                        })
-                      : t("period.asMain")}
+                    {adhoc ? t("period.kindAdhoc") : t("period.kindMain")}
+                    <span className="mt-0.5 block text-xs text-slate-600">
+                      {adhoc
+                        ? existing
+                          ? t("period.asAdhoc", {
+                              label: branchLabel(periodKey(year, quarter), existingChildCount + 1),
+                            })
+                          : t("period.kindAdhocHint")
+                        : t("period.kindMainHint")}
+                    </span>
                   </span>
                 </label>
               ))}
             </div>
-            {asAdhoc && (
+            {asAdhoc && existing && (
               <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
                 {t("period.adhocHint")}
               </p>

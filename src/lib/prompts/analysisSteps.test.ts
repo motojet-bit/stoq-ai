@@ -5,6 +5,7 @@ import {
   mergeSteps,
   nextStep,
   progressRatio,
+  scoreRowsOnly,
   stepInstruction,
   usableSteps,
 } from "@/lib/prompts/analysisSteps";
@@ -72,14 +73,41 @@ describe("段ごとの指示", () => {
     expect(text).toContain("# 7");
   });
 
-  it("2 段目以降は既に書いた内容を渡す（重複を避けさせる）", () => {
-    expect(stepInstruction(ANALYSIS_STEPS[1], "前の出力")).toContain("前の出力");
+  it("**採点段には直前の出力を渡さない**（雪だるま式のトークン膨張を防ぐ）", () => {
+    for (const step of ANALYSIS_STEPS.filter((s) => s.range !== null)) {
+      expect(stepInstruction(step, "前の段で書いた長い本文")).not.toContain("前の段で書いた長い本文");
+    }
   });
 
-  it("最終段は死角チェックを求める", () => {
-    const text = stepInstruction(ANALYSIS_STEPS[3], "前の出力");
+  it("最終段は死角チェックを求め、評価テーブルの行を受け取る", () => {
+    const text = stepInstruction(ANALYSIS_STEPS[3], "| 1 | A | 4 | 良好 | 根拠 |");
     expect(text).toContain("死角チェック");
     expect(text).toContain("矛盾");
+    expect(text).toContain("| 1 | A |");
+  });
+});
+
+describe("最終段へ渡す本文の絞り込み", () => {
+  it("**評価テーブルの行だけを残す**（前置きや節は見直しに要らない）", () => {
+    const merged = [
+      "## 評価テーブル",
+      "| # | 項目 | スコア | 評価 | 根拠 |",
+      "| --- | --- | --- | --- | --- |",
+      "| 1 | A | 4 | 良好 | 根拠 |",
+      "| 2 | B | 3 | 普通 | 根拠 |",
+      "",
+      "## 強み",
+      "- 良い",
+    ].join("\n");
+    const rows = scoreRowsOnly(merged);
+    expect(rows).toContain("| 1 | A |");
+    expect(rows).toContain("| 2 | B |");
+    expect(rows).not.toContain("## 強み");
+    expect(rows).not.toContain("| # | 項目");
+  });
+
+  it("行が無ければ空", () => {
+    expect(scoreRowsOnly("## 強み\n- 良い")).toBe("");
   });
 });
 

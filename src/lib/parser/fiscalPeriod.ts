@@ -15,7 +15,7 @@ export interface FiscalPeriod {
   /** `FY2023-Q3` 形式。ヒートマップ等の突き合わせに使う内部キー */
   key: string;
   /** どの書き方から拾ったか（診断用） */
-  matchedBy: "usQuarter" | "jpQuarter" | "jpFiscalYear" | "usFiscalYear";
+  matchedBy: "usQuarter" | "jpQuarter" | "jpFiscalYear" | "usFiscalYear" | "fileName";
   /** 拾った元の文字列 */
   matchedText: string;
 }
@@ -138,6 +138,23 @@ export function detectFiscalPeriod(text: string): FiscalPeriod | null {
     };
   }
   return null;
+}
+
+/**
+ * ファイル名から決算期を読み取る。
+ *
+ * **本文の解析に失敗したときの最後の手がかり。**
+ * 画像だけの PDF や、表紙に期を書かない資料でも、
+ * `FY26_Q3.pdf` `2024年3月期_Q1.pdf` のような名前が付いていることは多い。
+ *
+ * 本文と同じ規則で読むが、**区切り文字が多い**ので先に空白へ均す。
+ */
+export function detectFiscalPeriodFromName(fileName: string): FiscalPeriod | null {
+  // 拡張子を落とし、_ - . を空白にして本文と同じ規則に乗せる
+  const base = fileName.replace(/\.[A-Za-z0-9]+$/, "").replace(/[._\-]+/g, " ");
+  const found = detectFiscalPeriod(base);
+  if (!found) return null;
+  return { ...found, matchedBy: "fileName", matchedText: found.matchedText };
 }
 
 /**

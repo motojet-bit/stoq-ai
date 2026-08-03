@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   detectFiscalPeriod,
+  detectFiscalPeriodFromName,
   matchQuarter,
   periodKey,
 } from "@/lib/parser/fiscalPeriod";
@@ -109,5 +110,28 @@ describe("Yahoo Finance の四半期との突き合わせ", () => {
   it("系列が空でも落ちない", () => {
     const p = detectFiscalPeriod("FY2023 Q3")!;
     expect(matchQuarter(p, [])).toBeNull();
+  });
+});
+
+describe("ファイル名からの読み取り", () => {
+  it("**本文が読めないときの手がかりにする**（FY26_Q3.pdf のような命名）", () => {
+    const p = detectFiscalPeriodFromName("FY26_Q3.pdf");
+    expect(p).toMatchObject({ fiscalYear: 2026, quarter: 3, matchedBy: "fileName" });
+  });
+
+  it("区切りが混ざっていても読む", () => {
+    expect(detectFiscalPeriodFromName("ACME-2024年3月期_第2四半期-決算.pdf")).toMatchObject({
+      fiscalYear: 2024,
+      quarter: 2,
+    });
+  });
+
+  it("拡張子が無くても読む", () => {
+    expect(detectFiscalPeriodFromName("FY2023 Q1")?.quarter).toBe(1);
+  });
+
+  it("期らしきものが無ければ null（推測で埋めない）", () => {
+    expect(detectFiscalPeriodFromName("決算資料.pdf")).toBeNull();
+    expect(detectFiscalPeriodFromName("")).toBeNull();
   });
 });

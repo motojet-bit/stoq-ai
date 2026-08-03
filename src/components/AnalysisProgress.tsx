@@ -1,4 +1,5 @@
 import { ANALYSIS_STEPS, PROGRESS_STAGES, progressRatio } from "@/lib/prompts/analysisSteps";
+import { formatJpy, formatTokens, formatUsd, type CostEstimate } from "@/lib/llm/cost";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
@@ -7,6 +8,9 @@ interface Props {
   /** いま生成している段のラベル。走っていなければ null */
   currentStepLabel: string | null;
   running: boolean;
+  /** ここまでの消費トークン（実測） */
+  tokens: number;
+  cost: CostEstimate;
 }
 
 /**
@@ -20,6 +24,8 @@ export default function AnalysisProgress({
   completedSteps,
   currentStepLabel,
   running,
+  tokens,
+  cost,
 }: Props) {
   const t = useT();
   const ratio = progressRatio(completedSteps, running);
@@ -30,8 +36,19 @@ export default function AnalysisProgress({
         <span className="t-label font-medium text-slate-300">
           {currentStepLabel ?? t("step.prepare")}
         </span>
-        <span className="font-mono t-label text-slate-500">
-          {t("step.progress", { done: completedSteps, total: ANALYSIS_STEPS.length })}
+        <span className="flex shrink-0 items-center gap-2 font-mono t-label text-slate-500">
+          {/* 走っている最中でも、ここまでの消費が見えるようにする */}
+          {tokens > 0 && (
+            <span title={cost.unknownModel ? t("usage.unknownModel") : t("usage.note")}>
+              {formatTokens(tokens)}
+              {!cost.unknownModel && (
+                <span className="ml-1 text-slate-600">
+                  {t("usage.approx")} {formatJpy(cost.jpy)} ({formatUsd(cost.usd)})
+                </span>
+              )}
+            </span>
+          )}
+          <span>{t("step.progress", { done: completedSteps, total: ANALYSIS_STEPS.length })}</span>
         </span>
       </div>
 

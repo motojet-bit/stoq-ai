@@ -68,16 +68,37 @@ export function progressRatio(completedSteps: number, running: boolean): number 
 }
 
 /**
+ * 採点段（1〜3）に渡す本文だけを抜き出す。
+ *
+ * **最終段は評価テーブルの行だけを読めばよい。**
+ * 段ごとの前置きや強み・リスクまで渡すと、
+ * 見直しに要らないものが入力トークンを食う。
+ */
+export function scoreRowsOnly(merged: string): string {
+  return merged
+    .split("\n")
+    .filter((line) => /^\s*\|\s*\d+\s*\|/.test(line))
+    .join("\n");
+}
+
+/**
  * 各段の指示文。
  *
- * **評価基準そのものは Rust 側の秘匿プロンプトにある。**
- * ここで足すのは「この段では何番から何番までを書くか」という範囲指定だけ。
+ * **採点段（1〜3）には直前の出力を渡さない。**
+ * 段を追うごとに前段の本文がプロンプトへ積み上がり、
+ * 最後には資料と合わせて 10 万トークンを超えて切断されていた。
+ * 各段は「一次資料 ＋ 財務データ」だけを見て、担当範囲を独立に採点する。
+ * 通しの体裁は最後にフロント側で組み立てる。
+ *
+ * **最終段だけは評価テーブルの行を渡す。**
+ * 矛盾の指摘と死角チェックは、何が書かれたかを読まないと成立しない。
+ * 渡すのは表の行だけで、前置きや途中の節は落とす。
  */
-export function stepInstruction(step: AnalysisStep, previous: string): string {
+export function stepInstruction(step: AnalysisStep, scoredRows: string): string {
   if (step.range === null) {
     return [
       t("prompt.step.previousHeading"),
-      previous.trim(),
+      scoredRows.trim(),
       "",
       t("prompt.step.taskHeading"),
       t("prompt.step.finalTask"),
@@ -91,17 +112,11 @@ export function stepInstruction(step: AnalysisStep, previous: string): string {
   }
 
   const { from, to } = step.range;
-  const head =
-    previous.trim() === ""
-      ? []
-      : [t("prompt.step.writtenHeading"), previous.trim(), "", t("prompt.step.taskHeading")];
-
   return [
-    ...head,
     t("prompt.step.rangeTask", { from, to, count: to - from + 1 }),
     "",
     t("prompt.step.ruleNoHeader"),
-    t("prompt.step.ruleNoRepeat"),
+    t("prompt.step.ruleIndependent"),
     t("prompt.step.ruleNoSections"),
   ].join("\n");
 }

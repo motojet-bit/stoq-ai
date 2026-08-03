@@ -54,6 +54,7 @@ import AnalysisWithDebate from "@/components/AnalysisWithDebate";
 import FiscalPeriodDialog from "@/components/FiscalPeriodDialog";
 import {
   detectFiscalPeriod,
+  detectFiscalPeriodFromName,
   periodKey,
   type FiscalPeriod,
 } from "@/lib/parser/fiscalPeriod";
@@ -221,6 +222,12 @@ export default function App() {
     } catch {
       // 読めなくても手動で選べるようにダイアログは出す
     }
+    /*
+     * **本文で読めなければファイル名を見る。**
+     * 画像だけの PDF や、表紙に期を書かない資料でも
+     * `FY26_Q3.pdf` のような命名は多い。空欄で選ばせるより手がかりを出す。
+     */
+    detected ??= detectFiscalPeriodFromName(first.displayName);
     setPeriodAsk({ detected, documentName: first.displayName, mode: "document" });
   };
 

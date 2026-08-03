@@ -1,10 +1,11 @@
-import { useState } from "react";
 import type { Diagnosis } from "@/lib/errors/diagnose";
 import { IconWarning } from "@/components/Icons";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
   diagnosis: Diagnosis;
+  /** 「詳細」を押したときに開く */
+  onShowDetail: () => void;
   /** 完了済みの段の数。0 より大きければ「続きから」と伝える */
   completedSteps: number;
   onRetry: () => void;
@@ -21,11 +22,11 @@ interface Props {
 export default function AnalysisFailure({
   diagnosis,
   completedSteps,
+  onShowDetail,
   onRetry,
   onOpenSettings,
 }: Props) {
   const t = useT();
-  const [showDetail, setShowDetail] = useState(false);
 
   return (
     <div className="rounded-lg border border-red-900/60 bg-red-950/25 px-3 py-2.5">
@@ -62,20 +63,15 @@ export default function AnalysisFailure({
             {t("help.openSettings")}
           </button>
         )}
+        {/* 生ログはモーダルで見せる。ここに広げると本文が押し出される */}
         <button
           type="button"
-          onClick={() => setShowDetail((v) => !v)}
+          onClick={onShowDetail}
           className="min-h-7 px-1 t-label text-slate-500 underline underline-offset-2 hover:text-slate-300"
         >
           {t("diagnose.detail")}
         </button>
       </div>
-
-      {showDetail && (
-        <pre className="selectable mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded border border-slate-800 bg-slate-950/60 px-2 py-1.5 t-label text-slate-500">
-          {diagnosis.detail}
-        </pre>
-      )}
     </div>
   );
 }
