@@ -239,7 +239,7 @@ export default function App() {
    * と聞けば期を記録できる。黙って期なしで進めると、
    * あとからヒートマップの期と突き合わせられない。
    */
-  const askFiscalPeriod = async () => {
+  const askFiscalPeriod = async (skipMismatchCheck = false) => {
     // 全資料の本文を読み、期ごとにまとめる（読めないものは名前だけで判定）
     const loaded: { name: string; text: string }[] = [];
     for (const doc of documents) {
@@ -256,7 +256,7 @@ export default function App() {
      * **期を聞く前に、資料が対象銘柄のものかを確かめる。**
      * 期だけ確認して走らせても、中身が別会社なら意味が無い。
      */
-    for (const doc of loaded) {
+    for (const doc of skipMismatchCheck ? [] : loaded) {
       const result = checkTickerMatch({
         selected: activeTicker ?? "",
         selectedName: activeAnalysis?.fundamentals?.name ?? null,
@@ -265,6 +265,7 @@ export default function App() {
         known: detectKnownCompany(doc.text, doc.name),
       });
       if (result.status === "mismatch") {
+        // 止めずに選ばせる。誤検知のこともあるので続行の道を残す
         setMismatch({ ...result, documentName: doc.name });
         return;
       }
@@ -778,6 +779,11 @@ export default function App() {
         foundTicker={mismatch?.foundTicker ?? null}
         foundName={mismatch?.foundName ?? null}
         documentName={mismatch?.documentName ?? ""}
+        onProceed={() => {
+          setMismatch(null);
+          // 誤検知として続ける。次は期の確認へ進む
+          void askFiscalPeriod(true);
+        }}
         onClose={() => setMismatch(null)}
       />
 

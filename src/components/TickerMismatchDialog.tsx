@@ -13,18 +13,19 @@ interface Props {
   foundName: string | null;
   /** 判定に使った資料の名前 */
   documentName: string;
+  /** 誤検知として、このまま分析を続ける */
+  onProceed: () => void;
   onClose: () => void;
 }
 
 /**
  * 選択中の銘柄と添付資料の企業が食い違っているときの警告。
  *
- * **進ませない。** 別会社の資料で分析すると、AI はその会社の数字で
- * 20 項目を埋め、選択中の銘柄の分析として保存される。
- * 出力を読んでも気づけないので、ここで確実に止める。
+ * **止めずに選ばせる。** 決算資料には競合・顧客・取引先の名前が普通に出てくるので、
+ * 検知は外れることがある。強制的に止めると、正しい資料での分析まで進まなくなる。
  *
- * 「無視して続行」は置かない。**誤って続けたときの被害が、
- * 止められた不便より大きい。** 資料を入れ替えるか、銘柄を選び直せば済む。
+ * 既定のフォーカスは「差し替える」側に置く。
+ * **押し間違いで進むより、押し間違いで止まるほうが安全**なため。
  */
 export default function TickerMismatchDialog({
   open,
@@ -32,6 +33,7 @@ export default function TickerMismatchDialog({
   foundTicker,
   foundName,
   documentName,
+  onProceed,
   onClose,
 }: Props) {
   const t = useT();
@@ -85,13 +87,22 @@ export default function TickerMismatchDialog({
 
         <p className="mt-3 text-xs leading-relaxed text-slate-500">{t("mismatch.hint")}</p>
 
-        <div className="mt-5 flex justify-end">
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
+            onClick={onProceed}
+            className="min-h-9 rounded-md border border-slate-700 px-4 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+          >
+            {t("mismatch.proceed")}
+          </button>
+          {/* 既定はこちら。押し間違いで進むより、止まるほうが安全 */}
+          <button
+            type="button"
+            autoFocus
             onClick={onClose}
             className="min-h-9 rounded-md bg-emerald-600 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
           >
-            {t("mismatch.close")}
+            {t("mismatch.cancel")}
           </button>
         </div>
       </div>

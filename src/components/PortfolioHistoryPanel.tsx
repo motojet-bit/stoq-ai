@@ -22,6 +22,7 @@ import PortfolioHeatmap from "@/components/PortfolioHeatmap";
 import QuarterCompareTable from "@/components/QuarterCompareTable";
 import ExportMenu from "@/components/ExportMenu";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CollapsibleSection from "@/components/CollapsibleSection";
 import {
   IconChart,
   IconLayoutColumns,
@@ -412,10 +413,10 @@ export default function PortfolioHistoryPanel({
                           {/* 構造化データがあれば要点を先に見せる */}
                           {record && record.blockScores.length > 0 && (
                             <div className="mb-2 grid gap-2 sm:grid-cols-2">
-                              <div>
-                                <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
-                                  {t("history.blockScores")}
-                                </div>
+                              <CollapsibleSection
+                                id="histBlockScores"
+                                title={t("history.blockScores")}
+                              >
                                 <ul className="space-y-0.5">
                                   {record.blockScores.map((b) => (
                                     <li
@@ -429,11 +430,11 @@ export default function PortfolioHistoryPanel({
                                     </li>
                                   ))}
                                 </ul>
-                              </div>
-                              <div>
-                                <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
-                                  {t("history.keyMetrics")}
-                                </div>
+                              </CollapsibleSection>
+                              <CollapsibleSection
+                                id="histKeyMetrics"
+                                title={t("history.keyMetrics")}
+                              >
                                 <ul className="space-y-0.5">
                                   {record.keyMetrics.slice(0, 6).map((m) => (
                                     <li
@@ -449,7 +450,7 @@ export default function PortfolioHistoryPanel({
                                     </li>
                                   ))}
                                 </ul>
-                              </div>
+                              </CollapsibleSection>
                             </div>
                           )}
 
@@ -457,10 +458,11 @@ export default function PortfolioHistoryPanel({
                             (record.evaluations.strengths.length > 0 ||
                               record.evaluations.risks.length > 0) && (
                               <div className="mb-2 grid gap-2 sm:grid-cols-2">
-                                <div>
-                                  <div className="mb-1 t-label font-medium text-emerald-400">
-                                    {t("history.strengths")}
-                                  </div>
+                                <CollapsibleSection
+                                  id="histStrengths"
+                                  title={t("history.strengths")}
+                                  toneClass="text-emerald-400"
+                                >
                                   <ul className="space-y-0.5">
                                     {record.evaluations.strengths.map((item) => (
                                       <li
@@ -471,11 +473,12 @@ export default function PortfolioHistoryPanel({
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                                <div>
-                                  <div className="mb-1 t-label font-medium text-amber-400">
-                                    {t("history.risks")}
-                                  </div>
+                                </CollapsibleSection>
+                                <CollapsibleSection
+                                  id="histRisks"
+                                  title={t("history.risks")}
+                                  toneClass="text-amber-400"
+                                >
                                   <ul className="space-y-0.5">
                                     {record.evaluations.risks.map((item) => (
                                       <li
@@ -486,7 +489,7 @@ export default function PortfolioHistoryPanel({
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
+                                </CollapsibleSection>
                               </div>
                             )}
 

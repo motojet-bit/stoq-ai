@@ -1,4 +1,12 @@
-import { cancelDebate, clearDebate, runDebateTurn, useDebateRun } from "@/lib/debate/debateStore";
+import { useRef, useState } from "react";
+import {
+  askDebate,
+  cancelDebate,
+  clearDebate,
+  runDebateTurn,
+  useDebateRun,
+  type DebateSide,
+} from "@/lib/debate/debateStore";
 import { debateGate, isRunning } from "@/lib/debate/debateTurn";
 import { useSettings } from "@/lib/config/settingsStore";
 import { IconStop, IconTrash, IconWarning } from "@/components/Icons";
@@ -27,8 +35,17 @@ export default function DebatePanel({ ticker, analysisText, onOpenSettings }: Pr
   const status = settings?.debate ?? null;
 
   const gate = debateGate({ analysisText, status, phase });
-  const running = isRunning(phase);
+  const running = isRunning(phase) || run?.replying !== null;
   const hasResult = Boolean(run && (run.critique || run.rebuttal));
+  const [question, setQuestion] = useState("");
+  // 「質問の先頭へ戻る」で戻る位置
+  const askRef = useRef<HTMLDivElement>(null);
+
+  const send = (side: DebateSide) => {
+    if (!ticker || question.trim() === "") return;
+    void askDebate(ticker, question, side);
+    setQuestion("");
+  };
 
   const blockedText =
     gate.reason === "noAnalysis"
@@ -88,6 +105,15 @@ export default function DebatePanel({ ticker, analysisText, onOpenSettings }: Pr
         </span>
       </div>
 
+      {/*
+        **常時出す。** 批判は無限に作れるので、ここを読まずに読むと
+        「悪い材料が次々出てくる」だけの画面に見えて判断が鈍る。
+      */}
+      <div className="shrink-0 border-b border-slate-800 bg-amber-950/20 px-3 py-2">
+        <p className="t-label font-medium text-amber-300">{t("debate.tipTitle")}</p>
+        <p className="mt-0.5 t-label leading-relaxed text-slate-400">{t("debate.tipBody")}</p>
+      </div>
+
       <div className="panel-scroll min-h-0 flex-1 px-3 py-2.5">
         {/* --------------------------------------------- 未実行のときの案内 */}
         {!hasResult && !running && (
@@ -144,7 +170,63 @@ export default function DebatePanel({ ticker, analysisText, onOpenSettings }: Pr
         )}
 
         {phase === "done" && (
-          <p className="mt-3 t-label text-slate-600">{t("debate.finished")}</p>
+          <>
+            {/* 続けるかどうかの判断材料。**追加分析が要らない場合を先に示す** */}
+            <div className="mt-3 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2">
+              <p className="t-label font-medium text-slate-300">{t("debate.guideTitle")}</p>
+              <p className="mt-0.5 t-label leading-relaxed text-slate-500">
+                {t("debate.guideBody")}
+              </p>
+            </div>
+
+            {/* --------------------------------------- 続きの対話 */}
+            {(run?.messages.length ?? 0) > 0 && (
+              <div className="mt-4 space-y-3">
+                {run?.messages.map((m) => (
+                  <div key={m.id} ref={m.role === "user" ? askRef : undefined}>
+                    <p
+                      className={`t-label font-medium ${
+                        m.role === "user"
+                          ? "text-slate-400"
+                          : m.role === "bear"
+                            ? "text-amber-400"
+                            : "text-emerald-400"
+                      }`}
+                    >
+                      {m.role === "user"
+                        ? t("debate.you")
+                        : m.role === "bear"
+                          ? t("debate.critique")
+                          : t("debate.rebuttal")}
+                    </p>
+                    <pre className="selectable mt-0.5 whitespace-pre-wrap break-words t-label leading-relaxed text-slate-300">
+                      {m.text}
+                    </pre>
+                  </div>
+                ))}
+                {run?.replying && (
+                  <p className="flex items-center gap-2 t-label text-slate-600">
+                    <span className="inline-block h-3 w-1.5 animate-pulse bg-slate-600" />
+                    {t("debate.replying")}
+                  </p>
+                )}
+
+                {/*
+                  **長い回答で流れたあと、自分の問いへ戻れるようにする。**
+                  どこから読み直せばよいか分からなくなるのを防ぐ。
+                */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    askRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                  className="t-label text-slate-500 underline underline-offset-2 hover:text-slate-300"
+                >
+                  {t("debate.jumpToQuestion")}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {phase === "error" && run?.error && (
@@ -153,6 +235,48 @@ export default function DebatePanel({ ticker, analysisText, onOpenSettings }: Pr
           </p>
         )}
       </div>
+
+      {/*
+        --------------------------------------------- 自由対話の入力
+        **1 往復で打ち切らない。** 納得できるまで詰めたい人には、
+        自分の言葉で問い直せる余地が要る。
+        ただし**自動では続けない**（押したときだけ動く）。費用が青天井になる。
+      */}
+      {phase === "done" && (
+        <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2">
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send("bear");
+              }
+            }}
+            rows={2}
+            placeholder={t("debate.askPlaceholder")}
+            className="selectable w-full resize-none rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 t-label text-slate-100 placeholder:text-slate-600 focus:border-emerald-600 focus:outline-none"
+          />
+          <div className="mt-1.5 flex gap-1.5">
+            <button
+              type="button"
+              disabled={question.trim() === "" || run?.replying !== null}
+              onClick={() => send("bear")}
+              className="min-h-7 flex-1 rounded-md bg-amber-700/80 px-2 t-label font-medium text-white transition-colors hover:bg-amber-600 disabled:bg-slate-800 disabled:text-slate-500"
+            >
+              {t("debate.askBear")}
+            </button>
+            <button
+              type="button"
+              disabled={question.trim() === "" || run?.replying !== null}
+              onClick={() => send("bull")}
+              className="min-h-7 flex-1 rounded-md bg-emerald-700/80 px-2 t-label font-medium text-white transition-colors hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-500"
+            >
+              {t("debate.askBull")}
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

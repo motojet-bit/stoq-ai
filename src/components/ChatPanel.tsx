@@ -230,14 +230,33 @@ ${draft.text}`));
               </div>
             ) : (
               <ul className="space-y-4">
-                {messages.map((m) => (
-                  <li key={m.id}>
+                {messages.map((m, i) => (
+                  <li key={m.id} id={`chat-msg-${m.id}`}>
                     <div
-                      className={`t-label mb-1 font-medium ${
+                      className={`t-label mb-1 flex items-center gap-2 font-medium ${
                         m.role === "user" ? "text-slate-400" : "text-emerald-400"
                       }`}
                     >
                       {m.role === "user" ? t("chat.you") : t("chat.ai")}
+
+                      {/*
+                        **長い回答で流れたあと、その問いの先頭へ戻れるようにする。**
+                        自動スクロールで下端まで送られると、
+                        どこから読み直せばよいか分からなくなる。
+                      */}
+                      {m.role !== "user" && i > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document
+                              .getElementById(`chat-msg-${messages[i - 1].id}`)
+                              ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                          }
+                          className="ml-auto shrink-0 t-label font-normal text-slate-600 underline underline-offset-2 hover:text-slate-300"
+                        >
+                          {t("debate.jumpToQuestion")}
+                        </button>
+                      )}
                     </div>
                     {m.error ? (
                       <p className="selectable t-body rounded border border-red-900 bg-red-950/40 px-2.5 py-2 text-red-300">

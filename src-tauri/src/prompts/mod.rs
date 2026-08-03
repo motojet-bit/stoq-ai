@@ -249,33 +249,19 @@ pub struct AnalysisPreset {
     pub guard_ticker: Option<String>,
 }
 
-/// 銘柄不一致のときに出させる合図。フロント側と同じ文字列。
-pub const MISMATCH_MARKER: &str = "MISMATCH_TICKER_ERROR";
+/// 資料ミスマッチの警告文。**出力の最上部に出させる。**
+pub const MISMATCH_WARNING: &str =
+    "⚠️ 添付資料が他社のものである可能性があります。確認のうえ、必要に応じて資料を差し替えて再分析してください。";
 
-/// 銘柄不一致の禁止事項。
+/// 資料ミスマッチの判定ルール。
 ///
-/// **システムプロンプトの最初に置く。** ユーザー文の途中に混ぜると、
-/// 「資料はあるのだから分析するのが親切だ」と解釈されて完走されてしまう。
-/// 一番強い位置に、例外を認めない書き方で置く。
-fn mismatch_guard(ticker: &str) -> String {
+/// **分析は止めない。** 決算資料には競合他社・顧客・取引先の名前が普通に出てくる。
+/// 「他社名がある」だけで遮断すると、正しい資料での分析まで進まなくなる。
+/// 続行したうえで、**気づける場所に警告を置く**ほうが実害が小さい。
+fn mismatch_rule(ticker: &str) -> String {
     let ticker = ticker.trim();
     format!(
-        "# 【最優先禁止事項】対象銘柄の確認
-
-         分析対象のティッカーは **{ticker}** である。
-
-         提供された一次資料・提出書類の対象企業が {ticker} と**明らかに異なる**場合、         分析を絶対に開始してはならない。
-
-         - 考察・要約・前置き・注意書きを含め、**本文を一切出力しない**
-         - 評価テーブルを 1 行も書かない
-         - 「参考として分析します」「資料は別会社ですが」といった補足も書かない
-         - 出力は次の 1 行のみとし、そこで終了する:
-
-         {MISMATCH_MARKER}: <資料内の企業名>
-
-         **これは親切心より優先される。** 別企業の資料をそのまま分析すると、         その数字が {ticker} の分析として保存され、利用者は誤りに気づけない。
-
-         対象企業を判断できない場合、または一致している場合は、この行を出さず         通常どおり分析を進めること。"
+        "# 【資料ミスマッチ判定】\n\n\n         分析対象の銘柄は **{ticker}** である。\n\n\n         もし提供された資料の**主体企業**が {ticker} と明らかに異なると判断した場合、\n         **分析はそのまま続行**しつつ、出力の最上部（総合判定より上）に\n         次の警告文をそのまま出力すること:\n\n\n         {MISMATCH_WARNING}\n\n\n         **競合比較・顧客・取引先として他社名が出ているだけの場合は出力しないこと。**\n         決算資料に他社名が並ぶのは普通であり、それだけでは別企業の資料とは言えない。\n\n\n         判断が付かない場合も出力しない。"
     )
 }
 
@@ -332,13 +318,13 @@ pub fn build_system_prompt(preset: &AnalysisPreset) -> String {
 
     let custom = custom_section(preset.custom_instruction.as_deref());
 
-    // 不一致の禁止事項は**役割より前**。ここが一番強く効く
+    // ミスマッチ判定は**役割より前**。ここが一番強く効く
     let guard = preset
         .guard_ticker
         .as_deref()
         .map(str::trim)
         .filter(|t| !t.is_empty())
-        .map(mismatch_guard);
+        .map(mismatch_rule);
 
     let mut parts: Vec<&str> = Vec::new();
     if let Some(section) = guard.as_deref() {
@@ -463,37 +449,38 @@ mod tests {
     // ------------------------------------------------ 役割の選択
 
     /// **id は保存データに入るので変えない。** ラベルは変えてよい。
-    /// **不一致の禁止事項は先頭**（一番強く効く位置）。
+    /// **ミスマッチ判定は先頭**（一番強く効く位置）。
     #[test]
-    fn 不一致の禁止事項は役割より前に置かれる() {
+    fn ミスマッチ判定は役割より前に置かれる() {
         let mut preset = preset("general", &[]);
         preset.guard_ticker = Some("TSLA".into());
         let prompt = build_system_prompt(&preset);
 
-        let guard = prompt.find("最優先禁止事項").expect("禁止事項が無い");
+        let rule = prompt.find("資料ミスマッチ判定").expect("判定ルールが無い");
         let role = prompt.find("汎用").or_else(|| prompt.find("あなたは")).unwrap();
-        assert!(guard < role, "禁止事項は役割より前");
-        assert!(prompt.contains(MISMATCH_MARKER));
+        assert!(rule < role, "判定ルールは役割より前");
+        assert!(prompt.contains(MISMATCH_WARNING));
         assert!(prompt.contains("TSLA"));
     }
 
-    /// 完走させないための言い回しが入っていること。
+    /// **分析を止めない**（誤検知で進まなくなるのを避ける）。
     #[test]
-    fn 禁止事項は例外を認めない書き方になっている() {
+    fn ミスマッチでも分析は続行させる() {
         let mut preset = preset("general", &[]);
         preset.guard_ticker = Some("TSLA".into());
         let prompt = build_system_prompt(&preset);
 
-        for word in ["絶対に開始してはならない", "本文を一切出力しない", "親切心より優先"] {
-            assert!(prompt.contains(word), "「{word}」が無い");
-        }
+        assert!(prompt.contains("分析はそのまま続行"));
+        // 競合他社の言及だけで警告を出させない
+        assert!(prompt.contains("競合比較"));
+        assert!(prompt.contains("判断が付かない場合も出力しない"));
     }
 
     /// 指定が無ければ従来どおり（第 2 段以降で無駄に付けない）。
     #[test]
-    fn ティッカー未指定なら禁止事項を付けない() {
+    fn ティッカー未指定なら判定ルールを付けない() {
         let prompt = build_system_prompt(&preset("general", &[]));
-        assert!(!prompt.contains(MISMATCH_MARKER));
+        assert!(!prompt.contains(MISMATCH_WARNING));
     }
 
     #[test]

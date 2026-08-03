@@ -4,6 +4,7 @@ import type { TickerAnalysis } from "@/types";
 import { CRITERIA } from "@/lib/prompts/criteria";
 import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
+import CollapsibleSection from "@/components/CollapsibleSection";
 import PanelHeader from "@/components/PanelHeader";
 import AnalysisProgress from "@/components/AnalysisProgress";
 import OverflowScroller from "@/components/OverflowScroller";
@@ -384,36 +385,58 @@ export default function AnalysisPanel({
                 </p>
               )}
 
+              {/*
+                **既定で畳んでおく。** 表計算へ移すときにしか使わないので、
+                開いたままだと本文がその分だけ下へ押し出される。
+                開けば従来どおりスクロールして選択・コピーできる。
+              */}
               {result && result.rows.length > 0 && (
-                <div className="mb-5">
-                  <h3 className="t-heading mb-2 flex items-baseline gap-2 font-medium uppercase tracking-wider text-slate-500">
-                    {t("analysis.scoreTable")}
+                <CollapsibleSection
+                  id="pasteFormat"
+                  title={t("analysis.pasteFormat")}
+                  meta={
                     <span className="t-label font-mono normal-case text-slate-600">
                       {t("analysis.rowCount", {
                         done: result.rows.length,
                         total: CRITERIA.length,
                       })}
                     </span>
-                  </h3>
-                  <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-1">
+                  }
+                >
+                  <div className="max-h-[32rem] overflow-auto rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-1">
                     {result.rows.map((row) => (
                       <CriterionScoreRow key={row.id} row={row} />
                     ))}
                   </div>
-                </div>
+                </CollapsibleSection>
               )}
 
               {result && result.strengths.length > 0 && (
-                <BulletSection title={t("analysis.strengths")} tone="emerald" items={result.strengths} />
+                <BulletSection
+                  id="strengths"
+                  title={t("analysis.strengths")}
+                  tone="emerald"
+                  items={result.strengths}
+                />
               )}
               {result && result.risks.length > 0 && (
-                <BulletSection title={t("analysis.risks")} tone="amber" items={result.risks} />
+                <BulletSection
+                  id="risks"
+                  title={t("analysis.risks")}
+                  tone="amber"
+                  items={result.risks}
+                />
               )}
               {result?.valuation && (
-                <TextSection title={t("analysis.valuation")} body={result.valuation} />
+                <TextSection id="valuation" title={t("analysis.valuation")} body={result.valuation} />
               )}
               {result?.conclusion && (
-                <TextSection title={t("analysis.conclusion")} body={result.conclusion} highlight />
+                <TextSection
+                  id="conclusion"
+                  title={t("analysis.conclusion")}
+                  body={result.conclusion}
+                  highlight
+                />
               )}
 
               {streaming && (
@@ -451,20 +474,19 @@ export default function AnalysisPanel({
 }
 
 function BulletSection({
+  id,
   title,
   tone,
   items,
 }: {
+  id: string;
   title: string;
   tone: "emerald" | "amber";
   items: string[];
 }) {
   const color = tone === "emerald" ? "text-emerald-400" : "text-amber-400";
   return (
-    <div className="mb-5">
-      <h3 className={`t-heading mb-2 font-medium uppercase tracking-wider ${color}`}>
-        {title}
-      </h3>
+    <CollapsibleSection id={id} title={title} toneClass={color}>
       <ul className="space-y-1.5">
         {items.map((item) => (
           <li key={item} className={`selectable t-body flex gap-2 text-slate-300`}>
@@ -473,24 +495,23 @@ function BulletSection({
           </li>
         ))}
       </ul>
-    </div>
+    </CollapsibleSection>
   );
 }
 
 function TextSection({
+  id,
   title,
   body,
   highlight = false,
 }: {
+  id: string;
   title: string;
   body: string;
   highlight?: boolean;
 }) {
   return (
-    <div className="mb-5">
-      <h3 className="t-heading mb-2 font-medium uppercase tracking-wider text-slate-500">
-        {title}
-      </h3>
+    <CollapsibleSection id={id} title={title}>
       <p
         className={`selectable t-body whitespace-pre-wrap ${
           highlight
@@ -500,6 +521,6 @@ function TextSection({
       >
         {body}
       </p>
-    </div>
+    </CollapsibleSection>
   );
 }

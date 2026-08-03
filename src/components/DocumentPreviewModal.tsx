@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { StagedDocument } from "@/types";
 import { readDocumentText } from "@/lib/parser/documentStore";
+import { invoke } from "@/lib/tauri";
+import { toastError, toastSuccess } from "@/lib/ui/toastStore";
 import { IconFile } from "@/components/Icons";
 import ModalShell from "@/components/ModalShell";
 import { t as tr } from "@/lib/i18n/i18n";
@@ -14,6 +16,29 @@ interface Props {
 export default function DocumentPreviewModal({ doc, onClose }: Props) {
   const [text, setText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  /**
+   * 抽出したテキストを書き出す。
+   *
+   * **元のバイナリではなく抽出テキストを保存する。** プレビューで見えているものと
+   * 同じものが手元に残るほうが、あとから照合できる。
+   */
+  const download = async () => {
+    if (!doc || text === null) return;
+    setSaving(true);
+    try {
+      const path = await invoke<string>("export_write_file", {
+        fileName: `${doc.displayName.replace(/[\/:*?"<>|]/g, "_")}.txt`,
+        contents: text,
+      });
+      toastSuccess(tr("doc.downloaded"), path);
+    } catch (e) {
+      toastError(tr("doc.downloadFailed"), e);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!doc) return;
@@ -51,6 +76,25 @@ export default function DocumentPreviewModal({ doc, onClose }: Props) {
       icon={<IconFile className="h-4 w-4 shrink-0 text-emerald-400" />}
       maxWidthClass="max-w-4xl"
       onClose={onClose}
+      footer={
+        <footer className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-800 px-4 py-2">
+          {/*
+            **保存できないときの逃げ道も同じ場所に出す。**
+            押しても何も起きないと、どこから取ればよいか分からず詰まる。
+          */}
+          <span className="min-w-0 flex-1 t-label leading-relaxed text-slate-600">
+            {tr("doc.downloadHint")}
+          </span>
+          <button
+            type="button"
+            disabled={text === null || saving}
+            onClick={() => void download()}
+            className="shrink-0 rounded-md border border-slate-700 px-3 py-1.5 t-body text-slate-300 transition-colors hover:bg-slate-800 disabled:opacity-40"
+          >
+            {tr("doc.download")}
+          </button>
+        </footer>
+      }
     >
         <div className="sticky top-0 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 bg-slate-900 px-4 py-2 t-label text-slate-500">
           <span>{tr("doc.originalName", { name: doc?.originalName ?? "" })}</span>

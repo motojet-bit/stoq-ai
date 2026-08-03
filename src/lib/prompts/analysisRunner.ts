@@ -23,7 +23,6 @@ import {
   usableSteps,
 } from "@/lib/prompts/analysisSteps";
 import { diagnose } from "@/lib/errors/diagnose";
-import { detectMismatchSignal } from "@/lib/parser/tickerMatch";
 import { appendUsageLog } from "@/lib/usage/usageStore";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type {
@@ -409,8 +408,6 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     }
 
     let cancelled = false;
-    // 資料が別会社のものだと AI が判定したときに、その企業名が入る
-    let mismatchFound: string | null = null;
     for (;;) {
       const step = nextStep(parts.map((p) => p.id));
       if (!step) break;
@@ -452,20 +449,6 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           onStart: (provider, model) => patch(ticker, { provider, model }),
           onDelta: (delta) => {
             stepRaw += delta;
-            /*
-             * **不一致の合図が出たら、その場で切る。**
-             * 資料が別会社のものだと分かった時点で、以降の生成は
-             * すべて無駄になる。最後まで受け取ってから捨てるのではなく、
-             * 通信を止めてトークンの消費を打ち切る。
-             */
-            if (mismatchFound === null) {
-              const found = detectMismatchSignal(stepRaw);
-              if (found !== null) {
-                mismatchFound = found;
-                void cancelChat(requestId);
-                return;
-              }
-            }
             const merged = mergeSteps([...parts, { id: step.id, raw: stepRaw }]);
             patch(ticker, { raw: merged, result: parseAnalysis(merged) });
           },
@@ -475,36 +458,6 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       inputTokens += result.usage?.input ?? 0;
       outputTokens += result.usage?.output ?? 0;
 
-      /*
-       * **不一致なら、ここで安全に降りる。**
-       * 生成済みの段は捨て、保存もしない。
-       * 途中経過も消しておかないと、次回に別会社の採点から再開してしまう。
-       */
-      if (mismatchFound !== null) {
-        await clearCheckpoints(ticker);
-        const found = mismatchFound || t("mismatch.abortedUnknown");
-        patch(ticker, {
-          phase: "error",
-          error: t("mismatch.abortedTitle"),
-          diagnosis: {
-            kind: "unknown",
-            title: t("mismatch.abortedTitle"),
-            action: t("mismatch.abortedBody", { found, ticker }),
-            retryable: false,
-            openSettings: false,
-            detail: `ERR_TICKER_MISMATCH: selected=${ticker} found=${found}`,
-          },
-          raw: "",
-          result: null,
-          requestId: null,
-          currentStepLabel: null,
-          inputTokens,
-          outputTokens,
-          finishedAtMs: Date.now(),
-        });
-        toastError(t("mismatch.abortedTitle"), t("mismatch.abortedBody", { found, ticker }));
-        return;
-      }
 
       // **中断されたら、その段は確定させない。** 途中までの行を保存すると、
       // 次に再開したときに欠けた表を土台にしてしまう
