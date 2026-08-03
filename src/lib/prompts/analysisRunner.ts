@@ -165,6 +165,13 @@ export interface RunOptions {
   /** 親（四半期本体）の履歴 ID。期中のアドホック分析ならここに指定する */
   parentId?: string | null;
   /**
+   * 保存済みの途中経過を捨てて、最初の段からやり直す。
+   *
+   * **同じところで失敗し続けるのを断ち切るために要る。**
+   * 壊れた段が残っていると、再開のたびにそれを土台にしてしまう。
+   */
+  fresh?: boolean;
+  /**
    * SEC から取りに行く対象期。**null なら最新**。
    * 資料なしで過去にさかのぼるときだけ指定する。
    */
@@ -463,7 +470,10 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
      * そこまでの生成がまるごと無駄になり、保存も走らない。
      * 段ごとに確定させ、終わるたびに DB へ置いておく。
      */
-    const saved = await loadCheckpoints(ticker);
+    // やり直しなら、読む前に捨てる（壊れた段を土台にしない）
+    if (options.fresh) await clearCheckpoints(ticker);
+
+    const saved = options.fresh ? [] : await loadCheckpoints(ticker);
     const keep = usableSteps(saved.map((s) => s.step));
     const parts = saved
       .filter((s) => keep.includes(s.step))

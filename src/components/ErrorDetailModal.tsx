@@ -14,6 +14,8 @@ interface Props {
     model: string | null;
     completedSteps: number;
   };
+  /** 途中経過を捨てて最初からやり直す */
+  onRestart: () => void;
   onClose: () => void;
 }
 
@@ -25,7 +27,13 @@ interface Props {
  * 画面の文言だけでは切り分けられない。
  * 貼り付ければ状況が揃うよう、発生時の環境も一緒に出す。
  */
-export default function ErrorDetailModal({ open, diagnosis, context, onClose }: Props) {
+export default function ErrorDetailModal({
+  open,
+  diagnosis,
+  context,
+  onRestart,
+  onClose,
+}: Props) {
   const t = useT();
   const [copied, setCopied] = useState(false);
 
@@ -63,6 +71,18 @@ export default function ErrorDetailModal({ open, diagnosis, context, onClose }: 
         <footer className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-t border-slate-800 px-4 py-2">
           <span className="t-label text-slate-600">{t("diagnose.modalHint")}</span>
           <div className="flex shrink-0 gap-2">
+            {/* 同じところで失敗し続けるときは、ここからも断ち切れるようにする */}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onRestart();
+              }}
+              title={t("diagnose.restartHint")}
+              className="min-h-8 rounded-md border border-slate-700 px-4 t-body text-slate-300 transition-colors hover:bg-slate-800"
+            >
+              {t("diagnose.restart")}
+            </button>
             <button
               type="button"
               onClick={() => void copy()}

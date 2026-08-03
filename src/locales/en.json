@@ -1205,5 +1205,7 @@
   "preset.note.groq": "Very fast, with a free tier",
   "model.reasoningCheap": "Low-cost reasoning model",
   "settings.key.localNotNeeded": "No API key needed (runs locally)",
-  "settings.key.local": "Local (no key)"
+  "settings.key.local": "Local (no key)",
+  "diagnose.restart": "Start over",
+  "diagnose.restartHint": "Discards the saved progress and starts again from the first step."
 }

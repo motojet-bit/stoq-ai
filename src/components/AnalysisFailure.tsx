@@ -9,6 +9,8 @@ interface Props {
   /** 完了済みの段の数。0 より大きければ「続きから」と伝える */
   completedSteps: number;
   onRetry: () => void;
+  /** 途中経過を捨てて最初からやり直す */
+  onRestart: () => void;
   onOpenSettings: () => void;
 }
 
@@ -24,6 +26,7 @@ export default function AnalysisFailure({
   completedSteps,
   onShowDetail,
   onRetry,
+  onRestart,
   onOpenSettings,
 }: Props) {
   const t = useT();
@@ -54,6 +57,18 @@ export default function AnalysisFailure({
             {t("diagnose.retry")}
           </button>
         )}
+        {/*
+          **同じところで失敗し続けるときの逃げ道。**
+          壊れた段が残っていると、再開のたびにそれを土台にしてしまう。
+        */}
+        <button
+          type="button"
+          onClick={onRestart}
+          title={t("diagnose.restartHint")}
+          className="min-h-7 rounded-md border border-slate-700 px-3 t-label text-slate-300 transition-colors hover:border-slate-600"
+        >
+          {t("diagnose.restart")}
+        </button>
         {diagnosis.openSettings && (
           <button
             type="button"

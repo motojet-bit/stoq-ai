@@ -44,6 +44,8 @@ interface Props {
   /** 最小化できない場合の理由（最後の 1 枚は畳ませない） */
   collapseDisabledReason?: string | null;
   onRun: () => void;
+  /** 途中経過を捨てて最初からやり直す */
+  onRestart: () => void;
   onCancel: () => void;
   onClear: () => void;
   /** マイポートフォリオへの保存先を選ぶ */
@@ -73,6 +75,7 @@ export default function AnalysisPanel({
   onToggleCollapse,
   collapseDisabledReason = null,
   onRun,
+  onRestart,
   onCancel,
   onClear,
   onSaveToPortfolio,
@@ -241,7 +244,7 @@ export default function AnalysisPanel({
             ) : (
               <button
                 type="button"
-                onClick={onRun}
+                onClick={hasContent ? onRestart : onRun}
                 /*
                  * 体験期間切れのときは `disabled` を付けない。
                  * **本物の disabled はクリックを拾えず、案内を出せない。**
@@ -368,6 +371,7 @@ export default function AnalysisPanel({
                     completedSteps={run.completedSteps}
                     onShowDetail={() => setDetailOpen(true)}
                     onRetry={onRun}
+                    onRestart={onRestart}
                     onOpenSettings={onOpenSettings}
                   />
                 </div>
@@ -461,6 +465,7 @@ export default function AnalysisPanel({
       <ErrorDetailModal
         open={detailOpen}
         diagnosis={run?.diagnosis ?? null}
+        onRestart={onRestart}
         context={{
           ticker,
           provider: run?.provider ?? null,

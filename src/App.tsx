@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { WorkspaceTab } from "@/types";
 import { INITIAL_TABS } from "@/lib/sampleData";
 import {
@@ -211,6 +211,18 @@ export default function App() {
    * 分析を開始する。
    * 一次資料が 1 件も無いときは、より良い結果が得られる旨を伝えて確認する。
    */
+  /*
+   * **やり直しは途中経過を捨てる。** 壊れた段が残っていると、
+   * 再開のたびにそれを土台にして同じところで失敗し続ける。
+   * 「再開する」だけが引き継ぐ経路。
+   */
+  const freshRef = useRef(false);
+
+  const handleRestartAnalysis = () => {
+    freshRef.current = true;
+    handleRunAnalysis();
+  };
+
   const handleRunAnalysis = () => {
     if (!activeTicker) return;
     if (!ensureAccess(activeTicker)) return;
@@ -334,6 +346,9 @@ export default function App() {
     targetPeriod: { year: number; quarter: 1 | 2 | 3 | 4 | null } | null = null,
   ) => {
     if (!activeTicker) return;
+    // 一度使ったら倒す（次の実行まで持ち越さない）
+    const fresh = freshRef.current;
+    freshRef.current = false;
     void runAnalysis({
       ticker: activeTicker,
       settings,
@@ -345,6 +360,7 @@ export default function App() {
       confirmedPeriodKey: getConfirmedPeriod(activeTicker)?.key ?? null,
       parentId,
       targetPeriod,
+      fresh,
     });
   };
 
@@ -409,6 +425,7 @@ export default function App() {
             onToggleCollapse={onToggleCollapse}
             collapseDisabledReason={collapseDisabledReason}
             onRun={handleRunAnalysis}
+            onRestart={handleRestartAnalysis}
             onCancel={() => activeTicker && void cancelAnalysis(activeTicker)}
             onClear={() => activeTicker && void clearAnalysis(activeTicker)}
             onSaveToPortfolio={() => activeTicker && setSavingTicker(activeTicker)}
