@@ -5,6 +5,9 @@ import { CRITERIA } from "@/lib/prompts/criteria";
 import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
+import AnalysisProgress from "@/components/AnalysisProgress";
+import AnalysisFailure from "@/components/AnalysisFailure";
+import { estimateCost, formatJpy, formatTokens, formatUsd } from "@/lib/llm/cost";
 import AnalystRoleMenu from "@/components/AnalystRoleMenu";
 import ExportMenu from "@/components/ExportMenu";
 import { buildAnalysisRecord } from "@/lib/export/analysisRecord";
@@ -71,6 +74,13 @@ export default function AnalysisPanel({
   const debateOpen = useDebatePaneOpen();
 
   const streaming = run?.phase === "streaming" || run?.phase === "collecting";
+
+  // 実測トークンからの概算コスト。単価が不明なモデルは金額を出さない
+  const cost = estimateCost({
+    inputTokens: run?.inputTokens ?? 0,
+    outputTokens: run?.outputTokens ?? 0,
+    model: run?.model ?? null,
+  });
   const result = run?.result ?? null;
   const hasContent = (run?.raw.length ?? 0) > 0;
 
@@ -135,6 +145,26 @@ export default function AnalysisPanel({
             {result && result.averageScore !== null && (
               <span className="t-label shrink-0 font-mono text-emerald-400">
                 {t("analysis.averageScore", { score: result.averageScore.toFixed(1) })}
+              </span>
+            )}
+
+            {/*
+              消費トークンと概算コスト。**実測値だけを出す。**
+              usage が取れなかったら何も出さない（0 と出すと無料に見える）。
+            */}
+            {run && run.inputTokens + run.outputTokens > 0 && (
+              <span
+                title={cost.unknownModel ? t("usage.unknownModel") : t("usage.note")}
+                className="t-label shrink-0 font-mono text-slate-500"
+              >
+                {t("usage.label")}: {formatTokens(run.inputTokens + run.outputTokens)}
+                {!cost.unknownModel && (
+                  <>
+                    {" / "}
+                    {t("usage.approx")} {formatJpy(cost.jpy)}
+                    <span className="ml-1 text-slate-600">({formatUsd(cost.usd)})</span>
+                  </>
+                )}
               </span>
             )}
 
@@ -270,10 +300,30 @@ export default function AnalysisPanel({
                 </ul>
               )}
 
-              {run.error && (
-                <p className="selectable t-body mb-3 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-red-300">
-                  {run.error}
-                </p>
+              {/* 4 段の直列実行。どこまで終わったかを見せる */}
+              {(streaming || run.completedSteps > 0) && run.phase !== "done" && (
+                <AnalysisProgress
+                  completedSteps={run.completedSteps}
+                  currentStepLabel={run.currentStepLabel}
+                  running={streaming}
+                />
+              )}
+
+              {run.diagnosis ? (
+                <div className="mb-3">
+                  <AnalysisFailure
+                    diagnosis={run.diagnosis}
+                    completedSteps={run.completedSteps}
+                    onRetry={onRun}
+                    onOpenSettings={onOpenSettings}
+                  />
+                </div>
+              ) : (
+                run.error && (
+                  <p className="selectable t-body mb-3 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-red-300">
+                    {run.error}
+                  </p>
+                )
               )}
 
               {run.phase === "collecting" && (

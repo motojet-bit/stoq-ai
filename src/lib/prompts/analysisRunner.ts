@@ -14,6 +14,14 @@ import {
 import { parseAnalysis, type AnalysisResult } from "@/lib/prompts/parseAnalysis";
 import { readDocumentText } from "@/lib/parser/documentStore";
 import { isAutoFallback, planFilingFetch } from "@/lib/prompts/secFallback";
+import {
+  ANALYSIS_STEPS,
+  mergeSteps,
+  nextStep,
+  stepInstruction,
+  usableSteps,
+} from "@/lib/prompts/analysisSteps";
+import { diagnose } from "@/lib/errors/diagnose";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type {
   AppSettings,
@@ -49,6 +57,15 @@ export interface AnalysisRun {
   finishedAtMs: number | null;
   /** SQLite から復元したものか */
   fromCache: boolean;
+  /** 完了した段の数（0〜4） */
+  completedSteps: number;
+  /** いま生成している段のラベル。走っていなければ null */
+  currentStepLabel: string | null;
+  /** 実測の消費トークン */
+  inputTokens: number;
+  outputTokens: number;
+  /** 失敗したときの診断。成功時は null */
+  diagnosis: ReturnType<typeof diagnose> | null;
   /** 保存日時 */
   savedAtMs: number | null;
 }
@@ -91,6 +108,11 @@ function blank(ticker: string): AnalysisRun {
     finishedAtMs: null,
     fromCache: false,
     savedAtMs: null,
+    completedSteps: 0,
+    currentStepLabel: null,
+    inputTokens: 0,
+    outputTokens: 0,
+    diagnosis: null,
   };
 }
 
@@ -120,6 +142,63 @@ export interface RunOptions {
   confirmedPeriodKey?: string | null;
   /** 親（四半期本体）の履歴 ID。期中のアドホック分析ならここに指定する */
   parentId?: string | null;
+  /**
+   * SEC から取りに行く対象期。**null なら最新**。
+   * 資料なしで過去にさかのぼるときだけ指定する。
+   */
+  targetPeriod?: { year: number; quarter: 1 | 2 | 3 | 4 | null } | null;
+}
+
+interface Checkpoint {
+  step: number;
+  raw: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/** 保存済みの段を読む。読めなくても分析は始められるので握り潰す。 */
+async function loadCheckpoints(ticker: string): Promise<Checkpoint[]> {
+  if (!isTauri()) return [];
+  try {
+    return await invoke<Checkpoint[]>("analysis_steps_load", { ticker });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 1 段ぶんを保存する。
+ *
+ * **失敗しても分析は止めない。** 保存できないのは困るが、
+ * ここで throw すると、生成し終えた本文まで失うことになる。
+ */
+async function saveCheckpoint(
+  ticker: string,
+  step: number,
+  raw: string,
+  usage: { input: number; output: number } | undefined,
+): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    await invoke("analysis_step_save", {
+      ticker,
+      step,
+      raw,
+      inputTokens: usage?.input ?? 0,
+      outputTokens: usage?.output ?? 0,
+    });
+  } catch {
+    // 保存できなくても生成は続ける
+  }
+}
+
+async function clearCheckpoints(ticker: string): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    await invoke("analysis_steps_clear", { ticker });
+  } catch {
+    // 消せなくても実害は無い（次回 usableSteps が整合を見る）
+  }
 }
 
 /** 応答のために空けておくトークン数 */
@@ -185,6 +264,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         const fetched = await invoke<SecFilingText>("sec_fetch_latest_filing", {
           ticker,
           forms: filingPlan.forms,
+          year: options.targetPeriod?.year ?? null,
+          quarter: options.targetPeriod?.quarter ?? null,
         });
         filing = {
           form: fetched.form,
@@ -202,6 +283,23 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           );
         }
       } catch (e) {
+        /*
+         * **期を指定していたのに見つからなかった場合は分析を止める。**
+         * 黙って別の期の書類で続けると、頼んだ期の分析として
+         * 違う期の中身が保存される。
+         */
+        if (options.targetPeriod) {
+          const key = `FY${options.targetPeriod.year}${
+            options.targetPeriod.quarter ? `-Q${options.targetPeriod.quarter}` : ""
+          }`;
+          pushToast(
+            "warning",
+            t("toast.analysis.periodNotFound"),
+            t("toast.analysis.periodNotFoundWhy", { key }),
+          );
+          patch(ticker, { phase: "idle", requestId: null });
+          return;
+        }
         pushToast(
           "warning",
           t("toast.analysis.secFailed"),
@@ -264,34 +362,99 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       promptTokens: prompt.tokens,
     });
 
-    // --- 生成 ------------------------------------------------------
-    let raw = "";
-    const { cancelled } = await streamChat(
-      {
-        requestId,
-        // 役割 ID と閾値だけを渡す。秘匿プロンプトとの結合は Rust 側で行う
-        analysisPreset: { roleId, thresholds },
-        messages: [{ role: "user", content: prompt.user }],
-        maxTokens: RESERVE_FOR_OUTPUT,
-      },
-      {
-        onStart: (provider, model) => patch(ticker, { provider, model }),
-        onDelta: (delta) => {
-          raw += delta;
-          // 途中経過も構造化して描画する
-          patch(ticker, { raw, result: parseAnalysis(raw) });
-        },
-      },
-    );
+    /*
+     * --- 生成（4 段を直列に）--------------------------------------
+     *
+     * **20 項目を一度に書かせない。** 出力上限で切れると、
+     * そこまでの生成がまるごと無駄になり、保存も走らない。
+     * 段ごとに確定させ、終わるたびに DB へ置いておく。
+     */
+    const saved = await loadCheckpoints(ticker);
+    const keep = usableSteps(saved.map((s) => s.step));
+    const parts = saved
+      .filter((s) => keep.includes(s.step))
+      .map((s) => ({ id: s.step, raw: s.raw }));
 
-    const finalRaw = raw;
+    let inputTokens = parts.reduce((sum, _, i) => sum + (saved[i]?.inputTokens ?? 0), 0);
+    let outputTokens = parts.reduce((sum, _, i) => sum + (saved[i]?.outputTokens ?? 0), 0);
+
+    if (parts.length > 0) {
+      pushToast("info", t("step.resumed", { done: parts.length }), "");
+      patch(ticker, {
+        completedSteps: parts.length,
+        raw: mergeSteps(parts),
+        result: parseAnalysis(mergeSteps(parts)),
+      });
+    }
+
+    let cancelled = false;
+    for (;;) {
+      const step = nextStep(parts.map((p) => p.id));
+      if (!step) break;
+
+      patch(ticker, {
+        phase: "streaming",
+        currentStepLabel: t(step.labelKey),
+        completedSteps: parts.length,
+      });
+
+      const previous = mergeSteps(parts);
+      let stepRaw = "";
+      const result = await streamChat(
+        {
+          requestId,
+          // 役割 ID と閾値だけを渡す。秘匿プロンプトとの結合は Rust 側で行う
+          analysisPreset: { roleId, thresholds },
+          messages: [
+            { role: "user", content: prompt.user },
+            { role: "user", content: stepInstruction(step, previous) },
+          ],
+          maxTokens: RESERVE_FOR_OUTPUT,
+        },
+        {
+          onStart: (provider, model) => patch(ticker, { provider, model }),
+          onDelta: (delta) => {
+            stepRaw += delta;
+            const merged = mergeSteps([...parts, { id: step.id, raw: stepRaw }]);
+            patch(ticker, { raw: merged, result: parseAnalysis(merged) });
+          },
+        },
+      );
+
+      inputTokens += result.usage?.input ?? 0;
+      outputTokens += result.usage?.output ?? 0;
+
+      // **中断されたら、その段は確定させない。** 途中までの行を保存すると、
+      // 次に再開したときに欠けた表を土台にしてしまう
+      if (result.cancelled) {
+        cancelled = true;
+        break;
+      }
+
+      parts.push({ id: step.id, raw: result.text || stepRaw });
+      await saveCheckpoint(ticker, step.id, result.text || stepRaw, result.usage);
+      patch(ticker, {
+        completedSteps: parts.length,
+        inputTokens,
+        outputTokens,
+      });
+    }
+
+    const finalRaw = mergeSteps(parts);
+    const complete = parts.length === ANALYSIS_STEPS.length;
     patch(ticker, {
       phase: cancelled ? "cancelled" : "done",
       raw: finalRaw,
       result: parseAnalysis(finalRaw),
       requestId: null,
+      currentStepLabel: null,
+      inputTokens,
+      outputTokens,
       finishedAtMs: Date.now(),
     });
+
+    // 最後まで通ったら途中経過は捨てる（次回は最初から走る）
+    if (complete) await clearCheckpoints(ticker);
 
     // 生成完了と同時に SQLite へ自動保存する。中断でも途中結果を残す。
     if (finalRaw.trim().length > 0) {
@@ -311,6 +474,9 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           periodLabel:
             options.confirmedPeriodKey ?? options.quarterly?.quarters.at(-1)?.label ?? null,
           parentId: options.parentId ?? null,
+          // 実測の消費トークン。コスト表示と履歴に残す
+          inputTokens,
+          outputTokens,
           // 構造化データも一緒に残す（エクスポートのたびに解析し直さない）
           record: serializeAnalysisRecord(
             buildAnalysisRecord({
@@ -342,14 +508,21 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       pushToast("success", t("toast.analysis.done", { ticker }));
     }
   } catch (e) {
-    const message = errorMessage(e);
+    /*
+     * **原因を切り分けて残す。** 429（待てば直る）と 401（キーが違う）で
+     * やることが正反対なので、「通信に失敗しました」だけでは動きようがない。
+     * ここまでに確定した段は DB に残っているので、再開すれば続きから進む。
+     */
+    const info = diagnose(e);
     patch(ticker, {
       phase: "error",
-      error: message,
+      error: info.title,
+      diagnosis: info,
       requestId: null,
+      currentStepLabel: null,
       finishedAtMs: Date.now(),
     });
-    toastError(t("toast.analysis.failed", { ticker }), e);
+    toastError(info.title, info.action);
   }
 }
 

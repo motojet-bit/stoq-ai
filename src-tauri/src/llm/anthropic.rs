@@ -12,7 +12,7 @@ use tauri::ipc::Channel;
 
 use crate::error::{code, AppError, Result};
 use crate::http;
-use crate::llm::{ensure_success, pump_sse, LlmEvent, LlmRequest};
+use crate::llm::{ensure_success, pump_sse, LlmEvent, LlmRequest, TokenUsage};
 
 const API_URL: &str = "https://api.anthropic.com/v1/messages";
 const API_VERSION: &str = "2023-06-01";
@@ -24,6 +24,7 @@ pub async fn stream(
     request: &LlmRequest,
     max_tokens: u32,
     channel: &Channel<LlmEvent>,
+    usage: &mut TokenUsage,
 ) -> Result<String> {
     let messages: Vec<_> = request
         .messages
@@ -57,7 +58,12 @@ pub async fn stream(
 
     let res = ensure_success(res, "Anthropic").await?;
 
-    pump_sse(res, request.request_id.as_deref().unwrap_or_default(), channel, |payload| {
+    pump_sse(
+        res,
+        request.request_id.as_deref().unwrap_or_default(),
+        channel,
+        usage,
+        |payload| {
         let value: serde_json::Value = match serde_json::from_str(payload) {
             Ok(v) => v,
             Err(_) => return Ok(None),

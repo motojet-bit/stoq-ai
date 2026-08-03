@@ -16,7 +16,7 @@ use tauri::ipc::Channel;
 
 use crate::error::{code, AppError, Result};
 use crate::http;
-use crate::llm::{extract_error_message, pump_sse, LlmEvent, LlmRequest, TEMPERATURE};
+use crate::llm::{extract_error_message, pump_sse, LlmEvent, LlmRequest, TokenUsage, TEMPERATURE};
 
 /// 出力上限を指定するパラメータ名。
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -50,6 +50,7 @@ pub async fn stream(
     request: &LlmRequest,
     max_tokens: u32,
     channel: &Channel<LlmEvent>,
+    usage: &mut TokenUsage,
 ) -> Result<String> {
     let mut messages = Vec::new();
     if let Some(system) = request.system.as_ref().filter(|s| !s.trim().is_empty()) {
@@ -88,7 +89,7 @@ pub async fn stream(
 
         if res.status().is_success() {
             let request_id = request.request_id.as_deref().unwrap_or_default();
-            return pump_sse(res, request_id, channel, |payload| {
+            return pump_sse(res, request_id, channel, usage, |payload| {
                 let value: Value = match serde_json::from_str(payload) {
                     Ok(v) => v,
                     // ハートビートなど JSON でない行は無視する
@@ -125,6 +126,10 @@ fn build_body(model: &str, messages: &[Value], max_tokens: u32, dialect: Dialect
         "model": model,
         "messages": messages,
         "stream": true,
+        // **これが無いとストリーミングでは usage が返らない。**
+        // 消費トークンが取れないとコスト表示が常に 0 になる。
+        // 対応していない互換サーバーは黙って無視するだけなので、常に付けてよい。
+        "stream_options": { "include_usage": true },
     });
     body[dialect.token_param.key()] = json!(max_tokens);
     if dialect.send_temperature {

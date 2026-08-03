@@ -213,7 +213,13 @@ export interface DisplayMessage extends ChatMessage {
 export type LlmEvent =
   | { type: "start"; provider: string; model: string }
   | { type: "delta"; text: string }
-  | { type: "done"; text: string; cancelled: boolean }
+  | {
+      type: "done";
+      text: string;
+      cancelled: boolean;
+      /** 実測の消費トークン。取得できなければ 0 */
+      usage: { input: number; output: number };
+    }
   | { type: "error"; message: string };
 
 /** SQLite に保存された分析結果 */

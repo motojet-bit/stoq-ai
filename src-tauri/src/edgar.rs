@@ -349,11 +349,63 @@ fn span_days(start: &str, end: &str) -> Option<i64> {
 }
 
 /// 最新の指定フォーム（例: ["10-K", "10-Q"]）を 1 件取得する。
+/// 対象期の絞り込み条件。
+///
+/// **`None` なら最新を採る。** 指定があるときだけ、
+/// `report_date`（対象期の末日）で絞り込む。
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PeriodFilter {
+    /// 対象期の年（西暦 4 桁）
+    pub year: Option<i32>,
+    /// 第何四半期か。`None` なら年だけで絞る
+    pub quarter: Option<u8>,
+}
+
+impl PeriodFilter {
+    fn is_empty(&self) -> bool {
+        self.year.is_none()
+    }
+
+    /// `report_date`（YYYY-MM-DD）が条件に合うか。
+    ///
+    /// **暦月から四半期を割り出す。** 会社ごとの決算月ではなく
+    /// 提出書類の対象期末で見る（SEC の submissions が持っているのはこれだけ）。
+    fn matches(&self, report_date: &str) -> bool {
+        let Some(want_year) = self.year else {
+            return true;
+        };
+        let Ok(year) = report_date.get(0..4).unwrap_or("").parse::<i32>() else {
+            return false;
+        };
+        if year != want_year {
+            return false;
+        }
+        let Some(want_q) = self.quarter else {
+            return true;
+        };
+        let Ok(month) = report_date.get(5..7).unwrap_or("").parse::<u8>() else {
+            return false;
+        };
+        month.saturating_sub(1) / 3 + 1 == want_q
+    }
+}
+
 pub async fn fetch_latest_filing(
     ticker: &str,
     forms: &[String],
     user_agent: &str,
     max_chars: usize,
+) -> Result<SecFiling> {
+    fetch_filing(ticker, forms, user_agent, max_chars, PeriodFilter::default()).await
+}
+
+/// 提出書類を 1 件取得する。`period` を指定すると、その期のものを探す。
+pub async fn fetch_filing(
+    ticker: &str,
+    forms: &[String],
+    user_agent: &str,
+    max_chars: usize,
+    period: PeriodFilter,
 ) -> Result<SecFiling> {
     let ua = normalize_user_agent(user_agent)?;
     let ua = ua.as_str();
@@ -374,11 +426,18 @@ pub async fn fetch_latest_filing(
     let report_dates = str_array(recent, "reportDate");
 
     let wanted: Vec<String> = forms.iter().map(|f| f.to_uppercase()).collect();
+    /*
+     * **期の指定があるときは、合致しないものを飛ばす。**
+     * 合致が 1 件も無ければエラーにする（黙って最新を返すと、
+     * 頼んだ期と違う書類が「その期のもの」として分析に入る）。
+     */
     let index = (0..form_list.len())
-        .find(|i| wanted.iter().any(|w| form_list[*i].to_uppercase() == *w))
-        .ok_or_else(|| {
-            AppError::detail(code::NOT_FOUND, ticker.to_string())
-        })?;
+        .find(|i| {
+            wanted.iter().any(|w| form_list[*i].to_uppercase() == *w)
+                && (period.is_empty()
+                    || period.matches(report_dates.get(*i).map(String::as_str).unwrap_or("")))
+        })
+        .ok_or_else(|| AppError::detail(code::NOT_FOUND, ticker.to_string()))?;
 
     let accession = accessions.get(index).cloned().unwrap_or_default();
     let accession_plain = accession.replace('-', "");
@@ -437,6 +496,42 @@ fn str_array(value: &serde_json::Value, key: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn 期の絞り込み() {
+        let q3 = PeriodFilter { year: Some(2023), quarter: Some(3) };
+        assert!(q3.matches("2023-09-30"));
+        assert!(q3.matches("2023-07-01"));
+        assert!(!q3.matches("2023-06-30"));
+        assert!(!q3.matches("2022-09-30"));
+    }
+
+    #[test]
+    fn 年だけの指定は四半期を問わない() {
+        let y = PeriodFilter { year: Some(2023), quarter: None };
+        assert!(y.matches("2023-01-31"));
+        assert!(y.matches("2023-12-31"));
+        assert!(!y.matches("2024-01-31"));
+    }
+
+    /// 指定が無ければ何でも通す（最新を採る従来の動き）。
+    #[test]
+    fn 指定なしは素通し() {
+        let none = PeriodFilter::default();
+        assert!(none.is_empty());
+        assert!(none.matches("2019-03-31"));
+        assert!(none.matches(""));
+    }
+
+    /// 日付が壊れていたら**合致しない扱い**にする。
+    /// 通してしまうと、頼んだ期と違う書類がその期のものとして分析に入る。
+    #[test]
+    fn 壊れた日付は弾く() {
+        let q1 = PeriodFilter { year: Some(2023), quarter: Some(1) };
+        assert!(!q1.matches(""));
+        assert!(!q1.matches("20230331"));
+        assert!(!q1.matches("2023-XX-31"));
+    }
 
     #[test]
     fn メールだけなら名前を補う() {

@@ -79,6 +79,57 @@ pub struct LlmRequest {
     pub max_tokens: Option<u32>,
 }
 
+/// 1 回の呼び出しで消費したトークン数。
+///
+/// **取れなかったら 0 のままにする。** 推定値で埋めると、
+/// 実際の請求額とかけ離れた数字を「実測」として見せることになる。
+#[derive(Debug, Clone, Copy, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TokenUsage {
+    pub input: u32,
+    pub output: u32,
+}
+
+impl TokenUsage {
+    pub fn total(&self) -> u32 {
+        self.input + self.output
+    }
+
+    /// 大きいほうを採る。
+    ///
+    /// SSE では usage が複数回流れる（Anthropic は開始時に入力、
+    /// 終了時に出力）。**上書きすると先に来た値が消える。**
+    fn absorb(&mut self, other: TokenUsage) {
+        self.input = self.input.max(other.input);
+        self.output = self.output.max(other.output);
+    }
+}
+
+/// SSE のペイロードから usage を読む。
+///
+/// 3 社で名前が違うだけで構造は同じなので、1 か所でまとめて見る。
+/// プロバイダごとに書き分けると、追加のたびに拾い漏れが出る。
+fn read_usage(payload: &serde_json::Value) -> Option<TokenUsage> {
+    let pick = |path: &[&str]| -> u32 {
+        path.iter()
+            .find_map(|p| payload.pointer(p).and_then(serde_json::Value::as_u64))
+            .unwrap_or(0) as u32
+    };
+
+    let input = pick(&[
+        "/usage/prompt_tokens",          // OpenAI 互換
+        "/usage/input_tokens",           // Anthropic
+        "/usageMetadata/promptTokenCount", // Gemini
+    ]);
+    let output = pick(&[
+        "/usage/completion_tokens",
+        "/usage/output_tokens",
+        "/usageMetadata/candidatesTokenCount",
+    ]);
+
+    (input > 0 || output > 0).then_some(TokenUsage { input, output })
+}
+
 /// ストリーミングでフロントへ返すイベント。
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -86,7 +137,12 @@ pub enum LlmEvent {
     Start { provider: String, model: String },
     Delta { text: String },
     /// 完了。`cancelled` が true なら中断による途中終了。
-    Done { text: String, cancelled: bool },
+    Done {
+        text: String,
+        cancelled: bool,
+        /// 消費トークン。取得できなければ 0
+        usage: TokenUsage,
+    },
     Error { message: String },
 }
 
@@ -158,6 +214,7 @@ pub async fn send(
         model: model.clone(),
     });
 
+    let mut usage = TokenUsage::default();
     let result = match provider.as_str() {
         "openai" => {
             openai::stream(
@@ -167,11 +224,16 @@ pub async fn send(
                 &request,
                 max_tokens,
                 &channel,
+                &mut usage,
             )
             .await
         }
-        "anthropic" => anthropic::stream(&api_key, &model, &request, max_tokens, &channel).await,
-        "gemini" => gemini::stream(&api_key, &model, &request, max_tokens, &channel).await,
+        "anthropic" => {
+            anthropic::stream(&api_key, &model, &request, max_tokens, &channel, &mut usage).await
+        }
+        "gemini" => {
+            gemini::stream(&api_key, &model, &request, max_tokens, &channel, &mut usage).await
+        }
         // それ以外はユーザーが追加した OpenAI互換プロバイダ
         id => match settings.custom(id) {
             None => Err(AppError::detail(code::UNKNOWN_PROVIDER, id.to_string())),
@@ -182,7 +244,8 @@ pub async fn send(
                 } else if model.trim().is_empty() {
                     Err(AppError::code(code::UNEXPECTED))
                 } else {
-                    openai::stream(base, &api_key, &model, &request, max_tokens, &channel).await
+                    openai::stream(base, &api_key, &model, &request, max_tokens, &channel, &mut usage)
+                        .await
                 }
             }
         },
@@ -193,7 +256,11 @@ pub async fn send(
 
     match result {
         Ok(text) => {
-            let _ = channel.send(LlmEvent::Done { text, cancelled });
+            let _ = channel.send(LlmEvent::Done {
+                text,
+                cancelled,
+                usage,
+            });
             Ok(())
         }
         // 中断で通信が切れた場合はエラー扱いにしない
@@ -201,6 +268,7 @@ pub async fn send(
             let _ = channel.send(LlmEvent::Done {
                 text: String::new(),
                 cancelled: true,
+                usage,
             });
             Ok(())
         }
@@ -251,6 +319,7 @@ pub async fn pump_sse<F>(
     res: reqwest::Response,
     request_id: &str,
     channel: &Channel<LlmEvent>,
+    usage: &mut TokenUsage,
     mut extract: F,
 ) -> Result<String>
 where
@@ -279,6 +348,13 @@ where
             let payload = payload.trim();
             if payload.is_empty() || payload == "[DONE]" {
                 continue;
+            }
+
+            // usage は本文の抽出とは別に、全ペイロードから拾う
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(payload) {
+                if let Some(found) = read_usage(&value) {
+                    usage.absorb(found);
+                }
             }
 
             if let Some(text) = extract(payload)? {

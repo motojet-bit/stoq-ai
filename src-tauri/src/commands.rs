@@ -320,6 +320,9 @@ pub fn analysis_save(
     record: Option<String>,
     // parent_id: 親（四半期本体）の履歴 ID。期中のアドホック分析ならここに指定する
     parent_id: Option<String>,
+    // 実測の消費トークン（API の usage から取る。取れなければ 0）
+    input_tokens: Option<i64>,
+    output_tokens: Option<i64>,
 ) -> Result<SavedAnalysis> {
     analyses::save(
         &app,
@@ -334,6 +337,8 @@ pub fn analysis_save(
         period_label.as_deref(),
         record.as_deref(),
         parent_id.as_deref(),
+        input_tokens.unwrap_or(0),
+        output_tokens.unwrap_or(0),
     )
 }
 
@@ -347,6 +352,31 @@ pub fn analysis_history(app: AppHandle, ticker: Option<String>) -> Result<Vec<Ar
 #[tauri::command]
 pub fn analysis_history_raw(app: AppHandle, id: String) -> Result<Option<String>> {
     analyses::history_raw(&app, &id)
+}
+
+/// 分割実行の途中経過を保存する。
+#[tauri::command]
+pub fn analysis_step_save(
+    app: AppHandle,
+    ticker: String,
+    step: i64,
+    raw: String,
+    input_tokens: i64,
+    output_tokens: i64,
+) -> Result<()> {
+    analyses::save_step(&app, &ticker, step, &raw, input_tokens, output_tokens)
+}
+
+/// 保存済みの途中経過を読む（再開の起点を決める）。
+#[tauri::command]
+pub fn analysis_steps_load(app: AppHandle, ticker: String) -> Result<Vec<analyses::AnalysisStep>> {
+    analyses::load_steps(&app, &ticker)
+}
+
+/// 途中経過を捨てる。
+#[tauri::command]
+pub fn analysis_steps_clear(app: AppHandle, ticker: String) -> Result<()> {
+    analyses::clear_steps(&app, &ticker)
 }
 
 #[tauri::command]
@@ -760,10 +790,20 @@ pub async fn sec_fetch_latest_filing(
     app: AppHandle,
     ticker: String,
     forms: Option<Vec<String>>,
+    // 対象期の指定。**省略すると最新**（従来どおり）
+    year: Option<i32>,
+    quarter: Option<u8>,
 ) -> Result<SecFiling> {
     let settings = settings::load(&app)?;
     let forms = forms.unwrap_or_else(|| vec!["10-K".to_string(), "10-Q".to_string()]);
     // 1 トークン ≒ 4 文字として、プロンプト上限の 6 割を SEC 本文に割り当てる
     let max_chars = settings.max_prompt_tokens * 4 * 6 / 10;
-    edgar::fetch_latest_filing(&ticker, &forms, &settings.sec_user_agent, max_chars).await
+    edgar::fetch_filing(
+        &ticker,
+        &forms,
+        &settings.sec_user_agent,
+        max_chars,
+        edgar::PeriodFilter { year, quarter },
+    )
+    .await
 }

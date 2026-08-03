@@ -151,7 +151,8 @@ export default function App() {
    */
   const [periodAsk, setPeriodAsk] = useState<{
     detected: FiscalPeriod | null;
-    documentName: string;
+    documentName: string | null;
+    mode: "document" | "noDocument";
   } | null>(null);
 
   const settings = useSettings();
@@ -193,7 +194,8 @@ export default function App() {
     if (!activeTicker) return;
     if (!ensureAccess(activeTicker)) return;
     if (documents.length === 0) {
-      setConfirmingNoDocs(true);
+      // 資料なしでも黙って進めない。SEC のどの期を取りに行くかを選ばせる
+      setPeriodAsk({ detected: null, documentName: null, mode: "noDocument" });
       return;
     }
     // 資料があるなら、決算期を確認してから進む（確定済みなら聞き直さない）
@@ -219,19 +221,26 @@ export default function App() {
     } catch {
       // 読めなくても手動で選べるようにダイアログは出す
     }
-    setPeriodAsk({ detected, documentName: first.displayName });
+    setPeriodAsk({ detected, documentName: first.displayName, mode: "document" });
   };
 
   const confirmFiscalPeriod = (
-    fiscalYear: number,
+    fiscalYear: number | null,
     quarter: 1 | 2 | 3 | 4 | null,
     parentId: string | null,
   ) => {
     if (!activeTicker) return;
-    const entry = setConfirmedPeriod(activeTicker, fiscalYear, quarter, periodAsk?.detected ?? null);
     setPeriodAsk(null);
+
+    // 「最新期」を選んだ場合は期を確定させない（Rust 側が最新の提出書類を採る）
+    if (fiscalYear === null) {
+      startAnalysis(parentId, null);
+      return;
+    }
+
+    const entry = setConfirmedPeriod(activeTicker, fiscalYear, quarter, periodAsk?.detected ?? null);
     pushToast("info", t("toast.period.recorded", { key: entry.key }), "");
-    startAnalysis(parentId);
+    startAnalysis(parentId, { year: fiscalYear, quarter });
   };
 
   /*
@@ -250,7 +259,10 @@ export default function App() {
     return mine.find((e) => e.periodLabel === key) ?? mine[0] ?? null;
   })();
 
-  const startAnalysis = (parentId: string | null = null) => {
+  const startAnalysis = (
+    parentId: string | null = null,
+    targetPeriod: { year: number; quarter: 1 | 2 | 3 | 4 | null } | null = null,
+  ) => {
     if (!activeTicker) return;
     void runAnalysis({
       ticker: activeTicker,
@@ -262,6 +274,7 @@ export default function App() {
       documents,
       confirmedPeriodKey: getConfirmedPeriod(activeTicker)?.key ?? null,
       parentId,
+      targetPeriod,
     });
   };
 
@@ -689,6 +702,7 @@ export default function App() {
 
       <FiscalPeriodDialog
         open={periodAsk !== null}
+        mode={periodAsk?.mode ?? "document"}
         detected={periodAsk?.detected ?? null}
         documentName={periodAsk?.documentName ?? null}
         existing={existingForPeriod}

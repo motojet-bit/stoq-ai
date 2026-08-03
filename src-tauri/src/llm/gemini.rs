@@ -5,7 +5,7 @@ use tauri::ipc::Channel;
 
 use crate::error::Result;
 use crate::http;
-use crate::llm::{ensure_success, pump_sse, LlmEvent, LlmRequest, TEMPERATURE};
+use crate::llm::{ensure_success, pump_sse, LlmEvent, LlmRequest, TokenUsage, TEMPERATURE};
 
 pub async fn stream(
     api_key: &str,
@@ -13,6 +13,7 @@ pub async fn stream(
     request: &LlmRequest,
     max_tokens: u32,
     channel: &Channel<LlmEvent>,
+    usage: &mut TokenUsage,
 ) -> Result<String> {
     let url = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse"
@@ -50,7 +51,12 @@ pub async fn stream(
 
     let res = ensure_success(res, "Gemini").await?;
 
-    pump_sse(res, request.request_id.as_deref().unwrap_or_default(), channel, |payload| {
+    pump_sse(
+        res,
+        request.request_id.as_deref().unwrap_or_default(),
+        channel,
+        usage,
+        |payload| {
         let value: serde_json::Value = match serde_json::from_str(payload) {
             Ok(v) => v,
             Err(_) => return Ok(None),

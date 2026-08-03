@@ -45,10 +45,18 @@ export interface StreamHandlers {
   onDelta?: (text: string) => void;
 }
 
+/** 1 回の呼び出しで消費したトークン。取れなければ 0。 */
+export interface TokenUsage {
+  input: number;
+  output: number;
+}
+
 export interface StreamResult {
   text: string;
   /** 中断によって途中で終わったか */
   cancelled: boolean;
+  /** 実測の消費トークン。**推定で埋めない**（請求額とかけ離れた数字を出さないため） */
+  usage?: TokenUsage;
 }
 
 /** 生成中の呼び出しを中断する。それまでのテキストは破棄されない。 */
@@ -93,7 +101,11 @@ export async function streamChat(
         break;
       case "done":
         settled = true;
-        resolveResult({ text: event.text, cancelled: event.cancelled });
+        resolveResult({
+          text: event.text,
+          cancelled: event.cancelled,
+          usage: event.usage,
+        });
         break;
       case "error":
         settled = true;
