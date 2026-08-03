@@ -121,7 +121,7 @@ pub async fn fetch_fundamentals(ticker: &str) -> Result<Fundamentals> {
 
 // ---------------------------------------------------------------- HTTP
 
-async fn fetch_chart_meta(symbol: &str) -> Result<Value> {
+pub(crate) async fn fetch_chart_meta(symbol: &str) -> Result<Value> {
     let url = format!("https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d");
     let res = http::client()?.get(&url).send().await?;
 
@@ -130,11 +130,12 @@ async fn fetch_chart_meta(symbol: &str) -> Result<Value> {
         AppError::code(code::MARKET_FETCH_FAILED)
     })?;
 
+    // Yahoo は理由を書いて返す。**それも一緒に渡す**（銘柄名の誤りか、市場側の障害かが分かれる）
     if let Some(desc) = body
         .pointer("/chart/error/description")
         .and_then(|v| v.as_str())
     {
-        return Err(AppError::detail(code::NOT_FOUND, symbol.to_string()));
+        return Err(AppError::detail(code::NOT_FOUND, format!("{symbol}: {desc}")));
     }
     if !status.is_success() {
         return Err(AppError::code(code::MARKET_FETCH_FAILED));
@@ -163,7 +164,7 @@ async fn fetch_quote_summary(symbol: &str) -> Result<Value> {
     fetch_modules(symbol, MODULES).await
 }
 
-async fn fetch_modules(symbol: &str, modules: &str) -> Result<Value> {
+pub(crate) async fn fetch_modules(symbol: &str, modules: &str) -> Result<Value> {
     let mut refreshed = false;
 
     loop {
@@ -361,11 +362,11 @@ fn num(root: &Value, module: &str, field: &str) -> Option<f64> {
         .or_else(|| node.as_f64())
 }
 
-fn f64_at(v: &Value, key: &str) -> Option<f64> {
+pub(crate) fn f64_at(v: &Value, key: &str) -> Option<f64> {
     v.get(key).and_then(|x| x.as_f64())
 }
 
-fn str_at(v: &Value, key: &str) -> Option<String> {
+pub(crate) fn str_at(v: &Value, key: &str) -> Option<String> {
     v.get(key)
         .and_then(|x| x.as_str())
         .map(|s| s.to_string())
@@ -432,7 +433,7 @@ fn recommendation_label(key: &str) -> String {
     .to_string()
 }
 
-fn now_ms() -> u64 {
+pub(crate) fn now_ms() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)

@@ -221,6 +221,17 @@ fn adjust(detail: &str, current: Dialect) -> Option<Dialect> {
 mod tests {
     use super::*;
 
+    /// **本文を落とさない。** ステータスだけでは原因に辿り着けない。
+    #[test]
+    fn api_error_は本文をそのまま含む() {
+        let body = "Unsupported parameter: 'max_tokens' is not supported with this model";
+        let err = api_error(400, body);
+        // 画面まで運ばれるのは wire()。to_string() はコードしか返さない
+        let text = err.wire();
+        assert!(text.contains("max_tokens"), "本文が消えている: {text}");
+        assert!(text.contains("400"), "ステータスが消えている: {text}");
+    }
+
     /// **名前で判定する。** エラーで気づく作りだと 1 回目が必ず失敗する。
     #[test]
     fn 推論モデルを名前から見分ける() {
@@ -282,13 +293,14 @@ mod tests {
     }
 }
 
+/// API が返したエラーを、原因の分かる形にする。
+///
+/// **本文をそのまま載せる。** ステータスだけでは
+/// 「パラメータ名が違う」のか「残高が無い」のかを切り分けられない。
+/// 診断（`diagnose.ts`）もこの文字列を読んで種別を決めている。
 fn api_error(status: u16, detail: &str) -> AppError {
-    let hint = match status {
-        401 => "（APIキーが正しいか確認してください）",
-        403 => "（APIキーの権限、またはモデルへのアクセス権を確認してください）",
-        404 => "（モデル名または Base URL が正しいか確認してください）",
-        429 => "（レート制限に達しました。しばらく待って再試行してください）",
-        _ => "",
-    };
-    AppError::detail(code::LLM_RESPONSE_INVALID, status.to_string())
+    AppError::detail(
+        code::LLM_RESPONSE_INVALID,
+        format!("HTTP {status}: {detail}"),
+    )
 }

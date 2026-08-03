@@ -68,3 +68,32 @@ describe("案内の出し分け", () => {
     expect(d.detail).toContain("429");
   });
 });
+
+describe("推論モデルのパラメータ拒否", () => {
+  it("Unsupported parameter を出力上限と取り違えない", () => {
+    const raw =
+      "HTTP 400: Unsupported parameter: 'max_tokens' is not supported with this model. " +
+      "Use 'max_completion_tokens' instead.";
+    expect(classifyFailure(new Error(raw))).toBe("badRequest");
+  });
+
+  it("temperature の不適合も同じ扱い", () => {
+    const raw = "HTTP 400: Unsupported value: 'temperature' does not support 0.2 with this model.";
+    expect(classifyFailure(new Error(raw))).toBe("badRequest");
+  });
+
+  it("受け付けられていないので再試行を勧めない", () => {
+    const d = diagnose(new Error("HTTP 400: unsupported parameter: reasoning_effort"));
+    expect(d.retryable).toBe(false);
+    expect(d.openSettings).toBe(true);
+  });
+
+  it("生ログをそのまま残す", () => {
+    const raw = "HTTP 400: Unsupported parameter: 'max_tokens'";
+    expect(diagnose(new Error(raw)).detail).toContain("max_tokens");
+  });
+
+  it("本当の出力上限は truncated のまま", () => {
+    expect(classifyFailure(new Error("finish_reason: length"))).toBe("truncated");
+  });
+});

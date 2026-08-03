@@ -24,6 +24,7 @@ mod personas;
 mod portfolios;
 mod prompts;
 mod quarterly;
+mod quote;
 mod settings;
 mod shortcuts;
 mod trial;
@@ -122,6 +123,7 @@ pub fn run() {
             commands::documents_delete,
             commands::documents_clear,
             commands::yahoo_fetch_fundamentals,
+            commands::market_quote,
             commands::quarterly_series,
             commands::sec_filing_status,
             commands::sec_fetch_latest_filing,

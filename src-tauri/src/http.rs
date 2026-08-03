@@ -19,12 +19,17 @@ static LLM_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 /// 市場データ取得の待ち時間。応答が無ければ早めに諦めてよい。
 const DEFAULT_TIMEOUT_SECS: u64 = 60;
 
-/// LLM 呼び出しの待ち時間。
+/// LLM の**無音**をどこまで許すか。
 ///
 /// **推論モデルは考えている間、1 文字も返さない。**
 /// GPT-5 系や o シリーズは最初のトークンまで数分かかることがあり、
 /// 60 秒で切ると「考えている最中に打ち切る」ことになる。
-const LLM_TIMEOUT_SECS: u64 = 300;
+const LLM_READ_TIMEOUT_SECS: u64 = 300;
+
+/// 接続確立までの待ち時間。**ここは延ばさない。**
+/// 繋がらない相手を 5 分待っても結果は変わらず、
+/// 「URL を間違えた」ことに気づくのが遅れるだけになる。
+const CONNECT_TIMEOUT_SECS: u64 = 30;
 
 pub fn client() -> Result<&'static reqwest::Client> {
     if let Some(c) = CLIENT.get() {
@@ -34,23 +39,38 @@ pub fn client() -> Result<&'static reqwest::Client> {
     Ok(CLIENT.get_or_init(|| built))
 }
 
-/// LLM 用のクライアント。**待ち時間だけが違う。**
+/// LLM 用のクライアント。
 ///
-/// 市場データまで 5 分待つと、繋がらない取得元で画面が止まって見える。
+/// **全体の制限時間を持たせない。** `timeout` は本文の受信中も動き続けるため、
+/// 5 分にすると「5 分以上かかる分析」が答えを返している最中に切られる。
+/// 代わりに `read_timeout` で**無音が続いたときだけ**打ち切る。
+/// 届き続けている限り何分でも待つ、というのが求めている挙動。
 pub fn llm_client() -> Result<&'static reqwest::Client> {
     if let Some(c) = LLM_CLIENT.get() {
         return Ok(c);
     }
-    let built = build(LLM_TIMEOUT_SECS)?;
+    let built = build_llm()?;
     Ok(LLM_CLIENT.get_or_init(|| built))
 }
 
-fn build(timeout_secs: u64) -> Result<reqwest::Client> {
-    reqwest::Client::builder()
-        .cookie_store(true)
-        .timeout(Duration::from_secs(timeout_secs))
-        .connect_timeout(Duration::from_secs(15))
-        .user_agent(BROWSER_UA)
+fn build_llm() -> Result<reqwest::Client> {
+    base_builder()
+        .read_timeout(Duration::from_secs(LLM_READ_TIMEOUT_SECS))
         .build()
         .map_err(|e| AppError::detail(code::HTTP, e.to_string()))
+}
+
+fn build(timeout_secs: u64) -> Result<reqwest::Client> {
+    base_builder()
+        .timeout(Duration::from_secs(timeout_secs))
+        .build()
+        .map_err(|e| AppError::detail(code::HTTP, e.to_string()))
+}
+
+/// 2 つのクライアントで共通の設定。**待ち時間だけを呼び出し側で決める。**
+fn base_builder() -> reqwest::ClientBuilder {
+    reqwest::Client::builder()
+        .cookie_store(true)
+        .connect_timeout(Duration::from_secs(CONNECT_TIMEOUT_SECS))
+        .user_agent(BROWSER_UA)
 }

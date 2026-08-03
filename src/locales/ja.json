@@ -1040,6 +1040,8 @@
   "diagnose.quota.action": "各社のダッシュボードでクレジットを追加してください。アプリ側では解消できません。",
   "diagnose.truncated.title": "出力の途中で切れました",
   "diagnose.truncated.action": "そのまま再開すると、次の段から続きを生成します。",
+  "diagnose.badRequest.title": "リクエストが受け付けられませんでした",
+  "diagnose.badRequest.action": "モデル名が正しいか確認してください。推論モデル（GPT-5 / o シリーズ）では一部のパラメータが使えません。生ログの「parameter」の記載が原因です。",
   "diagnose.network.title": "接続できませんでした",
   "diagnose.network.action": "ネットワークを確認して再開してください。生成済みの段は保持されています。",
   "diagnose.unknown.title": "分析を完了できませんでした",
@@ -1211,6 +1213,13 @@
   "prompt.continueTask": "前回の出力が上限に達しました。以下の文の直後から、フォーマットを崩さずに**続きのみ**を出力してください。すでに書いた部分を繰り返さず、前置きも書かないでください。",
   "prompt.continueHeading": "--- 途中まで書いた内容 ---",
   "step.continuing": "長文レポートを継続生成中（追記 {{attempt}} / {{max}}）…",
-  "step.reasoning": "AI が思考・推論中（Reasoning）…",
-  "step.reasoningHint": "推論モデルは考えている間、文字を返しません。数分かかることがあります。"
+  "step.reasoning": "AI が深層推論中（Reasoning…）",
+  "step.reasoningHint": "推論モデルは考えている間、文字を返しません。数分かかることがあります。",
+  "quote.loading": "株価を取得中…",
+  "quote.offline": "株価取得オフライン",
+  "quote.offlineHint": "市場データを取得できませんでした。分析の操作には影響しません。",
+  "quote.range52": "52週レンジ",
+  "quote.marketCap": "時価総額",
+  "quote.closed": "時間外",
+  "quote.stale": "更新できず"
 }

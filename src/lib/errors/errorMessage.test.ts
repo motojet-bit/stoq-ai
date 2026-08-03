@@ -104,3 +104,22 @@ describe("Rust とフロントの対応", () => {
     expect(rust).not.toContain("AppError::msg");
   });
 });
+
+describe("コードと本文が 1 本の文字列で来る場合", () => {
+  it("コードと詳細に割る", () => {
+    const parsed = parseAppError(
+      new Error("ERR_LLM_RESPONSE_INVALID: HTTP 400: Unsupported parameter: 'max_tokens'"),
+    );
+    expect(parsed.code).toBe("ERR_LLM_RESPONSE_INVALID");
+    expect(parsed.detail).toContain("max_tokens");
+  });
+
+  it("改行を含む本文も落とさない", () => {
+    const parsed = parseAppError(["ERR_HTTP: 一行目", "二行目"].join("\n"));
+    expect(parsed.detail).toContain("二行目");
+  });
+
+  it("コードだけならこれまで通り", () => {
+    expect(parseAppError("ERR_DB_QUERY")).toEqual({ code: "ERR_DB_QUERY", detail: "" });
+  });
+});

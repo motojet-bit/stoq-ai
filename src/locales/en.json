@@ -1040,6 +1040,8 @@
   "diagnose.quota.action": "Add credit on the provider's dashboard. This cannot be resolved from the app.",
   "diagnose.truncated.title": "The output was cut off",
   "diagnose.truncated.action": "Resume and it will continue from the next step.",
+  "diagnose.badRequest.title": "The request was rejected",
+  "diagnose.badRequest.action": "Check the model name. Reasoning models (GPT-5 / o-series) reject some parameters. See the \"parameter\" mention in the raw log.",
   "diagnose.network.title": "Could not connect",
   "diagnose.network.action": "Check your connection and resume. The steps already generated are kept.",
   "diagnose.unknown.title": "The analysis could not be completed",
@@ -1212,5 +1214,12 @@
   "prompt.continueHeading": "--- WHAT HAS BEEN WRITTEN SO FAR ---",
   "step.continuing": "Continuing the long report (part {{attempt}} of {{max}})…",
   "step.reasoning": "The AI is reasoning…",
-  "step.reasoningHint": "Reasoning models return nothing while they think. This can take a few minutes."
+  "step.reasoningHint": "Reasoning models return nothing while they think. This can take a few minutes.",
+  "quote.loading": "Loading price…",
+  "quote.offline": "Price feed offline",
+  "quote.offlineHint": "Could not reach the market data source. Analysis is unaffected.",
+  "quote.range52": "52-week range",
+  "quote.marketCap": "Market cap",
+  "quote.closed": "Closed",
+  "quote.stale": "Not refreshed"
 }

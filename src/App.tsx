@@ -704,6 +704,7 @@ export default function App() {
       <CommandBar
         settings={settings}
         onTickerSubmit={handleTickerSubmit}
+        activeTicker={activeTicker}
         tickerPreset={tickerPreset}
         onFiles={(files) => void ingestFiles(files)}
         onOpenSettings={() => setSettingsOpen(true)}

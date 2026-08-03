@@ -23,6 +23,7 @@ use crate::prompts::{self, AnalystRole};
 use crate::quarterly::{self, QuarterlySeries};
 use crate::settings::{self, SettingsView};
 use crate::shortcuts::{self, ShortcutOverride};
+use crate::quote::{self, MarketQuote};
 use crate::yahoo::{self, Fundamentals};
 
 #[derive(Serialize)]
@@ -797,6 +798,15 @@ pub async fn yahoo_fetch_fundamentals(app: AppHandle, ticker: String) -> Result<
     // 名前は互換のため据え置き。実体は選択中の取得元へ振り分ける
     let current = settings::load(&app)?;
     market::fetch_fundamentals(&current, &ticker).await
+}
+
+/// 株価の軽量フィードを取得する。
+///
+/// **主要指標とは分けている。** 銘柄を切り替えた直後に出したいのは株価であって、
+/// 40 項目の指標を待つ間ずっと空欄を見せる理由はない。
+#[tauri::command]
+pub async fn market_quote(ticker: String) -> Result<MarketQuote> {
+    quote::fetch_quote(&ticker).await
 }
 
 /// 直近 4 四半期の推移とモメンタム判定を取得する。

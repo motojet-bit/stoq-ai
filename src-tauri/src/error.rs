@@ -115,6 +115,21 @@ impl AppError {
         }
     }
 
+    /// チャネルで文字列としてしか渡せない場面のための表現。
+    ///
+    /// **`to_string()` はコードしか返さない。** ストリーミングの失敗は
+    /// `LlmEvent::Error` の 1 本の文字列で運ばれるため、そのまま使うと
+    /// API が返した原因（パラメータ名・残高不足など）が捨てられ、
+    /// 画面には「原因不明」しか残らない。`ERR_X: 本文` の形にして持たせる。
+    pub fn wire(&self) -> String {
+        let p = self.payload();
+        if p.detail.is_empty() {
+            p.code
+        } else {
+            format!("{}: {}", p.code, p.detail)
+        }
+    }
+
     /// フロントへ渡す形にする。
     pub fn payload(&self) -> ErrorPayload {
         match self {
@@ -154,6 +169,19 @@ pub type Result<T> = std::result::Result<T, AppError>;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn wire_はコードと本文をつなげる() {
+        let err = AppError::detail(code::LLM_RESPONSE_INVALID, "HTTP 400: Unsupported parameter");
+        let wire = err.wire();
+        assert!(wire.starts_with("ERR_LLM_RESPONSE_INVALID: "), "{wire}");
+        assert!(wire.contains("Unsupported parameter"), "{wire}");
+    }
+
+    #[test]
+    fn wire_は本文が無ければコードだけ() {
+        assert_eq!(AppError::code(code::LICENSE_EMPTY).wire(), "ERR_LICENSE_EMPTY");
+    }
 
     #[test]
     fn コードだけのエラーを作れる() {

@@ -22,6 +22,8 @@ export type FailureKind =
   | "quota"
   /** 出力上限で切れた */
   | "truncated"
+  /** リクエストが受理されなかった（パラメータ名・値の不適合） */
+  | "badRequest"
   /** ネットワークに届いていない */
   | "network"
   /** 上記に当てはまらない */
@@ -65,6 +67,25 @@ export function classifyFailure(cause: unknown): FailureKind {
   }
   if (status === 403 || has(text, "forbidden", "permission")) return "forbidden";
   if (status === 404 || has(text, "not found", "model_not_found")) return "notFound";
+  /*
+   * **パラメータ拒否を先に見る。** これらの文面には `max_tokens` が含まれるため、
+   * 後ろの判定に落とすと「出力上限に達した」と誤って案内してしまい、
+   * 直し方（モデル名かパラメータ）に辿り着けない。
+   */
+  if (
+    has(
+      text,
+      "unsupported parameter",
+      "unsupported_parameter",
+      "unsupported value",
+      "unrecognized request argument",
+      "invalid_request_error",
+      "is not supported with this model",
+      "does not support",
+    )
+  ) {
+    return "badRequest";
+  }
   if (has(text, "max_tokens", "length", "truncated", "incomplete")) return "truncated";
   if (has(text, "timed out", "timeout", "dns", "connect", "network", "econnrefused")) {
     return "network";
@@ -90,6 +111,8 @@ export function diagnose(cause: unknown): Diagnosis {
     quota: { retryable: false, openSettings: false },
     // 分割実行が入っているので、再開すれば続きから進める
     truncated: { retryable: true, openSettings: false },
+    // 送った内容が受け付けられていない。再試行しても同じ結果になる
+    badRequest: { retryable: false, openSettings: true },
     network: { retryable: true, openSettings: false },
     unknown: { retryable: true, openSettings: false },
   };

@@ -3,10 +3,13 @@ import TickerInput from "@/components/TickerInput";
 import PdfDropZone from "@/components/PdfDropZone";
 import AttachmentHint from "@/components/AttachmentHint";
 import ProviderMenu from "@/components/ProviderMenu";
+import QuoteTicker from "@/components/QuoteTicker";
 
 interface Props {
   settings: AppSettings | null;
   onTickerSubmit: (ticker: string) => void;
+  /** 表示中の銘柄。株価フィードの対象になる */
+  activeTicker?: string | null;
   /** 検討中銘柄のクリックなどで入力欄にセットしたい値 */
   tickerPreset?: { ticker: string; seq: number } | null;
   onFiles: (files: File[]) => void;
@@ -20,6 +23,7 @@ interface Props {
 export default function CommandBar({
   settings,
   onTickerSubmit,
+  activeTicker = null,
   tickerPreset = null,
   onFiles,
   onOpenSettings,
@@ -27,6 +31,9 @@ export default function CommandBar({
   return (
     <div className="flex min-h-12 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-900/60 px-3">
       <TickerInput onSubmit={onTickerSubmit} preset={tickerPreset} />
+
+      {/* 入力欄のすぐ隣に置く。**今どの銘柄を見ているか**と対で読むもの */}
+      <QuoteTicker ticker={activeTicker} />
 
       <div className="h-6 w-px bg-slate-800" />
 

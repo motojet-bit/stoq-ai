@@ -365,6 +365,33 @@ export interface MetricGroup {
 }
 
 /** Yahoo Finance から取得した主要指標 */
+/**
+ * 株価の軽量フィード。**主要指標（`Fundamentals`）とは別物。**
+ * 銘柄を切り替えた直後に、待たずに出せるものだけを集めている。
+ */
+export interface MarketQuote {
+  ticker: string;
+  name: string;
+  currency: string;
+  exchange: string;
+  price: number | null;
+  priceDisplay: string;
+  /** 前日比（金額） */
+  change: number | null;
+  changeDisplay: string;
+  /** 前日比（％） */
+  changePercent: number | null;
+  week52High: number | null;
+  week52HighDisplay: string;
+  week52Low: number | null;
+  week52LowDisplay: string;
+  marketCap: number | null;
+  marketCapDisplay: string;
+  /** 市場の状態（`REGULAR` / `CLOSED` など。取れなければ null） */
+  marketState: string | null;
+  fetchedAtMs: number;
+}
+
 export interface Fundamentals {
   ticker: string;
   name: string;

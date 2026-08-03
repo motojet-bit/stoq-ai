@@ -37,8 +37,17 @@ export function parseAppError(cause: unknown): AppErrorPayload {
   const text =
     cause instanceof Error ? cause.message : typeof cause === "string" ? cause : "";
   // 文字列でコードだけ返ってくることもある
-  if (CODE_PATTERN.test(text.trim())) {
-    return { code: text.trim(), detail: "" };
+  const trimmed = text.trim();
+  if (CODE_PATTERN.test(trimmed)) {
+    return { code: trimmed, detail: "" };
+  }
+  /*
+   * ストリーミングの失敗は 1 本の文字列で運ばれる（`AppError::wire`）。
+   * **ここで割らないと本文が「原因不明」に丸められる。**
+   */
+  const joined = trimmed.match(/^(ERR_[A-Z0-9_]+):\s*([\s\S]+)$/);
+  if (joined) {
+    return { code: joined[1], detail: joined[2] };
   }
   return { code: "ERR_UNEXPECTED", detail: text };
 }

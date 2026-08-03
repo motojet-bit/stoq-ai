@@ -357,8 +357,9 @@ pub async fn send(
             Ok(())
         }
         Err(err) => {
+            // **本文ごと渡す。** コードだけでは何を直せばよいか分からない
             let _ = channel.send(LlmEvent::Error {
-                message: err.to_string(),
+                message: err.wire(),
             });
             Err(err)
         }
@@ -374,15 +375,16 @@ pub async fn ensure_success(res: reqwest::Response, provider: &str) -> Result<re
     let body = res.text().await.unwrap_or_default();
     let detail = extract_error_message(&body).unwrap_or_else(|| body.chars().take(500).collect());
 
-    let hint = match status {
-        401 => "（APIキーが正しいか確認してください）",
-        403 => "（APIキーの権限、またはモデルへのアクセス権を確認してください）",
-        404 => "（モデル名または Base URL が正しいか確認してください）",
-        429 => "（レート制限に達しました。しばらく待って再試行してください）",
-        _ => "",
-    };
-
-    Err(AppError::detail(code::UNEXPECTED, provider.to_string()))
+    /*
+     * **API が返した本文をそのまま載せる。**
+     * ステータスとプロバイダ名だけでは、
+     * 「パラメータ名が違う」のか「残高が無い」のかを切り分けられない。
+     * 診断（`diagnose.ts`）もこの文字列を読んで種別を決めている。
+     */
+    Err(AppError::detail(
+        code::UNEXPECTED,
+        format!("{provider} HTTP {status}: {detail}"),
+    ))
 }
 
 pub fn extract_error_message(body: &str) -> Option<String> {
@@ -476,6 +478,22 @@ where
 
 #[cfg(test)]
 mod tests {
+
+    /// API のエラー本文から、人が読める部分を取り出せること。
+    #[test]
+    fn エラー本文から原因の文だけを取り出す() {
+        let body = r#"{"error":{"message":"Unsupported parameter: 'temperature'","type":"invalid_request_error"}}"#;
+        assert_eq!(
+            extract_error_message(body).as_deref(),
+            Some("Unsupported parameter: 'temperature'")
+        );
+    }
+
+    /// JSON で来なかった場合でも、本文を捨てずに扱えること。
+    #[test]
+    fn json_でない本文は取り出さない() {
+        assert_eq!(extract_error_message("<html>502 Bad Gateway</html>"), None);
+    }
     use super::*;
 
     /// **usage が返らない相手でも落ちない。** 格安の互換サーバーには

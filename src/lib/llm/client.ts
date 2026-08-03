@@ -1,5 +1,6 @@
 import { Channel, invoke, isTauri } from "@/lib/tauri";
 import { t, getLocale  } from "@/lib/i18n/i18n";
+import { waitForSettle } from "@/lib/llm/settleGrace";
 import type { ChatMessage, LlmEvent, ProviderId } from "@/types";
 
 export interface LlmRequest {
@@ -135,10 +136,20 @@ export async function streamChat(
     }
   }
 
-  // invoke は解決したが done/error が届かなかった場合の保険
+  /*
+   * invoke は解決したが done/error が届かなかった場合の保険。
+   *
+   * **すぐには諦めない。** 2 つは別々の IPC で届くため、
+   * コマンドの解決がチャネル配信を追い越すことがある。
+   * 遅れているだけの応答を失敗と決めつけると、
+   * 完了した分析がそのまま捨てられてしまう。
+   */
   if (!settled) {
-    settled = true;
-    rejectResult(new Error(t("err.llmIncomplete")));
+    const outcome = await waitForSettle(result);
+    if (outcome === "pending" && !settled) {
+      settled = true;
+      rejectResult(new Error(t("err.llmIncomplete")));
+    }
   }
 
   return result;
