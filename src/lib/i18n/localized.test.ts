@@ -155,6 +155,7 @@ const LOCALIZED = [
   "src/lib/portfolio/quarterCompare.ts",
   "src/lib/chat/contextGauge.ts",
   "src/lib/prompts/mapReduce.ts",
+  "src/lib/config/providerPresets.ts",
   "src/lib/ui/collapsedSections.ts",
   "src/lib/usage/usageLog.ts",
   "src/lib/usage/usageStore.ts",
@@ -190,6 +191,11 @@ const INTERNAL_KEYS: Record<string, string[]> = {
    * 日本の決算資料には日本語の社名しか書かれていない。
    */
   "src/lib/parser/tickerMatch.ts": ["トヨタ自動車", "ソニーグループ", "ソフトバンクグループ"],
+  /*
+   * プロバイダの**表示名**。固有名詞なので訳さない。
+   * 「（ローカル）」は自分の PC で動く旨で、ここが英語だと何のことか伝わらない。
+   */
+  "src/lib/config/providerPresets.ts": ["SiliconFlow（硅基流动）", "Ollama（ローカル）"],
   "src/lib/compare/compareData.ts": [
     "現金・同等物",
     "営業CF",

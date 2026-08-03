@@ -41,6 +41,14 @@ const CUSTOM_SUGGESTIONS: { match: string; models: ModelSuggestion[] }[] = [
     ],
   },
   {
+    match: "siliconflow",
+    models: [
+      { id: "Qwen/Qwen2.5-72B-Instruct", note: t("model.general") },
+      { id: "Qwen/Qwen2.5-32B-Instruct", note: t("model.cheapFast") },
+      { id: "deepseek-ai/DeepSeek-R1", note: t("model.reasoningCheap") },
+    ],
+  },
+  {
     match: "moonshot",
     models: [
       { id: "moonshot-v1-8k", note: t("model.context8k") },

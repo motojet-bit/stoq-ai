@@ -3,6 +3,11 @@ import type { AppSettings, CustomProvider, ProviderId } from "@/types";
 import { BUILTIN_PROVIDERS, providerReadiness } from "@/lib/config/providers";
 import { modelSuggestions } from "@/lib/config/modelCatalog";
 import {
+  isPresetAdded,
+  PROVIDER_PRESETS,
+  type ProviderPreset,
+} from "@/lib/config/providerPresets";
+import {
   addCustomProvider,
   removeCustomProvider,
   saveSettings,
@@ -111,6 +116,32 @@ export default function SettingsModal({
     } catch (e) {
       setError(errorMessage(e));
     }
+  };
+
+  /**
+   * プリセットから 1 枠を作る。
+   *
+   * **接続先とモデルまで入れておく。** 枠だけ作って空にすると、
+   * 結局 Base URL を調べることになり、押した意味が無い。
+   */
+  const addPreset = async (preset: ProviderPreset) => {
+    setBusy(true);
+    await run(async () => {
+      const next = await addCustomProvider(preset.label);
+      // 直前に増えた枠が対象。ID はここで初めて分かる
+      const added = next.customProviders[next.customProviders.length - 1];
+      if (!added) return;
+      await updateCustomProvider(added.id, {
+        label: preset.label,
+        baseUrl: preset.baseUrl,
+        model: preset.model,
+      });
+      setCustomDrafts((prev) => ({
+        ...prev,
+        [added.id]: { label: preset.label, baseUrl: preset.baseUrl, model: preset.model },
+      }));
+    });
+    setBusy(false);
   };
 
   const handleSave = async () => {
@@ -372,6 +403,37 @@ export default function SettingsModal({
                     <IconPlus className="h-3.5 w-3.5" />
                     {t("settings.provider.add")}
                   </button>
+                </div>
+
+                {/*
+                  **Base URL を覚えている人はいない。** 追加のたびに調べさせると、
+                  安いモデルを使いたい人がそこで諦める。
+                  1 押しで枠を作り、あとはキーを入れるだけにする。
+                */}
+                <div className="mb-3 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5">
+                  <p className="t-label font-medium text-slate-300">{t("preset.heading")}</p>
+                  <p className="mt-0.5 t-label text-slate-600">{t("preset.hint")}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {PROVIDER_PRESETS.map((preset) => {
+                      const added = isPresetAdded(preset, settings.customProviders);
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          disabled={added || busy}
+                          title={t(preset.noteKey)}
+                          onClick={() => void addPreset(preset)}
+                          className="flex min-h-7 items-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2.5 t-label text-slate-300 transition-colors hover:border-emerald-700 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {!added && <IconPlus className="h-3 w-3" />}
+                          {preset.label}
+                          {added && (
+                            <span className="text-slate-600">（{t("preset.added")}）</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {settings.customProviders.length === 0 ? (

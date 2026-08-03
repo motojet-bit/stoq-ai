@@ -1193,5 +1193,15 @@
   "mapReduce.reduceHeading": "## 添付資料の抜き出し（{{count}} 分割）\n\n資料が大きいため分割して読み取りました。以下は各部分から抜き出した内容です。矛盾があれば指摘したうえで、どちらを採るかを述べてください。",
   "step.split.mapping": "資料を分割分析中（{{done}} / {{total}} 完了）…",
   "step.split.reducing": "中間結果を統合中…",
-  "basis.splitDocument": "添付資料を {{count}} 分割して読み取り"
+  "basis.splitDocument": "添付資料を {{count}} 分割して読み取り",
+  "preset.heading": "かんたん追加（OpenAI 互換）",
+  "preset.hint": "押すと接続先が入った枠ができます。あとは APIキーを入れるだけです。",
+  "preset.added": "追加済み",
+  "preset.getKey": "キーを取得",
+  "preset.note.deepseek": "低価格。推論モデル（deepseek-reasoner）も選べます",
+  "preset.note.siliconflow": "Qwen や DeepSeek-R1 を低価格で。無料枠あり",
+  "preset.note.ollama": "自分の PC で動かす。APIキー不要・完全無料",
+  "preset.note.openrouter": "1 つのキーで多数のモデルを使い分け",
+  "preset.note.groq": "高速。無料枠あり",
+  "model.reasoningCheap": "低価格な推論モデル"
 }

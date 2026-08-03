@@ -1193,5 +1193,15 @@
   "mapReduce.reduceHeading": "## Extracts from the attached document ({{count}} parts)\n\nThe document was large, so it was read in parts. Below is what was extracted from each. If they conflict, say so and state which reading you take.",
   "step.split.mapping": "Reading the document in parts ({{done}} of {{total}} done)…",
   "step.split.reducing": "Merging the extracts…",
-  "basis.splitDocument": "Attached document read in {{count}} parts"
+  "basis.splitDocument": "Attached document read in {{count}} parts",
+  "preset.heading": "Quick add (OpenAI-compatible)",
+  "preset.hint": "Adds a provider with the endpoint already filled in. You only need to paste the API key.",
+  "preset.added": "Added",
+  "preset.getKey": "Get a key",
+  "preset.note.deepseek": "Low cost, with a reasoning model (deepseek-reasoner) available",
+  "preset.note.siliconflow": "Qwen and DeepSeek-R1 at low cost, with a free tier",
+  "preset.note.ollama": "Runs on your own PC — no API key, completely free",
+  "preset.note.openrouter": "Many models through a single key",
+  "preset.note.groq": "Very fast, with a free tier",
+  "model.reasoningCheap": "Low-cost reasoning model"
 }
