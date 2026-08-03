@@ -8,12 +8,13 @@ import type { AnalysisRecord } from "@/lib/export/analysisRecord";
  * 画面ごとに組み立て直すと、CSV と JSON で数字が食い違う事故が起きる。
  */
 
-export type ExportFormat = "csv" | "md" | "json";
+export type ExportFormat = "csv" | "md" | "json" | "pdf";
 
 export const EXPORT_FORMATS: { id: ExportFormat; labelKey: string; extension: string }[] = [
   { id: "csv", labelKey: "export.format.csv", extension: "csv" },
   { id: "md", labelKey: "export.format.md", extension: "md" },
   { id: "json", labelKey: "export.format.json", extension: "json" },
+  { id: "pdf", labelKey: "export.format.pdf", extension: "pdf" },
 ];
 
 // ---------------------------------------------------------------- CSV
@@ -204,6 +205,9 @@ export function renderExport(records: AnalysisRecord[], format: ExportFormat): s
       return toMarkdown(records);
     case "json":
       return toJson(records);
+    case "pdf":
+      // PDF はファイルへ書かず印刷ダイアログへ回す（exportStore が分岐する）
+      return "";
   }
 }
 

@@ -14,11 +14,12 @@ import {
   parseAnalysisRecord,
   type AnalysisRecord,
 } from "@/lib/export/analysisRecord";
-import { pushChatDraft } from "@/lib/chat/chatDraft";
+import { markAsQuote, pushChatDraft } from "@/lib/chat/chatDraft";
 import { setPortfolioSplit, usePortfolioSplit } from "@/lib/ui/portfolioLayout";
 import { toastError, toastSuccess } from "@/lib/ui/toastStore";
 import PanelHeader from "@/components/PanelHeader";
 import PortfolioHeatmap from "@/components/PortfolioHeatmap";
+import QuarterCompareTable from "@/components/QuarterCompareTable";
 import ExportMenu from "@/components/ExportMenu";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import {
@@ -53,7 +54,7 @@ export default function PortfolioHistoryPanel({
   const split = usePortfolioSplit();
 
   // 一覧（ヒートマップ）とタイムラインを行き来する
-  const [view, setView] = useState<"heatmap" | "timeline">("heatmap");
+  const [view, setView] = useState<"heatmap" | "quarter" | "timeline">("heatmap");
   const [openTicker, setOpenTicker] = useState<string | null>(null);
   const [transferring, setTransferring] = useState(false);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
@@ -171,8 +172,9 @@ export default function PortfolioHistoryPanel({
   };
 
   const quote = (ticker: string, label: string, text: string) => {
+    // 引用部分に目印を付ける。画面では赤字になり、自分が書いた文と見分けが付く
     pushChatDraft(
-      `${t("history.quotePrefix", { ticker, label })}\n\n---\n${text}\n---\n\n`,
+      `${t("history.quotePrefix", { ticker, label })}\n\n${markAsQuote(text)}\n\n`,
     );
     toastSuccess(t("history.quoted"));
   };
@@ -219,8 +221,33 @@ export default function PortfolioHistoryPanel({
       />
 
       <div className="panel-scroll px-3 py-2">
-        {view === "heatmap" ? (
-          <PortfolioHeatmap entries={archive} onSelectTicker={openTimeline} />
+        {view === "heatmap" || view === "quarter" ? (
+          <>
+            {/* 俯瞰（全期）と、期を絞った横並びを切り替える */}
+            <div className="mb-2 flex gap-1">
+              {(["heatmap", "quarter"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setView(mode)}
+                  aria-pressed={view === mode}
+                  className={`min-h-6 rounded border px-2 t-label transition-colors ${
+                    view === mode
+                      ? "border-emerald-600 bg-emerald-950/40 text-emerald-300"
+                      : "border-slate-700 text-slate-400 hover:border-slate-600"
+                  }`}
+                >
+                  {mode === "heatmap" ? t("history.viewHeatmap") : t("history.viewQuarter")}
+                </button>
+              ))}
+            </div>
+
+            {view === "heatmap" ? (
+              <PortfolioHeatmap entries={archive} onSelectTicker={openTimeline} />
+            ) : (
+              <QuarterCompareTable entries={archive} onSelectTicker={openTimeline} />
+            )}
+          </>
         ) : (
           <>
             {/* タイムライン。一覧へ戻る導線は必ず残す */}

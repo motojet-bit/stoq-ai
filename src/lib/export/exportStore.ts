@@ -6,6 +6,7 @@ import {
   renderExport,
   type ExportFormat,
 } from "@/lib/export/exportAnalysis";
+import { buildPrintableHtml } from "@/lib/export/exportPdf";
 import { t } from "@/lib/i18n/i18n";
 
 /**
@@ -23,6 +24,16 @@ export async function exportRecords(
     return;
   }
 
+  /*
+   * **PDF はファイルに書かず、印刷ダイアログへ回す。**
+   * PDF 生成ライブラリを足すと、日本語の埋め込みフォントで数 MB 増える。
+   * 「超軽量であること」を優先し、OS 側のフォントで描かせる。
+   */
+  if (format === "pdf") {
+    printAsPdf(records);
+    return;
+  }
+
   const contents = renderExport(records, format);
   const fileName = exportFileName(records, format, Date.now());
 
@@ -37,4 +48,18 @@ export async function exportRecords(
   } catch (e) {
     toastError(t("toast.export.failed"), e);
   }
+}
+
+/** 印刷用の別ウィンドウを開く。閉じるのはユーザーに任せる（保存前に閉じない）。 */
+function printAsPdf(records: AnalysisRecord[]): void {
+  const win = window.open("", "_blank");
+  if (!win) {
+    toastError(t("export.pdf.blocked"), t("toast.export.appOnly"));
+    return;
+  }
+  win.document.write(buildPrintableHtml(records));
+  win.document.close();
+  // 描画が終わってから印刷を呼ぶ（空白ページで開くのを防ぐ）
+  win.onload = () => win.print();
+  toastSuccess(t("toast.export.done"), t("export.pdf.opened"));
 }

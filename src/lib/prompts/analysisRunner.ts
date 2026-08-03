@@ -289,7 +289,13 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
          * 黙って別の期の書類で続けると、頼んだ期の分析として
          * 違う期の中身が保存される。
          */
-        if (options.targetPeriod) {
+        /*
+         * **添付資料があるなら、SEC が取れなくても止めない。**
+         * PDF と財務データだけで分析は成立する。
+         * 期の指定はユーザーが「その期の資料」を入れている意思表示なので、
+         * SEC 側の未提出を理由に中断すると、手元にある資料を使えないまま終わる。
+         */
+        if (options.targetPeriod && documents.length === 0) {
           const key = `FY${options.targetPeriod.year}${
             options.targetPeriod.quarter ? `-Q${options.targetPeriod.quarter}` : ""
           }`;

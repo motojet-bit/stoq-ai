@@ -171,6 +171,10 @@ export default function CloudSyncSettings() {
         <p className="mt-1 selectable t-label leading-relaxed text-slate-600">
           {t("cloud.clientId.help")}
         </p>
+        {/* 費用がかかると誤解されると、ここで止まってしまう */}
+        <p className="mt-1 t-label font-medium text-emerald-400/90">
+          {t("cloud.clientId.free")}
+        </p>
       </label>
 
       {/* ------------------------------------------------ 操作 */}

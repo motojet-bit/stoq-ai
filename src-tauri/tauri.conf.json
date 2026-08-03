@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "StoQ AI Analyzer",
-        "width": 1440,
-        "height": 900,
+        "width": 1680,
+        "height": 1000,
         "minWidth": 1080,
         "minHeight": 680,
         "resizable": true,

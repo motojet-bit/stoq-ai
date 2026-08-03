@@ -20,6 +20,11 @@ interface Props {
   /** 判定に使った資料の名前 */
   documentName: string | null;
   /**
+   * 期の違う資料が複数見つかったときの候補。
+   * **1 件以下なら絞り込みは出さない。**
+   */
+  candidates?: { period: FiscalPeriod; documents: string[] }[];
+  /**
    * この期の本体としてすでに保存済みの分析。
    * あれば「期中の追加分析として記録する」を選べるようにする。
    */
@@ -52,6 +57,7 @@ export default function FiscalPeriodDialog({
   mode = "document",
   detected,
   documentName,
+  candidates = [],
   existing,
   existingChildCount,
   onConfirm,
@@ -65,6 +71,9 @@ export default function FiscalPeriodDialog({
   const [asAdhoc, setAsAdhoc] = useState(false);
   // 資料なしモードで、過去期を指定するか（既定は最新期）
   const [pickPast, setPickPast] = useState(false);
+  // 期が複数見つかったときに選ばれているキー
+  const [pickedKey, setPickedKey] = useState<string | null>(null);
+  const multi = candidates.length > 1;
 
   // 開くたびに検出結果へ戻す（前回の修正を引きずらない）
   useEffect(() => {
@@ -74,6 +83,14 @@ export default function FiscalPeriodDialog({
     // 既定は本体。上書きの意図が無いときだけ選び直してもらう
     setAsAdhoc(false);
     setPickPast(false);
+    setPickedKey(candidates[0]?.period.key ?? null);
+    // 複数見つかったときは先頭（最も新しい期）を初期選択にする
+    if (candidates.length > 1) {
+      setYear(candidates[0].period.fiscalYear);
+      setQuarter(candidates[0].period.quarter);
+    }
+    // candidates は開いた瞬間の内容だけを見る（開いている間に増えない）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, detected, thisYear]);
 
   useEffect(() => {
@@ -100,10 +117,58 @@ export default function FiscalPeriodDialog({
     >
       <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-black/60">
         <h2 id="fiscal-period-title" className="text-base font-semibold text-slate-100">
-          {mode === "noDocument" ? t("period.noDocTitle") : t("period.dialogTitle")}
+          {multi
+            ? t("period.multiTitle")
+            : mode === "noDocument"
+              ? t("period.noDocTitle")
+              : t("period.dialogTitle")}
         </h2>
 
-        {mode === "noDocument" ? (
+        {/*
+          **期の違う資料は混ぜない。** どの数字がどの期のものか
+          分からない結果ができるので、1 つ選ばせてから走らせる。
+        */}
+        {multi && (
+          <div className="mt-2">
+            <p className="text-sm leading-relaxed text-slate-400">
+              {t("period.multiBody", { count: candidates.length })}
+            </p>
+            <div className="mt-3 space-y-1.5">
+              {candidates.map((c) => (
+                <label
+                  key={c.period.key}
+                  className={`flex cursor-pointer gap-2.5 rounded-md border px-3 py-2 text-sm transition-colors ${
+                    pickedKey === c.period.key
+                      ? "border-emerald-600 bg-emerald-950/30 text-slate-100"
+                      : "border-slate-800 text-slate-400 hover:border-slate-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    checked={pickedKey === c.period.key}
+                    onChange={() => {
+                      setPickedKey(c.period.key);
+                      setYear(c.period.fiscalYear);
+                      setQuarter(c.period.quarter);
+                    }}
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-500"
+                  />
+                  <span className="min-w-0">
+                    <span className="font-mono font-semibold text-emerald-300">
+                      {c.period.key}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-slate-600">
+                      {c.documents.join(" / ")}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-slate-600">{t("period.multiHint")}</p>
+          </div>
+        )}
+
+        {multi ? null : mode === "noDocument" ? (
           <>
             <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {t("period.noDocBody")}
@@ -148,6 +213,11 @@ export default function FiscalPeriodDialog({
               {detected.matchedBy === "fileName" && (
                 <span className="mt-1 block text-xs text-amber-400/80">
                   {t("period.detectedFromName")}
+                </span>
+              )}
+              {detected.matchedBy === "estimated" && (
+                <span className="mt-1 block text-xs text-amber-400/80">
+                  {t("period.estimated")}
                 </span>
               )}
             </>

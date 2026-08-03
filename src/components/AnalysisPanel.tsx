@@ -23,6 +23,12 @@ import {
   IconTrash,
 } from "@/components/Icons";
 import { useDebatePaneOpen, toggleDebatePane } from "@/lib/ui/debateLayout";
+import {
+  isSelectAll,
+  SELECT_SCOPE_ATTR,
+  scopeElementOf,
+  selectElementContents,
+} from "@/lib/ui/selectScope";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
@@ -288,7 +294,23 @@ export default function AnalysisPanel({
         </div>
       )}
 
-      <div ref={scrollRef} className="panel-scroll px-4 py-3">
+      {/*
+        **Ctrl+A はこの中だけを選ぶ。** 既定のままだとサイドバーや
+        ボタンのラベルまで選択され、コピーしても使えない。
+      */}
+      <div
+        ref={scrollRef}
+        className="panel-scroll px-4 py-3"
+        {...{ [SELECT_SCOPE_ATTR]: "analysis" }}
+        tabIndex={-1}
+        onKeyDown={(e) => {
+          if (!isSelectAll(e)) return;
+          const scope = scopeElementOf(e.target);
+          if (!scope) return;
+          e.preventDefault();
+          selectElementContents(scope);
+        }}
+      >
           {!ticker ? (
             <p className="t-body text-slate-500">
               {t("analysis.emptyHint", { count: CRITERIA.length })}

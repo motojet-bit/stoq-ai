@@ -53,8 +53,9 @@ import ResizableSplit from "@/components/ResizableSplit";
 import AnalysisWithDebate from "@/components/AnalysisWithDebate";
 import FiscalPeriodDialog from "@/components/FiscalPeriodDialog";
 import {
-  detectFiscalPeriod,
+  collectFiscalPeriods,
   detectFiscalPeriodFromName,
+  likelyLatestPeriod,
   periodKey,
   type FiscalPeriod,
 } from "@/lib/parser/fiscalPeriod";
@@ -154,6 +155,8 @@ export default function App() {
     detected: FiscalPeriod | null;
     documentName: string | null;
     mode: "document" | "noDocument";
+    /** 期が複数見つかったときの候補（1 件以下なら絞り込みは出ない） */
+    candidates: { period: FiscalPeriod; documents: string[] }[];
   } | null>(null);
 
   const settings = useSettings();
@@ -196,7 +199,12 @@ export default function App() {
     if (!ensureAccess(activeTicker)) return;
     if (documents.length === 0) {
       // 資料なしでも黙って進めない。SEC のどの期を取りに行くかを選ばせる
-      setPeriodAsk({ detected: null, documentName: null, mode: "noDocument" });
+      setPeriodAsk({
+        detected: null,
+        documentName: null,
+        mode: "noDocument",
+        candidates: [],
+      });
       return;
     }
     // 資料があるなら、決算期を確認してから進む（確定済みなら聞き直さない）
@@ -215,20 +223,39 @@ export default function App() {
    * あとからヒートマップの期と突き合わせられない。
    */
   const askFiscalPeriod = async () => {
-    const first = documents[0];
-    let detected: FiscalPeriod | null = null;
-    try {
-      detected = detectFiscalPeriod(await readDocumentText(first.id));
-    } catch {
-      // 読めなくても手動で選べるようにダイアログは出す
+    // 全資料の本文を読み、期ごとにまとめる（読めないものは名前だけで判定）
+    const loaded: { name: string; text: string }[] = [];
+    for (const doc of documents) {
+      let text = "";
+      try {
+        text = await readDocumentText(doc.id);
+      } catch {
+        // 読めなくてもファイル名から拾えることがある
+      }
+      loaded.push({ name: doc.displayName, text });
     }
+
+    const candidates = collectFiscalPeriods(loaded);
+    const first = documents[0];
+
     /*
-     * **本文で読めなければファイル名を見る。**
-     * 画像だけの PDF や、表紙に期を書かない資料でも
-     * `FY26_Q3.pdf` のような命名は多い。空欄で選ばせるより手がかりを出す。
+     * 初期選択の決め方:
+     * 1. 資料から読み取れた期（複数あれば最も新しいもの）
+     * 2. ファイル名から読み取れた期
+     * 3. **どちらも駄目なら、SEC に出ていそうな最新期を見積もって出す。**
+     *    空欄で選ばせるより、直すほうが速い
      */
-    detected ??= detectFiscalPeriodFromName(first.displayName);
-    setPeriodAsk({ detected, documentName: first.displayName, mode: "document" });
+    const detected =
+      candidates[0]?.period ??
+      detectFiscalPeriodFromName(first.displayName) ??
+      likelyLatestPeriod(new Date());
+
+    setPeriodAsk({
+      detected,
+      documentName: first.displayName,
+      mode: "document",
+      candidates,
+    });
   };
 
   const confirmFiscalPeriod = (
@@ -710,6 +737,7 @@ export default function App() {
       <FiscalPeriodDialog
         open={periodAsk !== null}
         mode={periodAsk?.mode ?? "document"}
+        candidates={periodAsk?.candidates ?? []}
         detected={periodAsk?.detected ?? null}
         documentName={periodAsk?.documentName ?? null}
         existing={existingForPeriod}

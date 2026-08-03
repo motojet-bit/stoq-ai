@@ -39,6 +39,23 @@ export function getChatDraft(): ChatDraft | null {
   return draft;
 }
 
+/**
+ * 引用行の目印。
+ *
+ * **行頭に付ける。** 画面では赤字にして、自分が書いた文と
+ * 貼り込んだ引用を見分けられるようにする。
+ * Markdown の引用記法と同じ記号にしてあるので、そのまま貼っても意味が通る。
+ */
+export const QUOTE_MARK = "> ";
+
+/** 本文の各行に引用の目印を付ける。 */
+export function markAsQuote(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => (line.trim() === "" ? QUOTE_MARK.trimEnd() : QUOTE_MARK + line))
+    .join("\n");
+}
+
 /** 入力欄に流し込む。空文字は無視する。 */
 export function pushChatDraft(text: string): void {
   const trimmed = text.trim();

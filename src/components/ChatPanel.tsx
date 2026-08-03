@@ -27,6 +27,7 @@ import {
   useChatAttachmentsBusy,
 } from "@/lib/chat/chatAttachments";
 import { IconClose, IconPaperclip } from "@/components/Icons";
+import MessageBody from "@/components/MessageBody";
 import { useT } from "@/lib/i18n/i18n";
 import { errorMessage } from "@/lib/errors/errorMessage";
 
@@ -243,12 +244,7 @@ ${draft.text}`));
                         {m.error}
                       </p>
                     ) : (
-                      <p className="selectable t-body whitespace-pre-wrap break-words text-slate-300">
-                        {m.content}
-                        {m.streaming && (
-                          <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-emerald-500 align-middle" />
-                        )}
-                      </p>
+<MessageBody body={m.content} />
                     )}
                   </li>
                 ))}
