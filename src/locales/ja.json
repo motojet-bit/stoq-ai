@@ -1210,5 +1210,7 @@
   "diagnose.restartHint": "保存済みの途中経過を捨てて、最初の段からやり直します。",
   "prompt.continueTask": "前回の出力が上限に達しました。以下の文の直後から、フォーマットを崩さずに**続きのみ**を出力してください。すでに書いた部分を繰り返さず、前置きも書かないでください。",
   "prompt.continueHeading": "--- 途中まで書いた内容 ---",
-  "step.continuing": "長文レポートを継続生成中（追記 {{attempt}} / {{max}}）…"
+  "step.continuing": "長文レポートを継続生成中（追記 {{attempt}} / {{max}}）…",
+  "step.reasoning": "AI が思考・推論中（Reasoning）…",
+  "step.reasoningHint": "推論モデルは考えている間、文字を返しません。数分かかることがあります。"
 }

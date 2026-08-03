@@ -47,7 +47,7 @@ pub async fn stream(
         body["system"] = json!(system);
     }
 
-    let res = http::client()?
+    let res = http::llm_client()?
         .post(API_URL)
         .header("x-api-key", api_key)
         .header("anthropic-version", API_VERSION)

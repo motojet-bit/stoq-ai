@@ -42,7 +42,7 @@ pub async fn stream(
         body["systemInstruction"] = json!({ "parts": [{ "text": system }] });
     }
 
-    let res = http::client()?
+    let res = http::llm_client()?
         .post(&url)
         .header("x-goog-api-key", api_key)
         .header("Content-Type", "application/json")

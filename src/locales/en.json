@@ -1210,5 +1210,7 @@
   "diagnose.restartHint": "Discards the saved progress and starts again from the first step.",
   "prompt.continueTask": "The previous output hit the limit. Continue from immediately after the text below, keeping the same format, and output **only the continuation**. Do not repeat what is already written, and do not add any preamble.",
   "prompt.continueHeading": "--- WHAT HAS BEEN WRITTEN SO FAR ---",
-  "step.continuing": "Continuing the long report (part {{attempt}} of {{max}})…"
+  "step.continuing": "Continuing the long report (part {{attempt}} of {{max}})…",
+  "step.reasoning": "The AI is reasoning…",
+  "step.reasoningHint": "Reasoning models return nothing while they think. This can take a few minutes."
 }

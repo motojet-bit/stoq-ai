@@ -34,11 +34,29 @@ impl TokenParam {
     }
 }
 
+/// 推論（Reasoning）モデルか。
+///
+/// **名前で判定する。** 推論モデルは `max_tokens` を受け付けず
+/// `max_completion_tokens` を要求し、`temperature` も拒む。
+/// エラーで気づいて切り替える作りだと、1 回目が必ず失敗して待ち時間が延びる。
+/// 互換 API 側で同じ名前のモデルを出していても、同じ扱いで問題ない。
+pub fn is_reasoning_model(model: &str) -> bool {
+    let m = model.to_lowercase();
+    m.starts_with("o1")
+        || m.starts_with("o3")
+        || m.starts_with("o4")
+        || m.contains("gpt-5")
+        || m.contains("reasoner")
+        || m.contains("deepseek-r1")
+}
+
 /// 送信時に調整しうるパラメータの状態。
 #[derive(Debug, Clone, Copy)]
 struct Dialect {
     token_param: TokenParam,
     send_temperature: bool,
+    /// 推論モデルか。`reasoning_effort` を添えるかの判断に使う
+    reasoning: bool,
     /// 出力上限パラメータの切り替えは 1 回だけ。往復して無限ループになるのを防ぐ。
     token_param_switched: bool,
 }
@@ -64,13 +82,16 @@ pub async fn stream(
     // 本家 OpenAI は新しいモデルほど max_completion_tokens を要求するため、そちらを本命にする。
     // 他社の互換 API は max_tokens しか知らないことが多いのでそちらを本命にする。
     let is_official_openai = base_url.contains("api.openai.com");
+    // 推論モデルは max_tokens を受け付けず、temperature も拒む
+    let reasoning = is_reasoning_model(model);
     let mut dialect = Dialect {
-        token_param: if is_official_openai {
+        token_param: if is_official_openai || reasoning {
             TokenParam::MaxCompletionTokens
         } else {
             TokenParam::MaxTokens
         },
-        send_temperature: true,
+        send_temperature: !reasoning,
+        reasoning,
         token_param_switched: false,
     };
 
@@ -80,7 +101,7 @@ pub async fn stream(
     for _ in 0..3 {
         let body = build_body(model, &messages, max_tokens, dialect);
 
-        let res = http::client()?
+        let res = http::llm_client()?
             .post(&url)
             .bearer_auth(api_key)
             .header("Content-Type", "application/json")
@@ -136,8 +157,23 @@ fn build_body(model: &str, messages: &[Value], max_tokens: u32, dialect: Dialect
     if dialect.send_temperature {
         body["temperature"] = json!(TEMPERATURE);
     }
+    /*
+     * 推論の深さ。**既定の medium を明示して送る。**
+     * 送らないとモデル側の既定に委ねることになり、
+     * 提供元が既定を変えたときに結果の傾向が黙って変わる。
+     * 知らないパラメータを無視する互換サーバーでは何も起きない。
+     */
+    if dialect.reasoning {
+        body["reasoning_effort"] = json!(REASONING_EFFORT);
+    }
     body
 }
+
+/// 推論の深さ。`low` / `medium` / `high`。
+///
+/// **medium から始める。** high は待ち時間と費用が大きく伸びる割に、
+/// 20 項目の採点では差が出にくい。
+pub const REASONING_EFFORT: &str = "medium";
 
 /// エラーメッセージを読み、次に試すべきパラメータの組を返す。調整できなければ None。
 fn adjust(detail: &str, current: Dialect) -> Option<Dialect> {
@@ -166,7 +202,84 @@ fn adjust(detail: &str, current: Dialect) -> Option<Dialect> {
         });
     }
 
+    /*
+     * `reasoning_effort` を知らない互換サーバー。
+     * **落として 1 回だけやり直す。** 深さの指定が通らないだけで、
+     * 生成自体はできるので、ここで諦める理由が無い。
+     */
+    if current.reasoning && lower.contains("reasoning_effort") {
+        return Some(Dialect {
+            reasoning: false,
+            ..current
+        });
+    }
+
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **名前で判定する。** エラーで気づく作りだと 1 回目が必ず失敗する。
+    #[test]
+    fn 推論モデルを名前から見分ける() {
+        for model in ["o1-preview", "o3-mini", "gpt-5.5", "deepseek-reasoner", "DeepSeek-R1"] {
+            assert!(is_reasoning_model(model), "{model}");
+        }
+        for model in ["gpt-4o", "claude-opus-5", "gemini-2.5-pro", "llama-3.3-70b"] {
+            assert!(!is_reasoning_model(model), "{model}");
+        }
+    }
+
+    /// 推論モデルには max_completion_tokens と reasoning_effort を送り、
+    /// temperature は送らない（拒まれるため）。
+    #[test]
+    fn 推論モデルの本文() {
+        let dialect = Dialect {
+            token_param: TokenParam::MaxCompletionTokens,
+            send_temperature: false,
+            reasoning: true,
+            token_param_switched: false,
+        };
+        let body = build_body("gpt-5.5", &[], 4096, dialect);
+
+        assert_eq!(body["max_completion_tokens"], 4096);
+        assert!(body.get("max_tokens").is_none());
+        assert!(body.get("temperature").is_none());
+        assert_eq!(body["reasoning_effort"], REASONING_EFFORT);
+    }
+
+    /// 通常のモデルには従来どおり max_tokens と temperature を送る。
+    #[test]
+    fn 通常モデルの本文() {
+        let dialect = Dialect {
+            token_param: TokenParam::MaxTokens,
+            send_temperature: true,
+            reasoning: false,
+            token_param_switched: false,
+        };
+        let body = build_body("gpt-4o", &[], 4096, dialect);
+
+        assert_eq!(body["max_tokens"], 4096);
+        assert!(body.get("reasoning_effort").is_none());
+        assert_eq!(body["temperature"], TEMPERATURE);
+    }
+
+    /// **知らないパラメータで弾かれたら落として続ける。**
+    /// 深さの指定が通らないだけで、生成自体はできる。
+    #[test]
+    fn reasoning_effort_が弾かれたら落とす() {
+        let dialect = Dialect {
+            token_param: TokenParam::MaxCompletionTokens,
+            send_temperature: false,
+            reasoning: true,
+            token_param_switched: false,
+        };
+        let next = adjust("Unrecognized request argument: reasoning_effort", dialect)
+            .expect("落として続けるはず");
+        assert!(!next.reasoning);
+    }
 }
 
 fn api_error(status: u16, detail: &str) -> AppError {

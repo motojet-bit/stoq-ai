@@ -504,7 +504,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
 
       patch(ticker, {
         phase: "streaming",
-        currentStepLabel: t(step.labelKey),
+        // 最初の 1 文字が来たら段の名前へ切り替わる
+        currentStepLabel: t("step.reasoning"),
         completedSteps: parts.length,
       });
 
@@ -516,6 +517,12 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
        */
       const context = step.range === null ? scoreRowsOnly(mergeSteps(parts)) : "";
       let stepRaw = "";
+      /*
+       * **推論モデルは考えている間、1 文字も返さない。**
+       * 段の名前だけ出ていると止まったように見えるので、
+       * 最初の 1 文字が来るまで「思考中」と伝える。
+       */
+      let started = false;
       const result = await streamChat(
         {
           requestId,
@@ -538,6 +545,10 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         {
           onStart: (provider, model) => patch(ticker, { provider, model }),
           onDelta: (delta) => {
+            if (!started) {
+              started = true;
+              patch(ticker, { currentStepLabel: t(step.labelKey) });
+            }
             stepRaw += delta;
             const merged = mergeSteps([...parts, { id: step.id, raw: stepRaw }]);
             patch(ticker, { raw: merged, result: parseAnalysis(merged) });
