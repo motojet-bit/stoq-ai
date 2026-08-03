@@ -298,7 +298,7 @@ export default function AnalysisPanel({
         「いまどの段か」「いくらかかっているか」は見えている必要がある。
         スクロール領域の外に置くので、そもそも流れない。
       */}
-      {run && (streaming || run.completedSteps > 0) && run.phase !== "done" && (
+      {run && (streaming || run.completedSteps > 0 || run.splitProgress) && run.phase !== "done" && (
         <div className="shrink-0 border-b border-slate-800/80 bg-slate-950 px-4 pt-2">
           <AnalysisProgress
             completedSteps={run.completedSteps}
@@ -306,6 +306,7 @@ export default function AnalysisPanel({
             running={streaming}
             tokens={run.inputTokens + run.outputTokens}
             cost={cost}
+            split={run.splitProgress}
           />
         </div>
       )}

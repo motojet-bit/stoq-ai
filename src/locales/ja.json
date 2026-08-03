@@ -1181,5 +1181,17 @@
   "chat.clearBody": "チャットの内容は永久に消去されます。残しつつ新しいチャットを始めることもできます。その場合は新規作成できます。\nまた、コンテキストがいっぱいになった場合は、消去する前に会話を要約するようAIに指示してください。その要約を新しいチャットに貼り付ければ、コンテキストを保ったまま会話を進められます。",
   "chat.clearNew": "＋ 新規チャットを作成",
   "chat.clearConfirm": "🗑️ このチャットを消去する",
-  "chat.cleared": "対話履歴を消去しました"
+  "chat.cleared": "対話履歴を消去しました",
+  "mapReduce.mapHeading": "# 資料の一部（{{index}} / {{total}}）: {{heading}}",
+  "mapReduce.mapTask": "この部分から、次の 4 点だけを抜き出してください。",
+  "mapReduce.mapItem1": "- 主要な数値（金額・比率・期間を必ず添える）",
+  "mapReduce.mapItem2": "- 強みと読める記述",
+  "mapReduce.mapItem3": "- リスクと読める記述",
+  "mapReduce.mapItem4": "- 注記・会計処理の但し書き（一時的要因、基準変更など）",
+  "mapReduce.mapRule": "**評価や点数は付けないでください。** ほかの部分をまだ読んでいないため、ここで下した判断は最後まで残ってしまいます。書かれていることの抜き出しに徹してください。",
+  "mapReduce.summaryHeading": "## 抜き出し {{index}}: {{heading}}",
+  "mapReduce.reduceHeading": "## 添付資料の抜き出し（{{count}} 分割）\n\n資料が大きいため分割して読み取りました。以下は各部分から抜き出した内容です。矛盾があれば指摘したうえで、どちらを採るかを述べてください。",
+  "step.split.mapping": "資料を分割分析中（{{done}} / {{total}} 完了）…",
+  "step.split.reducing": "中間結果を統合中…",
+  "basis.splitDocument": "添付資料を {{count}} 分割して読み取り"
 }

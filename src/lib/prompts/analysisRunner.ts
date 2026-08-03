@@ -24,6 +24,13 @@ import {
 } from "@/lib/prompts/analysisSteps";
 import { diagnose } from "@/lib/errors/diagnose";
 import { appendUsageLog } from "@/lib/usage/usageStore";
+import {
+  mapInstruction,
+  needsSplit,
+  reduceSource,
+  splitIntoChunks,
+  splitProgress,
+} from "@/lib/prompts/mapReduce";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type {
   AppSettings,
@@ -68,6 +75,11 @@ export interface AnalysisRun {
   outputTokens: number;
   /** 失敗したときの診断。成功時は null */
   diagnosis: ReturnType<typeof diagnose> | null;
+  /**
+   * 分割分析の進み具合。**分割しないときは null**。
+   * null なら段のメーター、入っていればパーセント表示に切り替える。
+   */
+  splitProgress: { ratio: number; label: string } | null;
   /**
    * 中断を要求済みか。
    * **押した瞬間から立てる。** 立っている間はボタンを無効にして、
@@ -122,6 +134,7 @@ function blank(ticker: string): AnalysisRun {
     outputTokens: 0,
     diagnosis: null,
     cancelling: false,
+    splitProgress: null,
   };
 }
 
@@ -249,6 +262,9 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
 
   // 実行ログの起点。中断・エラーで終わってもここからの消費は記録する
   const startedAtMs = Date.now();
+  // 分割読み取りで使ったぶん。段の生成ぶんとは別に数えて最後に足す
+  let inputTokensPre = 0;
+  let outputTokensPre = 0;
 
   try {
     // --- 資料収集 -------------------------------------------------
@@ -260,6 +276,63 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         // 1 件読めなくても分析は続行する
       }
     }
+
+    /*
+     * --- 巨大資料の分割読み取り（Map）----------------------------
+     *
+     * **切り詰めると、削った部分は最初から無かったことになる。**
+     * 分けて抜き出し、抜き出しを突き合わせるほうが落ちる情報が少ない。
+     * 小さい資料は分けない（呼び出しが増えるぶん費用と時間がかかる）。
+     */
+    let splitCount = 0;
+    for (let i = 0; i < documents.length; i += 1) {
+      const doc = documents[i];
+      if (!needsSplit(doc.text)) continue;
+
+      const chunks = splitIntoChunks(doc.text);
+      if (chunks.length <= 1) continue;
+
+      const summaries: { index: number; heading: string | null; text: string }[] = [];
+      for (const chunk of chunks) {
+        patch(ticker, {
+          phase: "collecting",
+          splitProgress: {
+            ratio: splitProgress({ mapped: summaries.length, total: chunks.length, reducing: false }),
+            label: t("step.split.mapping", {
+              done: summaries.length,
+              total: chunks.length,
+            }),
+          },
+        });
+
+        try {
+          const result = await streamChat({
+            requestId: crypto.randomUUID(),
+            system: t("mapReduce.mapTask"),
+            messages: [{ role: "user", content: mapInstruction(chunk, chunks.length) }],
+            maxTokens: 2000,
+          });
+          inputTokensPre += result.usage?.input ?? 0;
+          outputTokensPre += result.usage?.output ?? 0;
+          summaries.push({ index: chunk.index, heading: chunk.heading, text: result.text });
+        } catch {
+          // 1 チャンク落ちても残りで続ける（全部落とすより情報が残る）
+        }
+      }
+
+      if (summaries.length > 0) {
+        patch(ticker, {
+          splitProgress: {
+            ratio: splitProgress({ mapped: summaries.length, total: chunks.length, reducing: true }),
+            label: t("step.split.reducing"),
+          },
+        });
+        // 本文を抜き出しへ差し替える。ここから先は通常の 4 段が走る
+        documents[i] = { name: doc.name, text: reduceSource(summaries) };
+        splitCount = Math.max(splitCount, summaries.length);
+      }
+    }
+    patch(ticker, { splitProgress: null });
 
     /*
      * 添付が 1 件も無ければ SEC から自動で補う。
@@ -365,6 +438,7 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
           : t("basis.filing", { form: filing.form, filed: filing.filed }),
       );
     }
+    if (splitCount > 0) basis.push(t("basis.splitDocument", { count: splitCount }));
     if (documents.length > 0) {
       const names = documents.map((d) => d.name);
       basis.push(
@@ -395,8 +469,8 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
       .filter((s) => keep.includes(s.step))
       .map((s) => ({ id: s.step, raw: s.raw }));
 
-    let inputTokens = parts.reduce((sum, _, i) => sum + (saved[i]?.inputTokens ?? 0), 0);
-    let outputTokens = parts.reduce((sum, _, i) => sum + (saved[i]?.outputTokens ?? 0), 0);
+    let inputTokens = inputTokensPre + parts.reduce((sum, _, i) => sum + (saved[i]?.inputTokens ?? 0), 0);
+    let outputTokens = outputTokensPre + parts.reduce((sum, _, i) => sum + (saved[i]?.outputTokens ?? 0), 0);
 
     if (parts.length > 0) {
       pushToast("info", t("step.resumed", { done: parts.length }), "");

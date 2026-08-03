@@ -1181,5 +1181,17 @@
   "chat.clearBody": "The chat content will be deleted permanently. You can also keep it and start a new chat instead.\nIf the context is full, ask the AI to summarize the conversation before deleting it. Pasting that summary into a new chat lets you carry the context forward.",
   "chat.clearNew": "+ Start a new chat",
   "chat.clearConfirm": "🗑️ Delete this chat",
-  "chat.cleared": "The conversation was cleared"
+  "chat.cleared": "The conversation was cleared",
+  "mapReduce.mapHeading": "# Document part {{index}} of {{total}}: {{heading}}",
+  "mapReduce.mapTask": "Extract only the following four things from this part.",
+  "mapReduce.mapItem1": "- Key figures (always include the amount, ratio and period)",
+  "mapReduce.mapItem2": "- Statements that read as strengths",
+  "mapReduce.mapItem3": "- Statements that read as risks",
+  "mapReduce.mapItem4": "- Notes and accounting caveats (one-off items, standard changes)",
+  "mapReduce.mapRule": "**Do not score or judge.** You have not seen the other parts yet, and a verdict made here would carry through to the end. Extract only what is written.",
+  "mapReduce.summaryHeading": "## Extract {{index}}: {{heading}}",
+  "mapReduce.reduceHeading": "## Extracts from the attached document ({{count}} parts)\n\nThe document was large, so it was read in parts. Below is what was extracted from each. If they conflict, say so and state which reading you take.",
+  "step.split.mapping": "Reading the document in parts ({{done}} of {{total}} done)…",
+  "step.split.reducing": "Merging the extracts…",
+  "basis.splitDocument": "Attached document read in {{count}} parts"
 }

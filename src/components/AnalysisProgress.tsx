@@ -11,6 +11,11 @@ interface Props {
   /** ここまでの消費トークン（実測） */
   tokens: number;
   cost: CostEstimate;
+  /**
+   * 分割分析の進み具合。**入っていればパーセント表示に切り替える。**
+   * 分割時は段の数が資料によって変わるので、5 段の目盛りでは表せない。
+   */
+  split?: { ratio: number; label: string } | null;
 }
 
 /**
@@ -26,15 +31,16 @@ export default function AnalysisProgress({
   running,
   tokens,
   cost,
+  split = null,
 }: Props) {
   const t = useT();
-  const ratio = progressRatio(completedSteps, running);
+  const ratio = split ? split.ratio : progressRatio(completedSteps, running);
 
   return (
     <div className="mb-3 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="t-label font-medium text-slate-300">
-          {currentStepLabel ?? t("step.prepare")}
+          {split ? split.label : (currentStepLabel ?? t("step.prepare"))}
         </span>
         <span className="flex shrink-0 items-center gap-2 font-mono t-label text-slate-500">
           {/* 走っている最中でも、ここまでの消費が見えるようにする */}
@@ -48,12 +54,19 @@ export default function AnalysisProgress({
               )}
             </span>
           )}
-          <span>{t("step.progress", { done: completedSteps, total: ANALYSIS_STEPS.length })}</span>
+          <span>
+            {split
+              ? `${Math.round(split.ratio * 100)}%`
+              : t("step.progress", { done: completedSteps, total: ANALYSIS_STEPS.length })}
+          </span>
         </span>
       </div>
 
-      {/* 段ごとの目盛り。終わった段は緑で埋める */}
-      <div className="mt-2 flex gap-1">
+      {/*
+        分割分析のときは目盛りを出さない。
+        **段の数が資料によって変わる**ので、5 つの目盛りでは表せない。
+      */}
+      <div className={`mt-2 flex gap-1 ${split ? "hidden" : ""}`}>
         {Array.from({ length: PROGRESS_STAGES }, (_, i) => {
           // 0 番目は準備段。以降が生成の 4 段
           const done = i <= completedSteps;

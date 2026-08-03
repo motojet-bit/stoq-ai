@@ -154,6 +154,7 @@ const LOCALIZED = [
   "src/lib/export/exportPdf.ts",
   "src/lib/portfolio/quarterCompare.ts",
   "src/lib/chat/contextGauge.ts",
+  "src/lib/prompts/mapReduce.ts",
   "src/lib/ui/collapsedSections.ts",
   "src/lib/usage/usageLog.ts",
   "src/lib/usage/usageStore.ts",
