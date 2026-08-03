@@ -413,3 +413,46 @@ where
     // ここで stream が drop され、接続が閉じる
     Ok(accumulated)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **usage が返らない相手でも落ちない。** 格安の互換サーバーには
+    /// 最後の `usage` を返さないものがある。0 のまま完了扱いにする。
+    #[test]
+    fn usage_が無ければ拾わない() {
+        let payload = serde_json::json!({ "choices": [{ "delta": { "content": "x" } }] });
+        assert!(read_usage(&payload).is_none());
+    }
+
+    #[test]
+    fn 三社の書き方をどれも拾う() {
+        let openai = serde_json::json!({ "usage": { "prompt_tokens": 10, "completion_tokens": 5 } });
+        let anthropic = serde_json::json!({ "usage": { "input_tokens": 7, "output_tokens": 3 } });
+        let gemini =
+            serde_json::json!({ "usageMetadata": { "promptTokenCount": 4, "candidatesTokenCount": 2 } });
+
+        assert_eq!(read_usage(&openai).unwrap().total(), 15);
+        assert_eq!(read_usage(&anthropic).unwrap().total(), 10);
+        assert_eq!(read_usage(&gemini).unwrap().total(), 6);
+    }
+
+    /// **上書きしない。** Anthropic は開始時に入力、終了時に出力を送るので、
+    /// 上書きすると先に来た値が消える。
+    #[test]
+    fn 複数回の_usage_は大きいほうを採る() {
+        let mut usage = TokenUsage::default();
+        usage.absorb(TokenUsage { input: 100, output: 0 });
+        usage.absorb(TokenUsage { input: 0, output: 40 });
+        assert_eq!(usage.input, 100);
+        assert_eq!(usage.output, 40);
+    }
+
+    /// 壊れた値でも 0 として扱い、例外にしない。
+    #[test]
+    fn 壊れた_usage_は_0_扱い() {
+        let broken = serde_json::json!({ "usage": { "prompt_tokens": "many" } });
+        assert!(read_usage(&broken).is_none());
+    }
+}

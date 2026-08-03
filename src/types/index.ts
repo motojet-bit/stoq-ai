@@ -21,7 +21,10 @@ export interface CustomProvider {
 /** APIキーの設定状況（キー本体は保持せず、マスク済み文字列のみ持つ） */
 export interface KeyStatus {
   provider: ProviderId;
+  /** 使える状態か。**ローカル接続先は鍵が無くても true** */
   configured: boolean;
+  /** 自分の PC 上の接続先か（localhost / 127.0.0.1） */
+  local: boolean;
   /** 例: "sk-…3f9a"。未設定なら null */
   masked: string | null;
 }

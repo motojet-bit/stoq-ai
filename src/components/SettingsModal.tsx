@@ -183,7 +183,15 @@ export default function SettingsModal({
           <span className="min-w-0 truncate">
             {source ? t("settings.key.labelWithSource", { source }) : t("settings.key.label")}
           </span>
-          {status?.configured ? (
+          {/*
+            ローカルは鍵が要らない。**「未設定」と出さない。**
+            動くのに設定漏れに見えると、要らないキーを探させることになる。
+          */}
+          {status?.local && !status.masked ? (
+            <span className="shrink-0 whitespace-nowrap text-emerald-400">
+              {t("settings.key.local")}
+            </span>
+          ) : status?.masked ? (
             <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-emerald-400">
               <span className="font-mono">{status.masked}</span>
               <button
@@ -206,7 +214,13 @@ export default function SettingsModal({
           spellCheck={false}
           value={keyDrafts[id] ?? ""}
           onChange={(e) => setKeyDrafts((prev) => ({ ...prev, [id]: e.target.value }))}
-          placeholder={status?.configured ? t("settings.key.changeOnly") : placeholder}
+          placeholder={
+            status?.local && !status.masked
+              ? t("settings.key.localNotNeeded")
+              : status?.masked
+                ? t("settings.key.changeOnly")
+                : placeholder
+          }
           className="selectable min-h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 font-mono t-label text-slate-100 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none"
         />
       </label>

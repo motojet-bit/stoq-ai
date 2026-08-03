@@ -64,8 +64,15 @@ export function providerReadiness(
 ): { ready: boolean; reason: string | null } {
   if (!settings) return { ready: false, reason: t("provider.err.noSettings") };
 
-  const configured = settings.keys.find((k) => k.provider === id)?.configured ?? false;
-  if (!configured) return { ready: false, reason: t("provider.err.noKey") };
+  const status = settings.keys.find((k) => k.provider === id);
+  /*
+   * **自分の PC 上の接続先は鍵が要らない。**
+   * Ollama や LM Studio は認証を持たないので、
+   * 未設定を理由に弾くとそもそも使えない。
+   */
+  if (!(status?.configured ?? false) && !(status?.local ?? false)) {
+    return { ready: false, reason: t("provider.err.noKey") };
+  }
 
   if (isBuiltin(id)) return { ready: true, reason: null };
 

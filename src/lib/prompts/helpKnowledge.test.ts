@@ -66,8 +66,8 @@ const settings = (over: Partial<AppSettings> = {}): AppSettings => ({
     },
   ],
   keys: [
-    { provider: "anthropic", configured: true, masked: "sk-ant-…3f9a" },
-    { provider: "openai", configured: false, masked: null },
+    { provider: "anthropic", configured: true, masked: "sk-ant-…3f9a", local: false },
+    { provider: "openai", configured: false, masked: null, local: false },
   ],
   ...over,
 });
@@ -110,8 +110,8 @@ describe("settingsSummary", () => {
     const text = settingsSummary(
       settings({
         keys: [
-          { provider: "anthropic", configured: true, masked: "sk-…1234" },
-          { provider: "market:fmp", configured: true, masked: "abc…7890" },
+          { provider: "anthropic", configured: true, masked: "sk-…1234", local: false },
+          { provider: "market:fmp", configured: true, masked: "abc…7890", local: false },
         ],
       }),
     );

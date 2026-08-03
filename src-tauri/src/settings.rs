@@ -156,6 +156,9 @@ pub struct SettingsView {
 pub struct KeyStatus {
     pub provider: String,
     pub configured: bool,
+    /// 自分の PC 上の接続先か。**true ならキー未設定でも使える**
+    #[serde(default)]
+    pub local: bool,
     /// 例: `sk-…3f9a`。未設定なら None
     pub masked: Option<String>,
 }
@@ -228,9 +231,12 @@ impl Settings {
                 .into_iter()
                 .map(|id| {
                     let masked = self.keys.get(&id).and_then(|k| mask_secret(k));
+                    let local = self.is_local_provider(&id);
                     KeyStatus {
+                        // ローカルは鍵が要らないので、未設定でも「使える」扱いにする
+                        configured: masked.is_some() || local,
                         provider: id,
-                        configured: masked.is_some(),
+                        local,
                         masked,
                     }
                 })
@@ -239,13 +245,30 @@ impl Settings {
     }
 
     pub fn key_for(&self, provider: &str) -> Result<String> {
-        self.keys
+        let found = self
+            .keys
             .get(provider)
             .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .ok_or_else(|| {
-                AppError::code(code::API_KEY_MISSING)
-            })
+            .filter(|s| !s.is_empty());
+
+        match found {
+            Some(key) => Ok(key),
+            /*
+             * **自分の PC で動かすものには鍵が要らない。**
+             * Ollama や LM Studio は認証を持たないので、
+             * 未設定を理由に弾くと、そもそも使えなくなる。
+             * OpenAI 互換の口は空のキーを受け取っても構わない。
+             */
+            None if self.is_local_provider(provider) => Ok(String::new()),
+            None => Err(AppError::code(code::API_KEY_MISSING)),
+        }
+    }
+
+    /// その接続先が自分の PC 上にあるか（`localhost` / `127.0.0.1`）。
+    pub fn is_local_provider(&self, provider: &str) -> bool {
+        self.custom(provider)
+            .map(|c| is_local_url(&c.base_url))
+            .unwrap_or(false)
     }
 
     /// 表示用のラベル。カスタムはユーザーが付けた名前を返す。
@@ -382,6 +405,15 @@ pub fn save(app: &AppHandle, settings: &Settings) -> Result<()> {
     let path = settings_path(app)?;
     std::fs::write(&path, serde_json::to_string_pretty(settings)?)?;
     Ok(())
+}
+
+/// URL が自分の PC を指しているか。
+///
+/// **ここだけで判定する。** 呼び出し側で書き分けると、
+/// 片方だけ直したときに挙動が食い違う。
+pub fn is_local_url(url: &str) -> bool {
+    let lower = url.trim().to_lowercase();
+    lower.contains("localhost") || lower.contains("127.0.0.1") || lower.contains("[::1]")
 }
 
 #[cfg(test)]

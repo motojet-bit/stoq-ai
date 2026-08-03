@@ -1203,5 +1203,7 @@
   "preset.note.ollama": "自分の PC で動かす。APIキー不要・完全無料",
   "preset.note.openrouter": "1 つのキーで多数のモデルを使い分け",
   "preset.note.groq": "高速。無料枠あり",
-  "model.reasoningCheap": "低価格な推論モデル"
+  "model.reasoningCheap": "低価格な推論モデル",
+  "settings.key.localNotNeeded": "ローカルのため APIキー不要",
+  "settings.key.local": "ローカル（キー不要）"
 }

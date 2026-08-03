@@ -1203,5 +1203,7 @@
   "preset.note.ollama": "Runs on your own PC — no API key, completely free",
   "preset.note.openrouter": "Many models through a single key",
   "preset.note.groq": "Very fast, with a free tier",
-  "model.reasoningCheap": "Low-cost reasoning model"
+  "model.reasoningCheap": "Low-cost reasoning model",
+  "settings.key.localNotNeeded": "No API key needed (runs locally)",
+  "settings.key.local": "Local (no key)"
 }
