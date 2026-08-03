@@ -162,6 +162,40 @@ export async function deleteSession(id: string): Promise<void> {
   }
 }
 
+/**
+ * いま開いている会話のログだけを消す。
+ *
+ * **タブや分析結果には触れない。** 消したいのは会話の中身であって、
+ * 銘柄タブや分析結果まで巻き添えにすると、やり直しが大きくなりすぎる。
+ *
+ * セッションごと消してから、空の状態へ戻す（同じ ID に空のログを残さない）。
+ */
+export async function clearActiveConversation(): Promise<boolean> {
+  const id = activeId;
+  // まだ 1 件も送っていなければ、画面を空にするだけでよい
+  if (!id) {
+    messages = [];
+    emit();
+    return true;
+  }
+  if (!isTauri()) {
+    messages = [];
+    emit();
+    return true;
+  }
+
+  try {
+    sessions = await invoke<ChatSession[]>("chat_delete_session", { id });
+    activeId = null;
+    messages = [];
+    emit();
+    return true;
+  } catch (e) {
+    toastError(t("toast.chat.deleteFailed"), e);
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------- メッセージ
 
 /** 画面上のメッセージ配列を差し替える（ストリーミング中の更新用）。 */

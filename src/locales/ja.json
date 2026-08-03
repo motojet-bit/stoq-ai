@@ -1173,5 +1173,13 @@
   "history.scoresAndMetrics": "ブロック別スコア ／ 主要数値",
   "history.strengthsAndRisks": "適合・強み ／ 基準未達・リスク",
   "history.rawBody": "分析本文（エクセル・CSV・表計算ソフト用貼り付けフォーマット）",
-  "command.analyzeHint": "Yahoo Finance の指標と SEC の提出状況を取得します。AI 分析はこのあと分析パネルから実行します。"
+  "command.analyzeHint": "Yahoo Finance の指標と SEC の提出状況を取得します。AI 分析はこのあと分析パネルから実行します。",
+  "chat.context": "コンテキスト",
+  "chat.contextHint": "この会話が使っているコンテキストの概算です。いっぱいになる前に、要約して新しいチャットへ移すことをおすすめします。",
+  "chat.clear": "対話履歴を消去",
+  "chat.clearTitle": "対話履歴の消去",
+  "chat.clearBody": "チャットの内容は永久に消去されます。残しつつ新しいチャットを始めることもできます。その場合は新規作成できます。\nまた、コンテキストがいっぱいになった場合は、消去する前に会話を要約するようAIに指示してください。その要約を新しいチャットに貼り付ければ、コンテキストを保ったまま会話を進められます。",
+  "chat.clearNew": "＋ 新規チャットを作成",
+  "chat.clearConfirm": "🗑️ このチャットを消去する",
+  "chat.cleared": "対話履歴を消去しました"
 }

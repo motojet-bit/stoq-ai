@@ -3,6 +3,8 @@ import type { AppSettings, DisplayMessage } from "@/types";
 import { streamChat } from "@/lib/llm/client";
 import { providerLabel, providerReadiness } from "@/lib/config/providers";
 import {
+  clearActiveConversation,
+  createSession,
   patchMessage,
   persistMessage,
   setMessages,
@@ -13,6 +15,10 @@ import type { SlotId } from "@/lib/ui/layoutStore";
 import { IconMessage } from "@/components/Icons";
 import PanelHeader from "@/components/PanelHeader";
 import PromptLibraryMenu from "@/components/PromptLibraryMenu";
+import ContextGauge from "@/components/ContextGauge";
+import ChatClearDialog from "@/components/ChatClearDialog";
+import { IconTrash } from "@/components/Icons";
+import { toastSuccess } from "@/lib/ui/toastStore";
 import { activeSystemPrompt } from "@/lib/prompts/promptLibrary";
 import { isMac } from "@/lib/ui/shortcutKeys";
 import { useChatDraft } from "@/lib/chat/chatDraft";
@@ -56,6 +62,8 @@ export default function ChatPanel({
   const messages = useChatMessages();
   const loadingHistory = useChatLoading();
   const [input, setInput] = useState("");
+  // 対話履歴を消す前の確認
+  const [clearing, setClearing] = useState(false);
   const [sending, setSending] = useState(false);
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -195,9 +203,41 @@ ${draft.text}`));
                 {activeModel ? ` / ${activeModel}` : ""}
               </span>
             )}
+            {/* 埋まる前に気づけるよう、消費量を常に出す */}
+            <ContextGauge
+              messages={messages}
+              systemPrompt={activeSystemPrompt()}
+              model={activeModel}
+            />
+
             <PromptLibraryMenu />
+
+            <button
+              type="button"
+              onClick={() => setClearing(true)}
+              disabled={messages.length === 0}
+              title={t("chat.clear")}
+              aria-label={t("chat.clear")}
+              className="shrink-0 rounded p-1 text-slate-600 transition-colors hover:bg-slate-800 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-600"
+            >
+              <IconTrash className="h-3.5 w-3.5" />
+            </button>
           </>
         }
+      />
+
+      <ChatClearDialog
+        open={clearing}
+        onCancel={() => setClearing(false)}
+        onCreateNew={() => {
+          // 履歴は残したまま、新しい会話を立てる
+          setClearing(false);
+          void createSession(ticker);
+        }}
+        onConfirm={async () => {
+          setClearing(false);
+          if (await clearActiveConversation()) toastSuccess(t("chat.cleared"), "");
+        }}
       />
 
       <>

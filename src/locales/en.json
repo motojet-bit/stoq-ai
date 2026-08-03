@@ -1173,5 +1173,13 @@
   "history.scoresAndMetrics": "Block scores / key metrics",
   "history.strengthsAndRisks": "Strengths / risks",
   "history.rawBody": "Analysis text (paste format for Excel / CSV / spreadsheets)",
-  "command.analyzeHint": "Retrieves metrics from Yahoo Finance and the SEC filing status. The AI analysis is run afterwards from the analysis panel."
+  "command.analyzeHint": "Retrieves metrics from Yahoo Finance and the SEC filing status. The AI analysis is run afterwards from the analysis panel.",
+  "chat.context": "Context",
+  "chat.contextHint": "An estimate of how much context this conversation uses. Before it fills up, summarize and move to a new chat.",
+  "chat.clear": "Clear the conversation",
+  "chat.clearTitle": "Clear the conversation",
+  "chat.clearBody": "The chat content will be deleted permanently. You can also keep it and start a new chat instead.\nIf the context is full, ask the AI to summarize the conversation before deleting it. Pasting that summary into a new chat lets you carry the context forward.",
+  "chat.clearNew": "+ Start a new chat",
+  "chat.clearConfirm": "🗑️ Delete this chat",
+  "chat.cleared": "The conversation was cleared"
 }
