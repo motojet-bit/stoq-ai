@@ -22,6 +22,7 @@ const LOCALIZED = [
   "src/components/ChatHistoryItem.tsx",
   "src/components/ChatPanel.tsx",
   "src/components/AnalysisWithDebate.tsx",
+  "src/components/UsageLogModal.tsx",
   "src/components/OverflowScroller.tsx",
   "src/components/TickerMismatchDialog.tsx",
   "src/components/MessageBody.tsx",
@@ -148,6 +149,8 @@ const LOCALIZED = [
   "src/lib/chat/markdownTable.ts",
   "src/lib/export/exportPdf.ts",
   "src/lib/portfolio/quarterCompare.ts",
+  "src/lib/usage/usageLog.ts",
+  "src/lib/usage/usageStore.ts",
   "src/lib/ui/overflow.ts",
   "src/lib/parser/tickerMatch.ts",
   "src/lib/ui/selectScope.ts",
@@ -203,8 +206,16 @@ const CJK = /[぀-ヿ一-鿿]/;
 
 /** 正規表現リテラルが始まる位置か（直前のトークンで判断する）。 */
 function startsRegex(before: string): boolean {
-  const prev = before.replace(/\s+$/, "").slice(-1);
-  return prev === "" || "(,=:[!&|?{};+".includes(prev);
+  const trimmed = before.replace(/\s+$/, "");
+  const prev = trimmed.slice(-1);
+  if (prev === "" || "(,=:[!&|?{};+".includes(prev)) return true;
+
+  /*
+   * **キーワードの直後も正規表現が来る。**
+   * `return /[",]/.test(x)` のような書き方を文字列の開始と誤読すると、
+   * 以降を丸ごと拾って「日本語の直書き」に見えてしまう。
+   */
+  return /(return|typeof|case|in|of|do|else)$/.test(trimmed);
 }
 
 /**

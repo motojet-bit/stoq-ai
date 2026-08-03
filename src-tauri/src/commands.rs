@@ -354,6 +354,45 @@ pub fn analysis_history_raw(app: AppHandle, id: String) -> Result<Option<String>
     analyses::history_raw(&app, &id)
 }
 
+/// 実行ログを 1 件積む。
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub fn usage_log_append(
+    app: AppHandle,
+    ticker: String,
+    provider: Option<String>,
+    model: Option<String>,
+    role_id: Option<String>,
+    input_tokens: i64,
+    output_tokens: i64,
+    status: String,
+    started_at_ms: i64,
+) -> Result<()> {
+    analyses::append_usage_log(
+        &app,
+        &ticker,
+        provider.as_deref(),
+        model.as_deref(),
+        role_id.as_deref(),
+        input_tokens,
+        output_tokens,
+        &status,
+        started_at_ms,
+    )
+}
+
+/// 実行ログを新しい順に返す。
+#[tauri::command]
+pub fn usage_log_list(app: AppHandle) -> Result<Vec<analyses::UsageLogEntry>> {
+    analyses::usage_log(&app)
+}
+
+/// 実行ログを全消しする。分析結果には触れない。
+#[tauri::command]
+pub fn usage_log_clear(app: AppHandle) -> Result<()> {
+    analyses::clear_usage_log(&app)
+}
+
 /// 分割実行の途中経過を保存する。
 #[tauri::command]
 pub fn analysis_step_save(

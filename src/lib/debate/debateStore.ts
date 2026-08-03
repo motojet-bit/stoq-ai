@@ -28,6 +28,8 @@ export interface DebateRun {
   rebuttal: string;
   /** 中断に使う ID。走っていなければ null */
   requestId: string | null;
+  /** 中断を要求済みか（連打で再スタートを踏まないようにする） */
+  cancelling: boolean;
   error: string | null;
 }
 
@@ -37,6 +39,7 @@ const empty = (ticker: string): DebateRun => ({
   critique: "",
   rebuttal: "",
   requestId: null,
+  cancelling: false,
   error: null,
 });
 
@@ -85,7 +88,9 @@ export function clearDebate(ticker: string): void {
 /** 生成中の呼び出しを止める。それまでの本文は残す。 */
 export async function cancelDebate(ticker: string): Promise<void> {
   const run = runs.get(ticker);
-  if (!run?.requestId) return;
+  if (!run?.requestId || run.cancelling) return;
+  // 先に立てる。通信の往復を待つと、その間に押せてしまう
+  patch(ticker, { cancelling: true });
   await cancelChat(run.requestId);
 }
 
@@ -114,6 +119,7 @@ export async function runDebateTurn(ticker: string, analysisText: string): Promi
     critique: "",
     rebuttal: "",
     requestId: critiqueId,
+    cancelling: false,
     error: null,
   });
 

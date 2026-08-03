@@ -24,6 +24,7 @@ import {
 } from "@/lib/prompts/analysisSteps";
 import { diagnose } from "@/lib/errors/diagnose";
 import { detectMismatchSignal } from "@/lib/parser/tickerMatch";
+import { appendUsageLog } from "@/lib/usage/usageStore";
 import { pushToast, toastError } from "@/lib/ui/toastStore";
 import type {
   AppSettings,
@@ -68,6 +69,12 @@ export interface AnalysisRun {
   outputTokens: number;
   /** 失敗したときの診断。成功時は null */
   diagnosis: ReturnType<typeof diagnose> | null;
+  /**
+   * 中断を要求済みか。
+   * **押した瞬間から立てる。** 立っている間はボタンを無効にして、
+   * 連打で「分析開始」に切り替わった瞬間を踏むのを防ぐ。
+   */
+  cancelling: boolean;
   /** 保存日時 */
   savedAtMs: number | null;
 }
@@ -115,6 +122,7 @@ function blank(ticker: string): AnalysisRun {
     inputTokens: 0,
     outputTokens: 0,
     diagnosis: null,
+    cancelling: false,
   };
 }
 
@@ -236,7 +244,12 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
     finishedAtMs: null,
     fromCache: false,
     savedAtMs: null,
+    // 走り始めたら倒す（前回の中断が残っているとボタンが押せない）
+    cancelling: false,
   });
+
+  // 実行ログの起点。中断・エラーで終わってもここからの消費は記録する
+  const startedAtMs = Date.now();
 
   try {
     // --- 資料収集 -------------------------------------------------
@@ -511,8 +524,24 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
 
     const finalRaw = mergeSteps(parts);
     const complete = parts.length === ANALYSIS_STEPS.length;
+
+    /*
+     * **中断でも記録する。** そこまでのトークンは実際に払っているので、
+     * 完走したものだけ数えると請求額と噛み合わない。
+     */
+    void appendUsageLog({
+      ticker,
+      provider: runs[ticker]?.provider ?? null,
+      model: runs[ticker]?.model ?? null,
+      roleId,
+      inputTokens,
+      outputTokens,
+      status: cancelled ? "cancelled" : "done",
+      startedAtMs,
+    });
     patch(ticker, {
       phase: cancelled ? "cancelled" : "done",
+      cancelling: false,
       raw: finalRaw,
       result: parseAnalysis(finalRaw),
       requestId: null,
@@ -583,8 +612,20 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
      * ここまでに確定した段は DB に残っているので、再開すれば続きから進む。
      */
     const info = diagnose(e);
+    // 失敗した実行も記録する（そこまでの消費は発生している）
+    void appendUsageLog({
+      ticker,
+      provider: runs[ticker]?.provider ?? null,
+      model: runs[ticker]?.model ?? null,
+      roleId: getActiveRoleId(),
+      inputTokens: runs[ticker]?.inputTokens ?? 0,
+      outputTokens: runs[ticker]?.outputTokens ?? 0,
+      status: "error",
+      startedAtMs,
+    });
     patch(ticker, {
       phase: "error",
+      cancelling: false,
       error: info.title,
       diagnosis: info,
       requestId: null,
@@ -599,6 +640,11 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
 export async function cancelAnalysis(ticker: string): Promise<void> {
   const run = runs[ticker];
   if (!run?.requestId) return;
+  // **二度目以降は何もしない。** 連打で余計な呼び出しを積まない
+  if (run.cancelling) return;
+
+  // 先に立てる。通信の往復を待ってから無効化すると、その間に押せてしまう
+  patch(ticker, { cancelling: true });
   await cancelChat(run.requestId);
 }
 

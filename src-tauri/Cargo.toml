@@ -23,7 +23,8 @@ futures-util = "0.3"
 
 # 分析結果の永続化。bundled で SQLite 本体を同梱し、実行環境への依存をなくす
 rusqlite = { version = "0.32", features = ["bundled"] }
-tokio = { version = "1", features = ["sync", "time", "rt"] }
+# macros: 中断の合図とチャンク到着を同時に待つ tokio::select! に要る
+tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
 
 # CORS を迂回し、SEC が要求する User-Agent を設定するため
 # HTTP は必ず Rust 側から発行する

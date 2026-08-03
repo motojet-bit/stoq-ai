@@ -53,6 +53,7 @@ import ResizableSplit from "@/components/ResizableSplit";
 import AnalysisWithDebate from "@/components/AnalysisWithDebate";
 import FiscalPeriodDialog from "@/components/FiscalPeriodDialog";
 import TickerMismatchDialog from "@/components/TickerMismatchDialog";
+import UsageLogModal from "@/components/UsageLogModal";
 import {
   checkTickerMatch,
   detectDocumentIdentity,
@@ -152,6 +153,7 @@ export default function App() {
 
   // 一次資料が無い状態で分析を実行しようとしたときの確認
   const [confirmingNoDocs, setConfirmingNoDocs] = useState(false);
+  const [usageLogOpen, setUsageLogOpen] = useState(false);
   /*
    * 決算期の確認待ち。
    * **資料があるときは必ず 1 回通す。** 自動特定は「読み取れたが間違っている」
@@ -577,6 +579,7 @@ export default function App() {
   const handleMenuAction = (action: MenuAction) => {
     if (action === "open-settings") setSettingsOpen(true);
     else if (action === "open-disclaimer") openDisclaimer();
+    else if (action === "open-usage-log") setUsageLogOpen(true);
   };
 
   const handleNewChat = () => {
@@ -766,6 +769,8 @@ export default function App() {
           setTourOpen(true);
         }}
       />
+
+      <UsageLogModal open={usageLogOpen} onClose={() => setUsageLogOpen(false)} />
 
       <TickerMismatchDialog
         open={mismatch !== null}

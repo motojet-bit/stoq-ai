@@ -158,6 +158,123 @@ pub fn migrate(conn: &Connection) -> Result<()> {
     )
     .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
 
+    /*
+     * 実行ログ。**分析結果とは別に持つ。**
+     * 結果を消してもコストの記録は残したいし、
+     * 中断・エラーで終わった実行も残す（消費は発生している）。
+     */
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS usage_log (
+            id            TEXT PRIMARY KEY,
+            ticker        TEXT NOT NULL,
+            provider      TEXT,
+            model         TEXT,
+            role_id       TEXT,
+            input_tokens  INTEGER NOT NULL DEFAULT 0,
+            output_tokens INTEGER NOT NULL DEFAULT 0,
+            status        TEXT NOT NULL,
+            started_at_ms INTEGER NOT NULL,
+            saved_at_ms   INTEGER NOT NULL
+         );
+         CREATE INDEX IF NOT EXISTS idx_usage_log_time
+            ON usage_log(saved_at_ms DESC);",
+    )
+    .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
+
+    Ok(())
+}
+
+/// 実行ログ 1 件。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UsageLogEntry {
+    pub id: String,
+    pub ticker: String,
+    pub provider: Option<String>,
+    pub model: Option<String>,
+    /// 使った役割プロファイルの ID
+    pub role_id: Option<String>,
+    pub input_tokens: i64,
+    pub output_tokens: i64,
+    /// `done` | `cancelled` | `error`
+    pub status: String,
+    pub started_at_ms: i64,
+    pub saved_at_ms: i64,
+}
+
+/// 実行ログを 1 件積む。
+#[allow(clippy::too_many_arguments)]
+pub fn append_usage_log(
+    app: &AppHandle,
+    ticker: &str,
+    provider: Option<&str>,
+    model: Option<&str>,
+    role_id: Option<&str>,
+    input_tokens: i64,
+    output_tokens: i64,
+    status: &str,
+    started_at_ms: i64,
+) -> Result<()> {
+    let saved_at_ms = now_ms();
+    open(app)?
+        .execute(
+            "INSERT INTO usage_log
+                (id, ticker, provider, model, role_id, input_tokens, output_tokens,
+                 status, started_at_ms, saved_at_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            params![
+                format!("use-{saved_at_ms}-{ticker}"),
+                ticker.trim().to_uppercase(),
+                provider,
+                model,
+                role_id,
+                input_tokens,
+                output_tokens,
+                status,
+                started_at_ms,
+                saved_at_ms
+            ],
+        )
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
+    Ok(())
+}
+
+/// 実行ログを新しい順に返す。
+pub fn usage_log(app: &AppHandle) -> Result<Vec<UsageLogEntry>> {
+    let conn = open(app)?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, ticker, provider, model, role_id, input_tokens, output_tokens,
+                    status, started_at_ms, saved_at_ms
+             FROM usage_log ORDER BY saved_at_ms DESC",
+        )
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(UsageLogEntry {
+                id: row.get(0)?,
+                ticker: row.get(1)?,
+                provider: row.get(2)?,
+                model: row.get(3)?,
+                role_id: row.get(4)?,
+                input_tokens: row.get(5)?,
+                output_tokens: row.get(6)?,
+                status: row.get(7)?,
+                started_at_ms: row.get(8)?,
+                saved_at_ms: row.get(9)?,
+            })
+        })
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
+
+    Ok(rows.filter_map(std::result::Result::ok).collect())
+}
+
+/// 実行ログを全消しする。**分析結果には触れない。**
+pub fn clear_usage_log(app: &AppHandle) -> Result<()> {
+    open(app)?
+        .execute("DELETE FROM usage_log", [])
+        .map_err(|e| AppError::detail(code::DB_QUERY, e.to_string()))?;
     Ok(())
 }
 

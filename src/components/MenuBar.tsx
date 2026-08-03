@@ -12,7 +12,7 @@ interface MenuItem {
   action?: MenuAction;
 }
 
-export type MenuAction = "open-settings" | "open-disclaimer";
+export type MenuAction = "open-settings" | "open-disclaimer" | "open-usage-log";
 
 interface Menu {
   labelKey: string;
@@ -44,6 +44,11 @@ export const MENUS: Menu[] = [
       { labelKey: "menu.view.zoomIn", shortcut: "Ctrl++", separatorBefore: true },
       { labelKey: "menu.view.zoomOut", shortcut: "Ctrl+-" },
       { labelKey: "menu.view.zoomReset", shortcut: "Ctrl+0" },
+      {
+        labelKey: "usageLog.menu",
+        action: "open-usage-log",
+        separatorBefore: true,
+      },
     ],
   },
   {

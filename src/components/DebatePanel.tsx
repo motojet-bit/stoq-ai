@@ -65,11 +65,12 @@ export default function DebatePanel({ ticker, analysisText, onOpenSettings }: Pr
           {running ? (
             <button
               type="button"
+              disabled={run?.cancelling ?? false}
               onClick={() => ticker && void cancelDebate(ticker)}
-              className="flex min-h-7 items-center gap-1 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-red-800 hover:text-red-300"
+              className="flex min-h-7 items-center gap-1 rounded-md border border-slate-700 px-2.5 t-label text-slate-300 transition-colors hover:border-red-800 hover:text-red-300 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:border-slate-700"
             >
               <IconStop className="h-3 w-3" />
-              {t("debate.cancel")}
+              {run?.cancelling ? t("analysis.cancelling") : t("debate.cancel")}
             </button>
           ) : (
             <button

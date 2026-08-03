@@ -222,13 +222,20 @@ export default function AnalysisPanel({
             )}
 
             {streaming ? (
+              /*
+                **押した瞬間に無効化する。**
+                連打していると、止まった直後にボタンが「分析開始」へ変わり、
+                その瞬間を踏んで再スタートしてしまう。
+                無効のまま「中断中…」を出し、切り替わりを踏ませない。
+              */
               <button
                 type="button"
+                disabled={run?.cancelling ?? false}
                 onClick={onCancel}
-                className="t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded border border-red-800 px-2 text-red-300 hover:bg-red-950/50"
+                className="t-label flex min-h-6 shrink-0 items-center gap-1.5 rounded border border-red-800 px-2 text-red-300 hover:bg-red-950/50 disabled:cursor-not-allowed disabled:border-slate-700 disabled:text-slate-500 disabled:hover:bg-transparent"
               >
                 <IconStop className="h-3 w-3" />
-                {t("analysis.cancel")}
+                {run?.cancelling ? t("analysis.cancelling") : t("analysis.cancel")}
               </button>
             ) : (
               <button

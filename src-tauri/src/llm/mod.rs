@@ -7,7 +7,10 @@ pub mod anthropic;
 pub mod gemini;
 pub mod openai;
 
-use std::sync::Mutex;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
+use tokio::sync::Notify;
 
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -22,11 +25,34 @@ use crate::settings::Settings;
 /// 次のチャンクで抜ける。それまでに受け取ったテキストは破棄せず返す。
 static CANCELLED: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
+/*
+ * 中断の合図。
+ *
+ * **フラグだけでは足りない。** 読み取りループはチャンクの到着を待って
+ * 止まっているので、フラグを見るのは「次の 1 個が届いたあと」になる。
+ * 生成が長いモデルでは数秒かかり、押しても止まらないように見える。
+ * `Notify` で待ちを叩き起こし、その場でストリームを捨てて接続を切る。
+ */
+static CANCEL_NOTIFY: Mutex<Option<HashMap<String, Arc<Notify>>>> = Mutex::new(None);
+
+/// リクエスト ID に対応する合図口を得る（無ければ作る）。
+fn cancel_notify(request_id: &str) -> Arc<Notify> {
+    let mut guard = CANCEL_NOTIFY.lock().unwrap();
+    let map = guard.get_or_insert_with(HashMap::new);
+    map.entry(request_id.to_string())
+        .or_insert_with(|| Arc::new(Notify::new()))
+        .clone()
+}
+
 pub fn request_cancel(request_id: &str) {
-    let mut guard = CANCELLED.lock().unwrap();
-    if !guard.iter().any(|id| id == request_id) {
-        guard.push(request_id.to_string());
+    {
+        let mut guard = CANCELLED.lock().unwrap();
+        if !guard.iter().any(|id| id == request_id) {
+            guard.push(request_id.to_string());
+        }
     }
+    // 待っている読み取りループを叩き起こす（次のチャンクを待たせない）
+    cancel_notify(request_id).notify_waiters();
 }
 
 fn is_cancelled(request_id: &str) -> bool {
@@ -35,6 +61,9 @@ fn is_cancelled(request_id: &str) -> bool {
 
 fn forget_cancel(request_id: &str) {
     CANCELLED.lock().unwrap().retain(|id| id != request_id);
+    if let Some(map) = CANCEL_NOTIFY.lock().unwrap().as_mut() {
+        map.remove(request_id);
+    }
 }
 
 /// 会話 1 メッセージ。
@@ -328,12 +357,27 @@ where
     let mut stream = res.bytes_stream();
     let mut buffer = String::new();
     let mut accumulated = String::new();
+    let notify = cancel_notify(request_id);
 
-    while let Some(chunk) = stream.next().await {
+    loop {
         // 中断が要求されていたら、ここまでのテキストを返して抜ける
         if !request_id.is_empty() && is_cancelled(request_id) {
             break;
         }
+
+        /*
+         * **チャンクの到着と中断の合図を同時に待つ。**
+         * 到着だけを待つと、押しても次の 1 個が来るまで止まらない。
+         * 中断が来たら `stream` を捨てて抜ける（drop で接続が閉じる）。
+         */
+        let chunk = tokio::select! {
+            biased;
+            () = notify.notified() => break,
+            next = stream.next() => match next {
+                Some(chunk) => chunk,
+                None => break,
+            },
+        };
 
         let bytes = chunk?;
         buffer.push_str(&String::from_utf8_lossy(&bytes));
@@ -366,5 +410,6 @@ where
         }
     }
 
+    // ここで stream が drop され、接続が閉じる
     Ok(accumulated)
 }
