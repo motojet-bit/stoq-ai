@@ -1265,9 +1265,14 @@
     <!-- ========================================================== 購入前の確認と同意 -->
     <!--
       決済ページへ直接飛ばさず、ここを必ず通す。
-      「投資助言ではない」「API 費用は別」「個別サポートは無い」「言語は 2 つだけ」の
-      4 点は、**買ったあとで知ると返金要求になる**種類の前提なので、
+      「投資助言ではない」「API 費用は別」「個別サポートは無い」「言語は 2 つだけ」
+      「メジャーアップデートは有償になりうる」の 5 点は、
+      **買ったあとで知ると返金要求になる**種類の前提なので、
       チェックを入れてもらってから通す。
+
+      **リード文の件数は JS が数え直す**（`[data-consent-count]`）。
+      項目を足したときに文言の数字だけ古いまま残る事故を防ぐ。
+      JS が動かない場合に備えて、HTML 側にも正しい数字を書いておく。
     -->
     <div
       id="consent"
@@ -1284,8 +1289,12 @@
           <span data-ja>ご購入前の確認と同意</span>
         </h2>
         <p class="mt-2 text-sm text-slate-400">
-          <span data-en>Please confirm all four before continuing to checkout.</span>
-          <span data-ja>以下の 4 点にご同意のうえ、購入手続きへお進みください。</span>
+          <span data-en>
+            Please confirm all <span data-consent-count>5</span> before continuing to checkout.
+          </span>
+          <span data-ja>
+            以下の <span data-consent-count>5</span> 点にご同意のうえ、購入手続きへお進みください。
+          </span>
         </p>
 
         <div class="mt-6 space-y-3">
@@ -1419,6 +1428,13 @@
         var boxes = modal.querySelectorAll("[data-consent]");
         var url = null;
         var opener = null;
+
+        // リード文の「以下の N 点」を実際のチェック項目数に合わせる。
+        // **文言側の数字を手で直し忘れても、ここでずれが消える。**
+        var counters = modal.querySelectorAll("[data-consent-count]");
+        for (var c = 0; c < counters.length; c++) {
+          counters[c].textContent = String(boxes.length);
+        }
 
         function sync() {
           var all = true;
