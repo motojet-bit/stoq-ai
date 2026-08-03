@@ -15,10 +15,16 @@ import { t } from "@/lib/i18n/i18n";
  * **小さい資料まで分けない。** 分割は呼び出し回数が増えるぶん
  * 費用と時間がかかるので、1 回で読める資料はそのまま読ませる。
  */
-export const SPLIT_THRESHOLD_TOKENS = 20_000;
+export const SPLIT_THRESHOLD_TOKENS = 10_000;
 
-/** 1 チャンクの目安。上限そのものではなく、要約させやすい大きさ。 */
-export const CHUNK_TARGET_TOKENS = 12_000;
+/**
+ * 1 チャンクの目安。上限そのものではなく、要約させやすい大きさ。
+ *
+ * **しきい値より必ず小さくする。** ここがしきい値以上だと、
+ * 「分割が要る」と判定された資料が 1 チャンクにしか割れず、
+ * 分割経路に入ったのに何も分かれないまま素通りする。
+ */
+export const CHUNK_TARGET_TOKENS = 5_000;
 
 export interface Chunk {
   /** 1 始まりの通し番号 */

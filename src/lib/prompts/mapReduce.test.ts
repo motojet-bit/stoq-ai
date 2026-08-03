@@ -115,3 +115,15 @@ describe("進み具合", () => {
     expect(splitProgress({ mapped: 0, total: 0, reducing: false })).toBe(0);
   });
 });
+
+describe("しきい値とチャンクの大きさの関係", () => {
+  it("**チャンクの目安はしきい値より小さい**（でないと 1 つにしか割れない）", () => {
+    expect(CHUNK_TARGET_TOKENS).toBeLessThan(SPLIT_THRESHOLD_TOKENS);
+  });
+
+  it("しきい値をわずかに超えた資料でも、実際に 2 つ以上へ割れる", () => {
+    const text = big(Math.round(SPLIT_THRESHOLD_TOKENS * 1.1));
+    expect(needsSplit(text)).toBe(true);
+    expect(splitIntoChunks(text).length).toBeGreaterThan(1);
+  });
+});

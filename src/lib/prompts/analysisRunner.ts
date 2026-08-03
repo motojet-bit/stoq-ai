@@ -737,6 +737,11 @@ export async function clearAnalysis(rawTicker: string): Promise<void> {
   emit();
 
   if (!isTauri()) return;
+  /*
+   * **途中経過も一緒に捨てる。** 結果だけ消して段を残すと、
+   * 次に走らせたときに消したはずの内容を土台にしてしまう。
+   */
+  await clearCheckpoints(ticker);
   try {
     await invoke("analysis_delete", { ticker });
     pushToast("info", t("toast.analysis.deleted", { ticker }));
