@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   detectFiscalPeriod,
+  collectFiscalPeriods,
   detectFiscalPeriodFromName,
+  likelyLatestPeriod,
   matchQuarter,
   periodKey,
 } from "@/lib/parser/fiscalPeriod";
@@ -133,5 +135,57 @@ describe("ファイル名からの読み取り", () => {
   it("期らしきものが無ければ null（推測で埋めない）", () => {
     expect(detectFiscalPeriodFromName("決算資料.pdf")).toBeNull();
     expect(detectFiscalPeriodFromName("")).toBeNull();
+  });
+});
+
+describe("複数資料の期のまとめ", () => {
+  it("**期の種類ごとにまとめる**（混ぜて分析させないため）", () => {
+    const groups = collectFiscalPeriods([
+      { name: "a.pdf", text: "FY2024 Q2 presentation" },
+      { name: "b.pdf", text: "FY2024 Q3 presentation" },
+      { name: "c.pdf", text: "FY2024 Q3 supplement" },
+    ]);
+    expect(groups).toHaveLength(2);
+    // 新しい期が先
+    expect(groups[0].period.key).toBe("FY2024-Q3");
+    expect(groups[0].documents).toEqual(["b.pdf", "c.pdf"]);
+  });
+
+  it("ファイル名でも拾う（本文が読めない資料）", () => {
+    const groups = collectFiscalPeriods([{ name: "FY26_Q1.pdf", text: "" }]);
+    expect(groups[0].period.key).toBe("FY2026-Q1");
+  });
+
+  it("期が読めない資料は束ねない（不明を 1 つの期として扱わない）", () => {
+    expect(collectFiscalPeriods([{ name: "memo.txt", text: "売上が伸びた" }])).toEqual([]);
+  });
+
+  it("全部同じ期なら 1 グループ（絞り込みは不要）", () => {
+    const groups = collectFiscalPeriods([
+      { name: "a.pdf", text: "FY2024 Q2" },
+      { name: "b.pdf", text: "FY2024 Q2" },
+    ]);
+    expect(groups).toHaveLength(1);
+  });
+});
+
+describe("提出されていそうな最新期の見積もり", () => {
+  it("**1 四半期前を出す**（四半期報告は期末から 40〜45 日遅れる）", () => {
+    // 8 月 → Q2（4〜6 月期）
+    expect(likelyLatestPeriod(new Date(2026, 7, 15))).toMatchObject({
+      fiscalYear: 2026,
+      quarter: 2,
+    });
+  });
+
+  it("年初は前年の Q4 へ戻す", () => {
+    expect(likelyLatestPeriod(new Date(2026, 0, 20))).toMatchObject({
+      fiscalYear: 2025,
+      quarter: 4,
+    });
+  });
+
+  it("見積もりであることが分かる", () => {
+    expect(likelyLatestPeriod(new Date(2026, 7, 1)).matchedBy).toBe("estimated");
   });
 });

@@ -19,9 +19,11 @@ const CORE: &str = include_str!("core.md");
 const OUTPUT: &str = include_str!("output.md");
 
 const ROLE_GENERAL: &str = include_str!("role_general.md");
-const ROLE_GROWTH: &str = include_str!("role_growth.md");
+/// **id は `growth` のまま**（保存データの鍵）。中身はマイクロキャップ方針。
+const ROLE_GROWTH: &str = include_str!("role_microcap.md");
 const ROLE_MEGACAP: &str = include_str!("role_megacap.md");
 const ROLE_DIVIDEND: &str = include_str!("role_dividend.md");
+const ROLE_MIDCAP: &str = include_str!("role_midcap.md");
 
 /// 既定の役割
 pub const DEFAULT_ROLE: &str = "general";
@@ -56,28 +58,42 @@ const ROLES: &[RoleDef] = &[
     },
     RoleDef {
         id: "growth",
-        label: "高成長・中小型グロースアナリスト",
-        summary: "中小型株の資金余力と成長率、希薄化リスクを重視して分析します",
+        label: "マイクロキャップ・ロマン枠アナリスト",
+        summary: "小型株の財務生存性（Cash Runway）を最優先で厳格に判定します",
         focus: &[
             "Cash Runway（残存月数）",
-            "売上成長率（YoY）",
-            "完全希薄化後株式数",
-            "確定受注の質",
+            "希薄化構造（ワラント・転換社債）",
+            "単一プロダクト依存と特許モート",
+            "黒字化への道筋",
+            "成長率 vs バーンレート",
         ],
         body: ROLE_GROWTH,
     },
     RoleDef {
         id: "megacap",
-        label: "メガスケーラー・大型優良株アナリスト",
-        summary: "大型株の FCF や資本配分、モートの持続性を重視して分析します",
+        label: "メガスケーラー・サテライト適合性アナリスト",
+        summary: "QQQ / S&P500 を超えるサテライト銘柄として持つ価値があるかを判定します",
         focus: &[
+            "指数を上回れるか",
             "FCF マージン",
-            "ROIC",
-            "資本配分（自社株買い・配当）",
-            "EV/Gross Profit",
-            "定性的なモート",
+            "モートの持続性",
+            "成長持続性",
+            "単一指標に依らない判定",
         ],
         body: ROLE_MEGACAP,
+    },
+    RoleDef {
+        id: "midcap",
+        label: "中位株・ツルハシ企業アナリスト",
+        summary: "トレンドに道具を売る側として、受注残と事業構造から安定運用と伸びしろを見ます",
+        focus: &[
+            "ツルハシ適合性（誰が勝っても売れるか）",
+            "バックログ（受注残）",
+            "リカーリング比率",
+            "顧客集中度",
+            "伸びしろ（取れる比率）",
+        ],
+        body: ROLE_MIDCAP,
     },
     RoleDef {
         id: "dividend",
@@ -399,14 +415,37 @@ mod tests {
 
     // ------------------------------------------------ 役割の選択
 
+    /// **id は保存データに入るので変えない。** ラベルは変えてよい。
     #[test]
-    fn 四つの役割がそろっている() {
+    fn 五つの役割がそろっている() {
         let list = roles();
-        assert_eq!(list.len(), 4);
+        assert_eq!(list.len(), 5);
         let ids: Vec<&str> = list.iter().map(|r| r.id.as_str()).collect();
-        assert_eq!(ids, vec!["general", "growth", "megacap", "dividend"]);
+        assert_eq!(ids, vec!["general", "growth", "megacap", "midcap", "dividend"]);
         assert!(list.iter().all(|r| !r.summary.is_empty()));
         assert!(list.iter().all(|r| !r.focus.is_empty()));
+    }
+
+    /// 投資思想の軸が、それぞれの本文へ実際に入っていること。
+    #[test]
+    fn 役割ごとの判定軸が本文に入っている() {
+        let cases = [
+            // メガスケーラーは指数と比べる。単一指標での判定を禁じる
+            (
+                "megacap",
+                vec!["QQQ", "S&P500", "サテライト", "PBR", "Rule of 40", "二段階評価"],
+            ),
+            // 中位株はツルハシ。受注残とリカーリングを見る
+            ("midcap", vec!["ツルハシ", "受注残", "リカーリング", "顧客"]),
+            // マイクロキャップは生存性が先
+            ("growth", vec!["Cash Runway", "ロマン枠", "全損", "希薄化", "Burn Rate"]),
+        ];
+        for (id, words) in cases {
+            let body = role_def(id).body;
+            for word in words {
+                assert!(body.contains(word), "{id} に「{word}」が無い");
+            }
+        }
     }
 
     #[test]
@@ -461,7 +500,7 @@ mod tests {
     fn 役割_共通部_閾値_出力の順に結合される() {
         let prompt = build_system_prompt(&preset("growth", &[]));
 
-        let role = prompt.find("中小型のグロース株").unwrap();
+        let role = prompt.find("マイクロキャップ").unwrap();
         let core = prompt.find("# 厳守事項").unwrap();
         let thresholds = prompt.find("# 閾値基準").unwrap();
         let output = prompt.find("# 出力フォーマット").unwrap();

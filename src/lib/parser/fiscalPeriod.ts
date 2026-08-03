@@ -15,7 +15,14 @@ export interface FiscalPeriod {
   /** `FY2023-Q3` 形式。ヒートマップ等の突き合わせに使う内部キー */
   key: string;
   /** どの書き方から拾ったか（診断用） */
-  matchedBy: "usQuarter" | "jpQuarter" | "jpFiscalYear" | "usFiscalYear" | "fileName";
+  matchedBy:
+    | "usQuarter"
+    | "jpQuarter"
+    | "jpFiscalYear"
+    | "usFiscalYear"
+    | "fileName"
+    /** どこからも読み取れず、暦から見積もった値 */
+    | "estimated";
   /** 拾った元の文字列 */
   matchedText: string;
 }
@@ -155,6 +162,61 @@ export function detectFiscalPeriodFromName(fileName: string): FiscalPeriod | nul
   const found = detectFiscalPeriod(base);
   if (!found) return null;
   return { ...found, matchedBy: "fileName", matchedText: found.matchedText };
+}
+
+/**
+ * 複数の資料から期を読み取り、**種類ごとにまとめる。**
+ *
+ * 期の違う資料を混ぜて 1 回で分析すると、
+ * どの数字がどの期のものか分からない結果ができる。
+ * 2 種類以上見つかったら、呼び出し側でユーザーに 1 つ選ばせる。
+ */
+export function collectFiscalPeriods(
+  documents: { name: string; text: string }[],
+): { period: FiscalPeriod; documents: string[] }[] {
+  const byKey = new Map<string, { period: FiscalPeriod; documents: string[] }>();
+
+  for (const doc of documents) {
+    // 本文で読めなければファイル名。どちらも駄目なら「期不明」として束ねない
+    const found = detectFiscalPeriod(doc.text) ?? detectFiscalPeriodFromName(doc.name);
+    if (!found) continue;
+    const entry = byKey.get(found.key);
+    if (entry) entry.documents.push(doc.name);
+    else byKey.set(found.key, { period: found, documents: [doc.name] });
+  }
+
+  // 新しい期が先（直近を既定に選びやすい並び）
+  return [...byKey.values()].sort((a, b) => periodOrder(b.period) - periodOrder(a.period));
+}
+
+/** 並べ替え用の数値。通期は Q4 の後ろに置く。 */
+function periodOrder(period: FiscalPeriod): number {
+  return period.fiscalYear * 10 + (period.quarter ?? 5);
+}
+
+/**
+ * SEC でその時点までに提出されていそうな最新期を見積もる。
+ *
+ * **期が全く分からないときの初期値にだけ使う。**
+ * 四半期報告は期末から 40〜45 日ほど遅れて出るので、
+ * 「いまの月」ではなく **1 四半期前**を既定にする。
+ * 8 月なら Q2（4〜6 月期）が直近の提出分。
+ */
+export function likelyLatestPeriod(now: Date): FiscalPeriod {
+  const month = now.getMonth() + 1;
+  const currentQuarter = Math.floor((month - 1) / 3) + 1;
+
+  // 1 つ前の四半期。年初なら前年の Q4 へ戻す
+  const quarter = currentQuarter === 1 ? 4 : ((currentQuarter - 1) as 1 | 2 | 3 | 4);
+  const year = currentQuarter === 1 ? now.getFullYear() - 1 : now.getFullYear();
+
+  return {
+    fiscalYear: year,
+    quarter,
+    key: periodKey(year, quarter),
+    matchedBy: "estimated",
+    matchedText: "",
+  };
 }
 
 /**
