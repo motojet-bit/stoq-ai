@@ -1,6 +1,7 @@
 import type { AppSettings } from "@/types";
 import TickerInput from "@/components/TickerInput";
 import PdfDropZone from "@/components/PdfDropZone";
+import AttachmentHint from "@/components/AttachmentHint";
 import ProviderMenu from "@/components/ProviderMenu";
 
 interface Props {
@@ -29,7 +30,14 @@ export default function CommandBar({
 
       <div className="h-6 w-px bg-slate-800" />
 
-      <PdfDropZone onFiles={onFiles} />
+      {/*
+        ドロップ領域の右端に置く。**何を添付すべきかは落とす直前に効く**ので、
+        設定やヘルプの奥ではなく、この場所に出す。
+      */}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <PdfDropZone onFiles={onFiles} />
+        <AttachmentHint />
+      </div>
 
       <div className="h-6 w-px bg-slate-800" />
 

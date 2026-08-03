@@ -1161,5 +1161,13 @@
   "doc.downloadHint": "💡 If the download does not work, get the document from SEC EDGAR or the company's IR page",
   "doc.downloaded": "Saved",
   "doc.downloadFailed": "Could not save",
-  "doc.openExternal": "Open in the browser"
+  "doc.openExternal": "Open in the browser",
+  "attachHint.badge": "What should I attach?",
+  "attachHint.title": "💡 How to get markedly better analysis",
+  "attachHint.autoNote": "Past financial metrics and SEC filings (10-Q / 10-K) are retrieved automatically in the background.",
+  "attachHint.lead": "To let the AI judge future growth accurately, these are the most useful things to attach here:",
+  "attachHint.item1": "Press release with next-period guidance",
+  "attachHint.item2": "Earnings call transcript",
+  "attachHint.item3": "Earnings presentation deck (slide PDF)",
+  "attachHint.item4": "Shareholder letter from management"
 }

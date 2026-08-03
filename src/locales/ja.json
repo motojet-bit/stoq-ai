@@ -1161,5 +1161,13 @@
   "doc.downloadHint": "💡 ダウンロードができない場合は、SEC の EDGAR データベースまたは各企業の IR ページから直接取得してください",
   "doc.downloaded": "保存しました",
   "doc.downloadFailed": "保存できませんでした",
-  "doc.openExternal": "外部ブラウザで開く"
+  "doc.openExternal": "外部ブラウザで開く",
+  "attachHint.badge": "効果的な添付資料とは？",
+  "attachHint.title": "💡 AI の分析精度を劇的に引き上げるヒント",
+  "attachHint.autoNote": "過去の財務指標や SEC 公式書類（10-Q / 10-K）はアプリが裏側で自動取得しています。",
+  "attachHint.lead": "AI に企業の『未来の成長性』を正確に評価させるため、ここには以下の資料を添付するのが最も効果的です:",
+  "attachHint.item1": "次期ガイダンス（業績見通し）のプレスリリース",
+  "attachHint.item2": "カンファレンスコール（決算説明会）の議事録（Transcript）",
+  "attachHint.item3": "決算プレゼンテーション資料（スライド PDF）",
+  "attachHint.item4": "経営陣からの株主宛て書簡（Shareholder Letter）"
 }

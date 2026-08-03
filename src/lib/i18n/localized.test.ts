@@ -22,6 +22,7 @@ const LOCALIZED = [
   "src/components/ChatHistoryItem.tsx",
   "src/components/ChatPanel.tsx",
   "src/components/AnalysisWithDebate.tsx",
+  "src/components/AttachmentHint.tsx",
   "src/components/CollapsibleSection.tsx",
   "src/components/UsageLogModal.tsx",
   "src/components/OverflowScroller.tsx",
