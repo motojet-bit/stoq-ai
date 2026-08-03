@@ -18,7 +18,7 @@ const STORAGE_KEY = "stockanalyzer.collapsedSections";
  * 貼り付け用フォーマットは**普段は読まない**（表計算へ移すときだけ要る）ので、
  * 開いたままだと本文がその分だけ下へ押し出される。
  */
-const DEFAULT_COLLAPSED = ["pasteFormat"];
+const DEFAULT_COLLAPSED = ["pasteFormat", "histRawBody"];
 
 function read(): Set<string> {
   try {

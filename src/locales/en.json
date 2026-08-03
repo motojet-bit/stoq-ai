@@ -34,7 +34,7 @@
   "status.help": "Help",
   "status.helpTooltip": "Ask the AI how to use this app",
   "command.tickerPlaceholder": "Ticker (e.g. NVDA, 7203.T, ASML.AS)",
-  "command.analyze": "Analyze",
+  "command.analyze": "Fetch data",
   "command.aiSettings": "AI settings",
   "command.activeProvider": "Active",
   "sidebar.newChat": "New chat",
@@ -1169,5 +1169,9 @@
   "attachHint.item1": "Press release with next-period guidance",
   "attachHint.item2": "Earnings call transcript",
   "attachHint.item3": "Earnings presentation deck (slide PDF)",
-  "attachHint.item4": "Shareholder letter from management"
+  "attachHint.item4": "Shareholder letter from management",
+  "history.scoresAndMetrics": "Block scores / key metrics",
+  "history.strengthsAndRisks": "Strengths / risks",
+  "history.rawBody": "Analysis text (paste format for Excel / CSV / spreadsheets)",
+  "command.analyzeHint": "Retrieves metrics from Yahoo Finance and the SEC filing status. The AI analysis is run afterwards from the analysis panel."
 }

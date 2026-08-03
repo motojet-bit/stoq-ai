@@ -34,7 +34,7 @@
   "status.help": "ヘルプ",
   "status.helpTooltip": "使い方を AI に質問する",
   "command.tickerPlaceholder": "ティッカー（例: NVDA, 7203.T, ASML.AS）",
-  "command.analyze": "分析",
+  "command.analyze": "指標取得",
   "command.aiSettings": "AI設定",
   "command.activeProvider": "稼働中",
   "sidebar.newChat": "新規チャット",
@@ -1169,5 +1169,9 @@
   "attachHint.item1": "次期ガイダンス（業績見通し）のプレスリリース",
   "attachHint.item2": "カンファレンスコール（決算説明会）の議事録（Transcript）",
   "attachHint.item3": "決算プレゼンテーション資料（スライド PDF）",
-  "attachHint.item4": "経営陣からの株主宛て書簡（Shareholder Letter）"
+  "attachHint.item4": "経営陣からの株主宛て書簡（Shareholder Letter）",
+  "history.scoresAndMetrics": "ブロック別スコア ／ 主要数値",
+  "history.strengthsAndRisks": "適合・強み ／ 基準未達・リスク",
+  "history.rawBody": "分析本文（エクセル・CSV・表計算ソフト用貼り付けフォーマット）",
+  "command.analyzeHint": "Yahoo Finance の指標と SEC の提出状況を取得します。AI 分析はこのあと分析パネルから実行します。"
 }

@@ -50,9 +50,14 @@ export default function TickerInput({ onSubmit, preset = null }: Props) {
         />
         </span>
       </Tooltip>
+      {/*
+        **ここは指標の取得。** AI 分析は分析パネルの「AI分析を実行」で走る。
+        「分析」と書くと、押した時点で AI が動いたと受け取られる。
+      */}
       <button
         type="submit"
-        className="min-h-8 rounded-md bg-emerald-600 px-3.5 t-body font-medium text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700"
+        title={t("command.analyzeHint")}
+        className="min-h-8 shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-3.5 t-body font-medium text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700"
       >
         {t("command.analyze")}
       </button>

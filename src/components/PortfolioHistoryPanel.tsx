@@ -411,12 +411,21 @@ export default function PortfolioHistoryPanel({
                       {expanded && (
                         <div className="border-t border-slate-800 px-2.5 py-2">
                           {/* 構造化データがあれば要点を先に見せる */}
+                          {/*
+                            **左右のペアはまとめて畳む。**
+                            片方だけ畳んでも、隣が開いていれば行の高さは変わらない。
+                            コンパクトにしたい人にとって意味のある単位はこの 2 枚 1 組。
+                          */}
                           {record && record.blockScores.length > 0 && (
+                            <CollapsibleSection
+                              id="histScores"
+                              title={t("history.scoresAndMetrics")}
+                            >
                             <div className="mb-2 grid gap-2 sm:grid-cols-2">
-                              <CollapsibleSection
-                                id="histBlockScores"
-                                title={t("history.blockScores")}
-                              >
+                              <div>
+                                <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
+                                  {t("history.blockScores")}
+                                </div>
                                 <ul className="space-y-0.5">
                                   {record.blockScores.map((b) => (
                                     <li
@@ -430,11 +439,11 @@ export default function PortfolioHistoryPanel({
                                     </li>
                                   ))}
                                 </ul>
-                              </CollapsibleSection>
-                              <CollapsibleSection
-                                id="histKeyMetrics"
-                                title={t("history.keyMetrics")}
-                              >
+                              </div>
+                              <div>
+                                <div className="mb-1 t-label font-medium uppercase tracking-wider text-slate-500">
+                                  {t("history.keyMetrics")}
+                                </div>
                                 <ul className="space-y-0.5">
                                   {record.keyMetrics.slice(0, 6).map((m) => (
                                     <li
@@ -450,19 +459,23 @@ export default function PortfolioHistoryPanel({
                                     </li>
                                   ))}
                                 </ul>
-                              </CollapsibleSection>
+                              </div>
                             </div>
+                            </CollapsibleSection>
                           )}
 
                           {record &&
                             (record.evaluations.strengths.length > 0 ||
                               record.evaluations.risks.length > 0) && (
+                              <CollapsibleSection
+                                id="histEvaluations"
+                                title={t("history.strengthsAndRisks")}
+                              >
                               <div className="mb-2 grid gap-2 sm:grid-cols-2">
-                                <CollapsibleSection
-                                  id="histStrengths"
-                                  title={t("history.strengths")}
-                                  toneClass="text-emerald-400"
-                                >
+                                <div>
+                                  <div className="mb-1 t-label font-medium text-emerald-400">
+                                    {t("history.strengths")}
+                                  </div>
                                   <ul className="space-y-0.5">
                                     {record.evaluations.strengths.map((item) => (
                                       <li
@@ -473,12 +486,11 @@ export default function PortfolioHistoryPanel({
                                       </li>
                                     ))}
                                   </ul>
-                                </CollapsibleSection>
-                                <CollapsibleSection
-                                  id="histRisks"
-                                  title={t("history.risks")}
-                                  toneClass="text-amber-400"
-                                >
+                                </div>
+                                <div>
+                                  <div className="mb-1 t-label font-medium text-amber-400">
+                                    {t("history.risks")}
+                                  </div>
                                   <ul className="space-y-0.5">
                                     {record.evaluations.risks.map((item) => (
                                       <li
@@ -489,8 +501,9 @@ export default function PortfolioHistoryPanel({
                                       </li>
                                     ))}
                                   </ul>
-                                </CollapsibleSection>
+                                </div>
                               </div>
+                              </CollapsibleSection>
                             )}
 
                           {fetching ? (
@@ -518,9 +531,16 @@ export default function PortfolioHistoryPanel({
                                   {t("history.quote")}
                                 </button>
                               </div>
-                              <pre className="selectable max-h-96 overflow-auto whitespace-pre-wrap break-words t-label leading-relaxed text-slate-300">
-                                {body}
-                              </pre>
+                              {/*
+                                評価テーブルを含む生の本文。**既定で畳む。**
+                                表計算へ移すときにしか読まないので、
+                                開いたままだと 1 件でタイムライン全体が埋まる。
+                              */}
+                              <CollapsibleSection id="histRawBody" title={t("history.rawBody")}>
+                                <pre className="selectable max-h-96 overflow-auto whitespace-pre-wrap break-words t-label leading-relaxed text-slate-300">
+                                  {body}
+                                </pre>
+                              </CollapsibleSection>
                             </>
                           )}
                         </div>
