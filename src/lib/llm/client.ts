@@ -17,6 +17,12 @@ export interface LlmRequest {
     roleId: string;
     thresholds: Record<string, number>;
     locale?: string;
+    /**
+     * 銘柄不一致の禁止事項を**システムプロンプトの冒頭**に置かせる。
+     * ユーザー文に混ぜると「資料はあるのだから分析するのが親切だ」と
+     * 解釈されて完走されてしまう。
+     */
+    guardTicker?: string;
   };
   /**
    * ディベートの担当。指定すると **Rust 側の秘匿プロンプト**が system になる。

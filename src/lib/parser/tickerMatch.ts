@@ -86,6 +86,67 @@ export function detectDocumentIdentity(text: string, fileName = ""): DocumentIde
   return { tickers: [...tickers], companyNames: [...companyNames] };
 }
 
+/**
+ * 社名がはっきり分かる主要企業。
+ *
+ * **社名しか書かれていない資料を弾くために要る。**
+ * 「Apple Inc.」とだけ書かれた資料を TSLA 選択時に渡しても、
+ * ティッカー表記が無いと以前は素通りしていた。
+ *
+ * ここに無い企業は従来どおり `unknown`（分からないものは止めない）。
+ * **紛れの無い固有名だけを載せる。** 「Block」「Match」のような
+ * 一般語と同じ綴りの社名は、本文中の普通の語と衝突するので入れない。
+ */
+const KNOWN_COMPANIES: { ticker: string; names: string[] }[] = [
+  { ticker: "AAPL", names: ["apple"] },
+  { ticker: "MSFT", names: ["microsoft"] },
+  { ticker: "GOOGL", names: ["alphabet", "google"] },
+  { ticker: "AMZN", names: ["amazon"] },
+  { ticker: "NVDA", names: ["nvidia"] },
+  { ticker: "TSLA", names: ["tesla"] },
+  { ticker: "META", names: ["meta platforms", "facebook"] },
+  { ticker: "NFLX", names: ["netflix"] },
+  { ticker: "AMD", names: ["advanced micro devices"] },
+  { ticker: "INTC", names: ["intel"] },
+  { ticker: "AVGO", names: ["broadcom"] },
+  { ticker: "ORCL", names: ["oracle"] },
+  { ticker: "CRM", names: ["salesforce"] },
+  { ticker: "ADBE", names: ["adobe"] },
+  { ticker: "PLTR", names: ["palantir"] },
+  { ticker: "COIN", names: ["coinbase"] },
+  { ticker: "UBER", names: ["uber technologies"] },
+  { ticker: "ASML", names: ["asml"] },
+  { ticker: "TSM", names: ["taiwan semiconductor"] },
+  { ticker: "7203", names: ["トヨタ自動車", "toyota motor"] },
+  { ticker: "6758", names: ["ソニーグループ", "sony group"] },
+  { ticker: "9984", names: ["ソフトバンクグループ", "softbank group"] },
+];
+
+/**
+ * 資料の冒頭に、はっきり分かる企業名が出ていればその銘柄を返す。
+ *
+ * **最初に見つかった 1 社だけを返す。** 資料には競合他社も出てくるので、
+ * 全部拾うと「複数社の資料」に見えてしまう。
+ * 発行元は先頭寄りに書かれるという前提で、**出現位置が最も早いもの**を採る。
+ */
+export function detectKnownCompany(
+  text: string,
+  fileName = "",
+): { ticker: string; name: string } | null {
+  const head = `${fileName}\n${text.slice(0, HEAD_CHARS)}`.toLowerCase();
+
+  let best: { ticker: string; name: string; at: number } | null = null;
+  for (const company of KNOWN_COMPANIES) {
+    for (const name of company.names) {
+      const at = head.indexOf(name);
+      if (at < 0) continue;
+      if (!best || at < best.at) best = { ticker: company.ticker, name, at };
+    }
+  }
+
+  return best ? { ticker: best.ticker, name: best.name } : null;
+}
+
 /** 比較用に均す。記号と接尾辞を落として、表記ゆれを吸収する。 */
 export function normalizeName(name: string): string {
   return name
@@ -116,11 +177,18 @@ export function checkTickerMatch(input: {
   /** 選択中の銘柄の会社名（Yahoo から取れていれば） */
   selectedName?: string | null;
   identity: DocumentIdentity;
+  /** 資料から読み取れた主要企業（`detectKnownCompany` の結果） */
+  known?: { ticker: string; name: string } | null;
 }): MatchResult {
   const selected = baseTicker(input.selected);
   if (selected === "") return { status: "unknown", foundTicker: null, foundName: null };
 
   const found = input.identity.tickers.map(baseTicker).filter((v) => v !== "");
+
+  // 既知の社名が選択中の銘柄と一致していれば、それだけで確定してよい
+  if (input.known && baseTicker(input.known.ticker) === selected) {
+    return { status: "match", foundTicker: selected, foundName: input.known.name };
+  }
 
   if (found.length > 0) {
     // 1 つでも一致すれば、その資料は対象銘柄のもの
@@ -147,7 +215,20 @@ export function checkTickerMatch(input: {
   }
 
   /*
-   * **社名が違うだけでは mismatch にしない。**
+   * **はっきり分かる社名が別会社のものなら、ここで弾く。**
+   * ティッカー表記の無い資料（「Apple Inc.」とだけ書かれた決算資料）は
+   * 以前これで素通りしていた。
+   */
+  if (input.known && baseTicker(input.known.ticker) !== selected) {
+    return {
+      status: "mismatch",
+      foundTicker: input.known.ticker,
+      foundName: input.identity.companyNames[0] ?? input.known.name,
+    };
+  }
+
+  /*
+   * **上に載っていない企業の社名違いは mismatch にしない。**
    * 子会社名・ブランド名・監査法人名が先に出てくる資料があり、
    * 「一致しなかった」を「別会社だ」と読み替えると誤検知が増える。
    */

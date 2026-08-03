@@ -175,6 +175,11 @@ const LOCALIZED = [
 const INTERNAL_KEYS: Record<string, string[]> = {
   // 言語の「自称」。日本語の選択肢を英語表記にすると、日本語話者が見つけられない
   "src/lib/i18n/locales.ts": ["日本語"],
+  /*
+   * 資料の社名を照合するための**データ**。訳したら当たらなくなる。
+   * 日本の決算資料には日本語の社名しか書かれていない。
+   */
+  "src/lib/parser/tickerMatch.ts": ["トヨタ自動車", "ソニーグループ", "ソフトバンクグループ"],
   "src/lib/compare/compareData.ts": [
     "現金・同等物",
     "営業CF",

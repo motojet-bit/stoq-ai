@@ -56,6 +56,7 @@ import TickerMismatchDialog from "@/components/TickerMismatchDialog";
 import {
   checkTickerMatch,
   detectDocumentIdentity,
+  detectKnownCompany,
   type MatchResult,
 } from "@/lib/parser/tickerMatch";
 import {
@@ -258,6 +259,8 @@ export default function App() {
         selected: activeTicker ?? "",
         selectedName: activeAnalysis?.fundamentals?.name ?? null,
         identity: detectDocumentIdentity(doc.text, doc.name),
+        // 社名しか書かれていない資料もここで弾く
+        known: detectKnownCompany(doc.text, doc.name),
       });
       if (result.status === "mismatch") {
         setMismatch({ ...result, documentName: doc.name });

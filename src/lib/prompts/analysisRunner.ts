@@ -420,10 +420,18 @@ export async function runAnalysis(options: RunOptions): Promise<void> {
         {
           requestId,
           // 役割 ID と閾値だけを渡す。秘匿プロンプトとの結合は Rust 側で行う
-          analysisPreset: { roleId, thresholds },
+          /*
+           * **不一致の禁止事項は第 1 段だけ、システムプロンプトの冒頭へ。**
+           * ここで止まれば以降の段は走らないので、無駄なトークンを使わない。
+           */
+          analysisPreset: {
+            roleId,
+            thresholds,
+            ...(step.id === ANALYSIS_STEPS[0].id ? { guardTicker: ticker } : {}),
+          },
           messages: [
             { role: "user", content: prompt.user },
-            { role: "user", content: stepInstruction(step, context, ticker) },
+            { role: "user", content: stepInstruction(step, context) },
           ],
           maxTokens: RESERVE_FOR_OUTPUT,
         },

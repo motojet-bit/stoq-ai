@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   checkTickerMatch,
   detectDocumentIdentity,
+  detectKnownCompany,
   detectMismatchSignal,
   MISMATCH_MARKER,
   normalizeName,
@@ -116,5 +117,61 @@ describe("実行時の不一致の合図", () => {
 
   it("企業名が付いていなくても合図として扱う", () => {
     expect(detectMismatchSignal(MISMATCH_MARKER)).toBe("");
+  });
+});
+
+describe("主要企業の社名からの判定", () => {
+  it("**社名だけの資料でも会社が分かる**（ティッカー表記が無い決算資料）", () => {
+    expect(detectKnownCompany("Apple Inc. Q3 FY2026 Results")).toMatchObject({
+      ticker: "AAPL",
+    });
+  });
+
+  it("**発行元は先頭寄り**なので、出現位置が最も早い社名を採る", () => {
+    // 競合として後ろに出てくる Tesla ではなく、先頭の Apple を採る
+    const found = detectKnownCompany("Apple Inc. の資料。競合には Tesla などがある。");
+    expect(found?.ticker).toBe("AAPL");
+  });
+
+  it("日本企業も拾う", () => {
+    expect(detectKnownCompany("トヨタ自動車株式会社 決算短信")?.ticker).toBe("7203");
+  });
+
+  it("載っていない企業は null（分からないものは止めない）", () => {
+    expect(detectKnownCompany("Acme Widgets Inc.")).toBeNull();
+  });
+});
+
+describe("社名照合を含めた突き合わせ", () => {
+  it("**TSLA 選択で Apple の資料は弾く**（ティッカー表記が無くても）", () => {
+    const result = checkTickerMatch({
+      selected: "TSLA",
+      identity: detectDocumentIdentity("Apple Inc. Q3 FY2026 Results"),
+      known: detectKnownCompany("Apple Inc. Q3 FY2026 Results"),
+    });
+    expect(result.status).toBe("mismatch");
+    expect(result.foundTicker).toBe("AAPL");
+  });
+
+  it("正しい組み合わせは通る", () => {
+    const text = "Tesla, Inc. Q3 2026 Update";
+    expect(
+      checkTickerMatch({
+        selected: "TSLA",
+        identity: detectDocumentIdentity(text),
+        known: detectKnownCompany(text),
+      }).status,
+    ).toBe("match");
+  });
+
+  it("**載っていない企業なら従来どおり止めない**（誤検知を増やさない）", () => {
+    const text = "Acme Widgets Inc. Annual Report";
+    expect(
+      checkTickerMatch({
+        selected: "TSLA",
+        identity: detectDocumentIdentity(text),
+        known: detectKnownCompany(text),
+      }).status,
+    ).toBe("unknown");
   });
 });
