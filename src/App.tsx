@@ -52,6 +52,12 @@ import WorkspacePanel from "@/components/WorkspacePanel";
 import ResizableSplit from "@/components/ResizableSplit";
 import AnalysisWithDebate from "@/components/AnalysisWithDebate";
 import FiscalPeriodDialog from "@/components/FiscalPeriodDialog";
+import TickerMismatchDialog from "@/components/TickerMismatchDialog";
+import {
+  checkTickerMatch,
+  detectDocumentIdentity,
+  type MatchResult,
+} from "@/lib/parser/tickerMatch";
 import {
   collectFiscalPeriods,
   detectFiscalPeriodFromName,
@@ -158,6 +164,14 @@ export default function App() {
     /** 期が複数見つかったときの候補（1 件以下なら絞り込みは出ない） */
     candidates: { period: FiscalPeriod; documents: string[] }[];
   } | null>(null);
+  /*
+   * 銘柄と資料の不一致。
+   * **見つけたら進ませない。** 別会社の資料で分析すると、
+   * その会社の数字が選択中の銘柄の分析として保存される。
+   */
+  const [mismatch, setMismatch] = useState<
+    (MatchResult & { documentName: string }) | null
+  >(null);
 
   const settings = useSettings();
   const settingsError = useSettingsError();
@@ -233,6 +247,22 @@ export default function App() {
         // 読めなくてもファイル名から拾えることがある
       }
       loaded.push({ name: doc.displayName, text });
+    }
+
+    /*
+     * **期を聞く前に、資料が対象銘柄のものかを確かめる。**
+     * 期だけ確認して走らせても、中身が別会社なら意味が無い。
+     */
+    for (const doc of loaded) {
+      const result = checkTickerMatch({
+        selected: activeTicker ?? "",
+        selectedName: activeAnalysis?.fundamentals?.name ?? null,
+        identity: detectDocumentIdentity(doc.text, doc.name),
+      });
+      if (result.status === "mismatch") {
+        setMismatch({ ...result, documentName: doc.name });
+        return;
+      }
     }
 
     const candidates = collectFiscalPeriods(loaded);
@@ -732,6 +762,15 @@ export default function App() {
           setHelpOpen(false);
           setTourOpen(true);
         }}
+      />
+
+      <TickerMismatchDialog
+        open={mismatch !== null}
+        selected={activeTicker ?? ""}
+        foundTicker={mismatch?.foundTicker ?? null}
+        foundName={mismatch?.foundName ?? null}
+        documentName={mismatch?.documentName ?? ""}
+        onClose={() => setMismatch(null)}
       />
 
       <FiscalPeriodDialog

@@ -94,7 +94,15 @@ export function scoreRowsOnly(merged: string): string {
  * 矛盾の指摘と死角チェックは、何が書かれたかを読まないと成立しない。
  * 渡すのは表の行だけで、前置きや途中の節は落とす。
  */
-export function stepInstruction(step: AnalysisStep, scoredRows: string): string {
+export function stepInstruction(
+  step: AnalysisStep,
+  scoredRows: string,
+  /**
+   * 対象銘柄。**第 1 段でだけ**、資料が別会社のものでないかを確かめさせる。
+   * 全段で聞くとトークンの無駄で、1 段目で止まれば以降は走らない。
+   */
+  ticker = "",
+): string {
   if (step.range === null) {
     return [
       t("prompt.step.previousHeading"),
@@ -112,7 +120,18 @@ export function stepInstruction(step: AnalysisStep, scoredRows: string): string 
   }
 
   const { from, to } = step.range;
+
+  /*
+   * **不一致の確認は第 1 段だけに置く。**
+   * ここで止まれば以降の段は走らないので、無駄なトークンを使わない。
+   */
+  const guard =
+    step.id === ANALYSIS_STEPS[0].id && ticker !== ""
+      ? [t("prompt.step.mismatchGuard", { ticker }), ""]
+      : [];
+
   return [
+    ...guard,
     t("prompt.step.rangeTask", { from, to, count: to - from + 1 }),
     "",
     t("prompt.step.ruleNoHeader"),

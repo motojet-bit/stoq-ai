@@ -87,6 +87,26 @@ describe("段ごとの指示", () => {
   });
 });
 
+describe("銘柄不一致のガード", () => {
+  it("**第 1 段だけで確認させる**（ここで止まれば以降は走らない）", () => {
+    const first = stepInstruction(ANALYSIS_STEPS[0], "", "TSLA");
+    expect(first).toContain("MISMATCH_TICKER_ERROR");
+    expect(first).toContain("TSLA");
+
+    for (const step of ANALYSIS_STEPS.slice(1)) {
+      expect(stepInstruction(step, "", "TSLA")).not.toContain("MISMATCH_TICKER_ERROR");
+    }
+  });
+
+  it("ティッカーが渡されなければガードを入れない", () => {
+    expect(stepInstruction(ANALYSIS_STEPS[0], "")).not.toContain("MISMATCH_TICKER_ERROR");
+  });
+
+  it("**判断が付かないときは通常どおり進めさせる**（誤検知で止めない）", () => {
+    expect(stepInstruction(ANALYSIS_STEPS[0], "", "TSLA")).toContain("判断が付かない");
+  });
+});
+
 describe("最終段へ渡す本文の絞り込み", () => {
   it("**評価テーブルの行だけを残す**（前置きや節は見直しに要らない）", () => {
     const merged = [

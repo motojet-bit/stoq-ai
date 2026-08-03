@@ -1102,5 +1102,16 @@
   "history.viewQuarter": "Compare a quarter",
   "history.quarterEmpty": "There are no analyses for this period yet.",
   "history.quarterTicker": "Ticker",
-  "history.quarterAverage": "Average"
+  "history.quarterAverage": "Average",
+  "mismatch.title": "The selected ticker does not match the company in the attached document",
+  "mismatch.body": "\"{{document}}\" appears to be about a different company. Analyzing it would save another company's figures as the analysis for the selected ticker.",
+  "mismatch.selected": "Selected ticker",
+  "mismatch.found": "Company in the document",
+  "mismatch.hint": "Replace the document, or change the ticker at the top.",
+  "mismatch.close": "Close",
+  "errors.ERR_TICKER_MISMATCH": "The analysis was stopped because the document is about a different company",
+  "mismatch.abortedTitle": "Analysis stopped — ticker mismatch",
+  "mismatch.abortedBody": "The document was identified as {{found}}. It will not be saved as an analysis of {{ticker}}.",
+  "mismatch.abortedUnknown": "a different company",
+  "prompt.step.mismatchGuard": "**Check this first**: confirm that the attached documents and filings are about {{ticker}}. If you determine they are about a different company, write **no assessment at all** and output only this single line, then stop:\n\nMISMATCH_TICKER_ERROR: <company name found in the document>\n\nIf you cannot tell, do not output this line and proceed with the assessment as usual."
 }

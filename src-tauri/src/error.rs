@@ -42,6 +42,9 @@ pub mod code {
     pub const DATA_DIR: &str = "ERR_DATA_DIR";
     pub const FILE_WRITE: &str = "ERR_FILE_WRITE";
     pub const NOT_FOUND: &str = "ERR_NOT_FOUND";
+    /// 選択中の銘柄と、添付資料・提出書類の企業が食い違っている。
+    /// **分析は最後まで成立してしまう**ので、気づいた時点で止める。
+    pub const TICKER_MISMATCH: &str = "ERR_TICKER_MISMATCH";
     pub const INVALID_INPUT: &str = "ERR_INVALID_INPUT";
 
     // --- ライセンス ---

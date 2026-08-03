@@ -1102,5 +1102,16 @@
   "history.viewQuarter": "四半期比較",
   "history.quarterEmpty": "この期の分析がまだありません。",
   "history.quarterTicker": "銘柄",
-  "history.quarterAverage": "平均"
+  "history.quarterAverage": "平均",
+  "mismatch.title": "選択中の銘柄と添付資料の企業が一致しません",
+  "mismatch.body": "「{{document}}」は別の企業の資料と判定されました。このまま分析すると、別会社の数字が選択中の銘柄の分析として保存されます。",
+  "mismatch.selected": "選択中の銘柄",
+  "mismatch.found": "資料内の企業",
+  "mismatch.hint": "資料を入れ替えるか、上部のティッカーを選び直してください。",
+  "mismatch.close": "閉じる",
+  "errors.ERR_TICKER_MISMATCH": "選択中の銘柄と資料の企業が一致しないため、分析を中止しました",
+  "mismatch.abortedTitle": "分析を中止しました（銘柄の不一致）",
+  "mismatch.abortedBody": "資料は {{found}} のものと判定されました。{{ticker}} の分析としては保存しません。",
+  "mismatch.abortedUnknown": "別の企業の資料",
+  "prompt.step.mismatchGuard": "**最初に確認すること**: 添付資料および提出書類が、対象銘柄 {{ticker}} の企業のものかを確かめる。別の企業の資料だと判断した場合は、**評価を一切書かず**、次の 1 行だけを出力して終了すること:\n\nMISMATCH_TICKER_ERROR: <資料内の企業名>\n\n判断が付かない場合は、この行を出さずに通常どおり評価を進める。"
 }
