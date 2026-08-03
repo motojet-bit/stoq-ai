@@ -476,6 +476,16 @@ mod tests {
         assert!(prompt.contains("判断が付かない場合も出力しない"));
     }
 
+    /// **出力の長さを抑える指示が入っていること。**
+    /// 長い出力は途中で切れやすく、切れた結果は読み手にとって価値がゼロになる。
+    #[test]
+    fn 出力の長さを抑える指示が入っている() {
+        let prompt = build_system_prompt(&preset("general", &[]));
+        for word in ["要点を凝縮", "冗長な重複表現を避け", "長さは評価されない"] {
+            assert!(prompt.contains(word), "「{word}」が無い");
+        }
+    }
+
     /// 指定が無ければ従来どおり（第 2 段以降で無駄に付けない）。
     #[test]
     fn ティッカー未指定なら判定ルールを付けない() {

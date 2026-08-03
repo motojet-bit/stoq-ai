@@ -1188,7 +1188,7 @@
   "mapReduce.mapItem2": "- Statements that read as strengths",
   "mapReduce.mapItem3": "- Statements that read as risks",
   "mapReduce.mapItem4": "- Notes and accounting caveats (one-off items, standard changes)",
-  "mapReduce.mapRule": "**Do not score or judge.** You have not seen the other parts yet, and a verdict made here would carry through to the end. Extract only what is written.",
+  "mapReduce.mapRule": "**Do not score or judge.** You have not seen the other parts yet, and a verdict made here would carry through to the end. Extract only what is written. Use bullet points and keep the whole thing under 500 words.",
   "mapReduce.summaryHeading": "## Extract {{index}}: {{heading}}",
   "mapReduce.reduceHeading": "## Extracts from the attached document ({{count}} parts)\n\nThe document was large, so it was read in parts. Below is what was extracted from each. If they conflict, say so and state which reading you take.",
   "step.split.mapping": "Reading the document in parts ({{done}} of {{total}} done)…",
@@ -1210,5 +1210,5 @@
   "diagnose.restartHint": "Discards the saved progress and starts again from the first step.",
   "prompt.continueTask": "The previous output hit the limit. Continue from immediately after the text below, keeping the same format, and output **only the continuation**. Do not repeat what is already written, and do not add any preamble.",
   "prompt.continueHeading": "--- WHAT HAS BEEN WRITTEN SO FAR ---",
-  "step.continuing": "Continuing a long output ({{attempt}} of {{max}})…"
+  "step.continuing": "Continuing the long report (part {{attempt}} of {{max}})…"
 }
