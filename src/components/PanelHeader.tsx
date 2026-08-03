@@ -8,6 +8,7 @@ import {
   usePanelDrag,
 } from "@/lib/ui/panelDrag";
 import { IconGrip, IconMinimize } from "@/components/Icons";
+import OverflowScroller from "@/components/OverflowScroller";
 import { useT } from "@/lib/i18n/i18n";
 
 interface Props {
@@ -104,9 +105,23 @@ export default function PanelHeader({
       <span className="shrink-0 text-slate-600">{icon}</span>
       <span className="t-heading shrink-0 font-medium text-slate-300">{title}</span>
 
-      {subtitle && <span className="t-label min-w-0 truncate text-slate-500">{subtitle}</span>}
+      {/*
+        **操作ボタンより先に、こちらを縮める。**
+        押せなくなるボタンより、読めなくなる補足のほうが被害が小さい。
+        入りきらなければ横スクロールし、端にフェードと ▶ を出す。
+      */}
+      {subtitle && (
+        <OverflowScroller>
+          <span className="t-label whitespace-nowrap text-slate-500">{subtitle}</span>
+        </OverflowScroller>
+      )}
 
-      <div className="ml-auto flex items-center gap-2">
+      {/*
+        **操作ボタン群は絶対に縮めない（shrink-0）。**
+        窓を狭めたり文字を大きくしたりしたときに、
+        「再分析」「保存」が画面外へ押し出されると操作そのものができなくなる。
+      */}
+      <div className="ml-auto flex shrink-0 items-center gap-2">
         {actions}
 
         <button

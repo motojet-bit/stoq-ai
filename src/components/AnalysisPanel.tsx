@@ -6,6 +6,7 @@ import type { SlotId } from "@/lib/ui/layoutStore";
 import CriterionScoreRow from "@/components/CriterionScoreRow";
 import PanelHeader from "@/components/PanelHeader";
 import AnalysisProgress from "@/components/AnalysisProgress";
+import OverflowScroller from "@/components/OverflowScroller";
 import ScoreCountUp from "@/components/ScoreCountUp";
 import AnalysisFailure from "@/components/AnalysisFailure";
 import ErrorDetailModal from "@/components/ErrorDetailModal";
@@ -161,11 +162,12 @@ export default function AnalysisPanel({
             {/*
               消費トークンと概算コスト。**実測値だけを出す。**
               usage が取れなかったら何も出さない（0 と出すと無料に見える）。
+              情報表示なので、ボタンより先にこちらを縮める（min-w-0 truncate）。
             */}
             {run && run.inputTokens + run.outputTokens > 0 && (
               <span
                 title={cost.unknownModel ? t("usage.unknownModel") : t("usage.note")}
-                className="t-label shrink-0 font-mono text-slate-500"
+                className="t-label min-w-0 truncate font-mono text-slate-500"
               >
                 {t("usage.label")}: {formatTokens(run.inputTokens + run.outputTokens)}
                 {!cost.unknownModel && (
@@ -261,19 +263,25 @@ export default function AnalysisPanel({
         }
       />
 
-      {/* 何をもとに分析したかを常に見えるようにする */}
+      {/*
+        何をもとに分析したかを常に見えるようにする。
+        **折り返さずに 1 行へ収め、溢れたら横へ送る。**
+        折り返すと資料が増えるたびにヘッダーが厚くなり、本文が押し下げられる。
+      */}
       {run && run.basis.length > 0 && (
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/30 px-4 py-1.5">
+        <div className="flex shrink-0 items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/30 px-4 py-1.5">
           <span className="t-label shrink-0 text-slate-500">{t("analysis.basis")}</span>
-          {run.basis.map((item) => (
-            <span
-              key={item}
-              title={item}
-              className="t-label max-w-64 truncate rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-slate-400"
-            >
-              {item}
-            </span>
-          ))}
+          <OverflowScroller className="py-0.5">
+            {run.basis.map((item) => (
+              <span
+                key={item}
+                title={item}
+                className="t-label max-w-64 shrink-0 truncate rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-slate-400"
+              >
+                {item}
+              </span>
+            ))}
+          </OverflowScroller>
         </div>
       )}
 

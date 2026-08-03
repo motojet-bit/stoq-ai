@@ -1113,5 +1113,6 @@
   "mismatch.abortedTitle": "Analysis stopped — ticker mismatch",
   "mismatch.abortedBody": "The document was identified as {{found}}. It will not be saved as an analysis of {{ticker}}.",
   "mismatch.abortedUnknown": "a different company",
-  "prompt.step.mismatchGuard": "**Check this first**: confirm that the attached documents and filings are about {{ticker}}. If you determine they are about a different company, write **no assessment at all** and output only this single line, then stop:\n\nMISMATCH_TICKER_ERROR: <company name found in the document>\n\nIf you cannot tell, do not output this line and proceed with the assessment as usual."
+  "prompt.step.mismatchGuard": "**Check this first**: confirm that the attached documents and filings are about {{ticker}}. If you determine they are about a different company, write **no assessment at all** and output only this single line, then stop:\n\nMISMATCH_TICKER_ERROR: <company name found in the document>\n\nIf you cannot tell, do not output this line and proceed with the assessment as usual.",
+  "overflow.more": "More items to the right — scroll sideways or widen the window"
 }
