@@ -20,16 +20,15 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SUPPORT_EMAIL = "superpuzanoza@gmail.com";
 
 /**
- * 販売者。
+ * 屋号。製品名と同じにしてある（アプリ・LP と綴りを揃えること）。
  *
- * **Lemon Squeezy の登録名と綴りを揃えること。** 食い違うと、
- * 決済画面と本サイトで「誰が売っているのか」が別人に見える。
+ * **個人名と住所は常時掲示しない。** 本製品の Merchant of Record は
+ * Lemon Squeezy であり、売買契約の相手方も同社。表に出す必要があるのは
+ * 「誰に連絡すれば届くか」で、それは問い合わせ先で足りる。
  *
- * **住所は載せない。** 記載の代わりに「請求があれば遅滞なく開示する」と書く。
- * 個人の住所を常時公開する必要はないが、問われたときに答えられる状態にはしておく。
+ * **請求があれば遅滞なく開示する**旨は明記してある。
+ * 問われたときに答えられる状態は保ちつつ、常時公開はしない。
  */
-const SELLER_NAME = "SAENGDAO HASUDA";
-/** 屋号。製品名と同じにしてある（アプリ・LP と綴りを揃えること） */
 const TRADE_NAME = "StoQ AI Analyzer";
 /** 最終更新日。文面を直したらここも直す */
 const UPDATED = "2026-08-05";
@@ -105,14 +104,14 @@ ${body}
         </p>
         <p class="mt-3 border-t border-slate-800 pt-3 text-xs text-slate-500">
           <span data-en>
-            Published by ${SELLER_NAME}, trading as ${TRADE_NAME}.
+            Published under the trade name ${TRADE_NAME}.
             Sold through Lemon Squeezy (merchant of record).
-            Business address disclosed on request.
+            Legal name and address disclosed on request.
           </span>
           <span data-ja>
-            提供: ${SELLER_NAME}（屋号: ${TRADE_NAME}）／
+            提供: ${TRADE_NAME}（屋号）／
             販売: Lemon Squeezy（Merchant of Record）／
-            所在地はご請求に応じて開示いたします。
+            氏名・所在地はご請求に応じて開示いたします。
           </span>
         </p>
       </div>
@@ -236,24 +235,42 @@ const terms = page({
         "対応インターフェース言語は、現時点では日本語および英語のみです。",
       ],
     ]),
-    section("5. Dependence on external services", "5. 外部サービスへの依存", [
+    section("5. Internet connection", "5. インターネット接続", [
+      [
+        "An internet connection is required. The app calls AI providers and market-data services to produce an analysis, and checks your licence with Lemon Squeezy. It is not designed to run offline.",
+        "インターネット接続が必要です。分析のために AI 提供元および市場データのサービスへ接続し、あわせて Lemon Squeezy でライセンスの確認を行います。オフラインでの利用は想定していません。",
+      ],
+      [
+        "If the licence cannot be checked because of a network or provider outage, the app keeps working for 14 days from the last successful check, so a temporary outage does not lock you out.",
+        "通信障害や提供元の障害でライセンスを確認できない場合でも、最後に確認できた時点から 14 日間はご利用いただけます。一時的な障害でお使いいただけなくなることはありません。",
+      ],
+    ]),
+
+    section("6. Devices", "6. 利用できる端末", [
+      [
+        "A licence can be activated on a limited number of devices. When replacing a machine, unregister the old one from the app&rsquo;s licence settings to free the slot.",
+        "1 つのライセンスで有効化できる端末数には上限があります。PC を買い替える際は、アプリのライセンス設定から旧端末の登録を外して枠を空けてください。",
+      ],
+    ]),
+
+    section("7. Dependence on external services", "7. 外部サービスへの依存", [
       [
         "This app relies on external APIs (LLM providers, market data, SEC EDGAR). If a provider changes its specification, restricts access or discontinues a service, some features may be limited or stop working without notice.",
         "本アプリは外部の API（LLM 提供元・市場データ・SEC EDGAR 等）に依存しています。提供元の仕様変更・アクセス制限・サービス終了により、一部機能が予告なく制限される、または利用できなくなる場合があります。",
       ],
     ]),
-    section("6. Seller", "6. 販売者", [
+    section("8. Seller", "8. 販売者", [
       [
-        `This product is developed and published by <strong>${SELLER_NAME}</strong>, trading as <strong>${TRADE_NAME}</strong>.`,
-        `本製品は <strong>${SELLER_NAME}</strong>（屋号: <strong>${TRADE_NAME}</strong>）が開発・提供しています。`,
+        `This product is developed and published under the trade name <strong>${TRADE_NAME}</strong>.`,
+        `本製品は屋号 <strong>${TRADE_NAME}</strong> として開発・提供しています。`,
       ],
       [
         `Payments are handled by Lemon Squeezy, which acts as the merchant of record. Your contract of sale is with Lemon Squeezy; your receipt and card statement will show them, not the developer.`,
         `決済は Lemon Squeezy を通じて行われ、同社が Merchant of Record（記録上の販売者）となります。売買契約の相手方は Lemon Squeezy であり、領収書やカードの明細には開発者ではなく同社が表示されます。`,
       ],
       [
-        `The seller&rsquo;s business address is not published here; it will be disclosed without delay on request to ${SUPPORT_EMAIL}. For questions about the app itself, use the same address.`,
-        `販売者の所在地は本サイトには掲載していませんが、${SUPPORT_EMAIL} へご請求いただければ遅滞なく開示いたします。アプリ自体に関するお問い合わせも同じ窓口で承ります。`,
+        `The publisher&rsquo;s legal name and business address are not published here; both will be disclosed without delay on request to ${SUPPORT_EMAIL}. For questions about the app itself, use the same address.`,
+        `提供者の氏名および所在地は本サイトには掲載していませんが、${SUPPORT_EMAIL} へご請求いただければ、いずれも遅滞なく開示いたします。アプリ自体に関するお問い合わせも同じ窓口で承ります。`,
       ],
     ]),
   ].join("\n\n"),
@@ -266,9 +283,9 @@ const privacy = page({
   titleEn: "Privacy Policy",
   titleJa: "プライバシーポリシー",
   leadEn:
-    "Short version: the developer runs no server and collects nothing. Everything stays on your machine.",
+    "Short version: the developer runs no server and collects nothing. Your analyses stay on your machine; only your licence key goes to the payment provider to be checked.",
   leadJa:
-    "要点: 開発者はサーバを持たず、いかなる情報も収集していません。データはお客様の PC 内に留まります。",
+    "要点: 開発者はサーバを持たず、いかなる情報も収集していません。分析の中身はお客様の PC 内に留まり、決済事業者へ送るのはライセンスキーの確認だけです。",
   body: [
     section("1. What the developer collects", "1. 開発者が収集する情報", [
       [
@@ -276,8 +293,8 @@ const privacy = page({
         "ありません。本アプリにはアクセス解析・利用統計・クラッシュレポートのいずれも組み込まれていません。送信先となる開発者のサーバも存在しません。",
       ],
       [
-        "Licence activation is performed offline, on your machine. Your licence key is not transmitted to the developer.",
-        "ライセンス認証はお客様の PC 内でオフラインに行われます。ライセンスキーが開発者へ送信されることはありません。",
+        "Licence checks go to Lemon Squeezy, not to the developer. On activation the app sends your licence key and a device label (for example &ldquo;StoQ AI Analyzer / windows&rdquo;) so the key can be verified and tied to your machine; afterwards it re-checks periodically. No personal information is included, and the developer never sees any of it.",
+        "ライセンスの確認は Lemon Squeezy に対して行われ、開発者へは送信されません。有効化の際、キーの正当性を確かめて端末に紐づけるため、<strong>ライセンスキーと端末の名札</strong>（例:「StoQ AI Analyzer / windows」）を送信します。以後も定期的に確認を行います。個人を特定する情報は含まれず、開発者がこれらを見ることはありません。",
       ],
     ]),
     section("2. Where your data is stored", "2. データの保存場所", [
@@ -302,6 +319,10 @@ const privacy = page({
       [
         "<strong>Market and filing data</strong> &mdash; Yahoo Finance, SEC EDGAR, and (if you choose them) Financial Modeling Prep or Alpha Vantage. The app sends the ticker symbol and, for SEC EDGAR, the User-Agent string you configured.",
         "<strong>市場データ・開示資料</strong> &mdash; Yahoo Finance / SEC EDGAR、およびお客様が選択した場合は Financial Modeling Prep / Alpha Vantage。銘柄コードと、SEC EDGAR についてはお客様が設定した User-Agent が送信されます。",
+      ],
+      [
+        "<strong>Lemon Squeezy</strong> &mdash; the licence key and device label, for activation and periodic re-checks.",
+        "<strong>Lemon Squeezy</strong> &mdash; 有効化と定期的な再確認のため、ライセンスキーと端末の名札を送信します。",
       ],
       [
         "<strong>Google Drive</strong> &mdash; only if you connect it. The app requests the <code>drive.appdata</code> scope only, which can read and write nothing but its own backup file. It cannot see your other files.",

@@ -39,7 +39,7 @@
         <span data-en>Privacy Policy</span><span data-ja>プライバシーポリシー</span>
       </h1>
       <p class="mt-2 text-sm leading-relaxed text-slate-400">
-        <span data-en>Short version: the developer runs no server and collects nothing. Everything stays on your machine.</span><span data-ja>要点: 開発者はサーバを持たず、いかなる情報も収集していません。データはお客様の PC 内に留まります。</span>
+        <span data-en>Short version: the developer runs no server and collects nothing. Your analyses stay on your machine; only your licence key goes to the payment provider to be checked.</span><span data-ja>要点: 開発者はサーバを持たず、いかなる情報も収集していません。分析の中身はお客様の PC 内に留まり、決済事業者へ送るのはライセンスキーの確認だけです。</span>
       </p>
       <p class="mt-1 text-xs text-slate-600">
         <span data-en>Last updated: 2026-08-05</span><span data-ja>最終更新日: 2026-08-05</span>
@@ -52,8 +52,8 @@
           </h2>
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Nothing. This app has no analytics, no telemetry and no crash reporting. There is no developer-operated server for it to send anything to.</p>
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>ありません。本アプリにはアクセス解析・利用統計・クラッシュレポートのいずれも組み込まれていません。送信先となる開発者のサーバも存在しません。</p>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Licence activation is performed offline, on your machine. Your licence key is not transmitted to the developer.</p>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>ライセンス認証はお客様の PC 内でオフラインに行われます。ライセンスキーが開発者へ送信されることはありません。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Licence checks go to Lemon Squeezy, not to the developer. On activation the app sends your licence key and a device label (for example &ldquo;StoQ AI Analyzer / windows&rdquo;) so the key can be verified and tied to your machine; afterwards it re-checks periodically. No personal information is included, and the developer never sees any of it.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>ライセンスの確認は Lemon Squeezy に対して行われ、開発者へは送信されません。有効化の際、キーの正当性を確かめて端末に紐づけるため、<strong>ライセンスキーと端末の名札</strong>（例:「StoQ AI Analyzer / windows」）を送信します。以後も定期的に確認を行います。個人を特定する情報は含まれず、開発者がこれらを見ることはありません。</p>
         </section>
 
         <section>
@@ -76,6 +76,8 @@
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>AI 提供元</strong> &mdash; OpenAI / Anthropic / Google (Gemini)、およびお客様が追加した OpenAI 互換プロバイダ。プロンプト・市場データ・添付された資料が送信されます。各社のプライバシーポリシーが適用されます。</p>
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Market and filing data</strong> &mdash; Yahoo Finance, SEC EDGAR, and (if you choose them) Financial Modeling Prep or Alpha Vantage. The app sends the ticker symbol and, for SEC EDGAR, the User-Agent string you configured.</p>
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>市場データ・開示資料</strong> &mdash; Yahoo Finance / SEC EDGAR、およびお客様が選択した場合は Financial Modeling Prep / Alpha Vantage。銘柄コードと、SEC EDGAR についてはお客様が設定した User-Agent が送信されます。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Lemon Squeezy</strong> &mdash; the licence key and device label, for activation and periodic re-checks.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>Lemon Squeezy</strong> &mdash; 有効化と定期的な再確認のため、ライセンスキーと端末の名札を送信します。</p>
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Google Drive</strong> &mdash; only if you connect it. The app requests the <code>drive.appdata</code> scope only, which can read and write nothing but its own backup file. It cannot see your other files.</p>
           <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>Google Drive</strong> &mdash; お客様が連携した場合のみ。要求するのは <code>drive.appdata</code> スコープのみで、本アプリ自身のバックアップファイル以外は読み書きできません。お客様の他のファイルは参照できません。</p>
         </section>
@@ -110,14 +112,14 @@
         </p>
         <p class="mt-3 border-t border-slate-800 pt-3 text-xs text-slate-500">
           <span data-en>
-            Published by SAENGDAO HASUDA, trading as StoQ AI Analyzer.
+            Published under the trade name StoQ AI Analyzer.
             Sold through Lemon Squeezy (merchant of record).
-            Business address disclosed on request.
+            Legal name and address disclosed on request.
           </span>
           <span data-ja>
-            提供: SAENGDAO HASUDA（屋号: StoQ AI Analyzer）／
+            提供: StoQ AI Analyzer（屋号）／
             販売: Lemon Squeezy（Merchant of Record）／
-            所在地はご請求に応じて開示いたします。
+            氏名・所在地はご請求に応じて開示いたします。
           </span>
         </p>
       </div>
