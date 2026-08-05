@@ -18,6 +18,19 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** 問い合わせ先。**1 か所で持つ**（散らすと直し漏れる） */
 const SUPPORT_EMAIL = "superpuzanoza@gmail.com";
+
+/**
+ * 販売者。
+ *
+ * **Lemon Squeezy の登録名と綴りを揃えること。** 食い違うと、
+ * 決済画面と本サイトで「誰が売っているのか」が別人に見える。
+ *
+ * **住所は載せない。** 記載の代わりに「請求があれば遅滞なく開示する」と書く。
+ * 個人の住所を常時公開する必要はないが、問われたときに答えられる状態にはしておく。
+ */
+const SELLER_NAME = "SAENGDAO HASUDA";
+/** 屋号。製品名と同じにしてある（アプリ・LP と綴りを揃えること） */
+const TRADE_NAME = "StoQ AI Analyzer";
 /** 最終更新日。文面を直したらここも直す */
 const UPDATED = "2026-08-05";
 
@@ -89,6 +102,18 @@ ${body}
           <a href="mailto:${SUPPORT_EMAIL}" class="text-emerald-400 hover:text-emerald-300">
             ${SUPPORT_EMAIL}
           </a>
+        </p>
+        <p class="mt-3 border-t border-slate-800 pt-3 text-xs text-slate-500">
+          <span data-en>
+            Published by ${SELLER_NAME}, trading as ${TRADE_NAME}.
+            Sold through Lemon Squeezy (merchant of record).
+            Business address disclosed on request.
+          </span>
+          <span data-ja>
+            提供: ${SELLER_NAME}（屋号: ${TRADE_NAME}）／
+            販売: Lemon Squeezy（Merchant of Record）／
+            所在地はご請求に応じて開示いたします。
+          </span>
         </p>
       </div>
     </main>
@@ -219,8 +244,16 @@ const terms = page({
     ]),
     section("6. Seller", "6. 販売者", [
       [
-        `Payments are handled by Lemon Squeezy, which acts as the merchant of record for this product. Your contract of sale is with Lemon Squeezy. For questions about the app itself, contact ${SUPPORT_EMAIL}.`,
-        `決済は Lemon Squeezy を通じて行われ、同社が本製品の Merchant of Record（記録上の販売者）となります。売買契約の相手方は Lemon Squeezy です。アプリ自体に関するお問い合わせは ${SUPPORT_EMAIL} までお願いいたします。`,
+        `This product is developed and published by <strong>${SELLER_NAME}</strong>, trading as <strong>${TRADE_NAME}</strong>.`,
+        `本製品は <strong>${SELLER_NAME}</strong>（屋号: <strong>${TRADE_NAME}</strong>）が開発・提供しています。`,
+      ],
+      [
+        `Payments are handled by Lemon Squeezy, which acts as the merchant of record. Your contract of sale is with Lemon Squeezy; your receipt and card statement will show them, not the developer.`,
+        `決済は Lemon Squeezy を通じて行われ、同社が Merchant of Record（記録上の販売者）となります。売買契約の相手方は Lemon Squeezy であり、領収書やカードの明細には開発者ではなく同社が表示されます。`,
+      ],
+      [
+        `The seller&rsquo;s business address is not published here; it will be disclosed without delay on request to ${SUPPORT_EMAIL}. For questions about the app itself, use the same address.`,
+        `販売者の所在地は本サイトには掲載していませんが、${SUPPORT_EMAIL} へご請求いただければ遅滞なく開示いたします。アプリ自体に関するお問い合わせも同じ窓口で承ります。`,
       ],
     ]),
   ].join("\n\n"),
