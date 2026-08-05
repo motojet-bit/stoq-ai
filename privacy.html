@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — StoQ AI Analyzer</title>
+    <meta name="robots" content="index,follow" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html[lang="en"] [data-ja] { display: none; }
+      html[lang="ja"] [data-en] { display: none; }
+    </style>
+  </head>
+  <body class="bg-slate-950 font-sans text-slate-200 antialiased">
+    <header class="border-b border-slate-900 bg-slate-950/90 backdrop-blur">
+      <div class="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
+        <a href="./index.html" class="text-sm font-semibold text-slate-100">
+          StoQ AI Analyzer
+        </a>
+        <a
+          href="./index.html"
+          class="ml-auto rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100"
+        >
+          <span data-en>&larr; Back to the site</span><span data-ja>&larr; トップへ戻る</span>
+        </a>
+        <button
+          type="button"
+          id="lang-toggle"
+          class="rounded-md border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
+          aria-label="Switch language"
+        >
+          <span data-en>🇯🇵 日本語</span><span data-ja>🇺🇸 English</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-5 py-12">
+      <h1 class="text-2xl font-semibold text-slate-50">
+        <span data-en>Privacy Policy</span><span data-ja>プライバシーポリシー</span>
+      </h1>
+      <p class="mt-2 text-sm leading-relaxed text-slate-400">
+        <span data-en>Short version: the developer runs no server and collects nothing. Everything stays on your machine.</span><span data-ja>要点: 開発者はサーバを持たず、いかなる情報も収集していません。データはお客様の PC 内に留まります。</span>
+      </p>
+      <p class="mt-1 text-xs text-slate-600">
+        <span data-en>Last updated: 2026-08-05</span><span data-ja>最終更新日: 2026-08-05</span>
+      </p>
+
+      <div class="mt-10 space-y-8">
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>1. What the developer collects</span><span data-ja>1. 開発者が収集する情報</span>
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Nothing. This app has no analytics, no telemetry and no crash reporting. There is no developer-operated server for it to send anything to.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>ありません。本アプリにはアクセス解析・利用統計・クラッシュレポートのいずれも組み込まれていません。送信先となる開発者のサーバも存在しません。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Licence activation is performed offline, on your machine. Your licence key is not transmitted to the developer.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>ライセンス認証はお客様の PC 内でオフラインに行われます。ライセンスキーが開発者へ送信されることはありません。</p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>2. Where your data is stored</span><span data-ja>2. データの保存場所</span>
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Analyses, chat history, notes, staged documents and settings are stored in a local database on your PC. API keys are stored in your operating system&rsquo;s application-settings directory and are shown on screen only as a masked string.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>分析結果・対話履歴・メモ・一時保存した資料・設定は、お客様の PC 内のローカルデータベースに保存されます。APIキーは OS のアプリ設定ディレクトリに保存され、画面にはマスクされた文字列のみが表示されます。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>None of this is sent to the developer. Uninstalling the app or deleting its data directory removes it.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>これらが開発者へ送信されることはありません。アプリのアンインストール、またはデータディレクトリの削除により消去できます。</p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>3. Where your data does go</span><span data-ja>3. 外部へ送信される先</span>
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>To make the app work, it talks directly to the following third parties. These requests go from your machine to the service; they do not pass through the developer.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>機能の提供のため、本アプリは以下の第三者と直接通信します。通信はお客様の PC から各サービスへ直接行われ、開発者を経由しません。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>AI providers</strong> &mdash; OpenAI, Anthropic, Google (Gemini), or any OpenAI-compatible provider you add. The app sends the prompt, the market data and any documents you attached. Each provider&rsquo;s own privacy policy applies.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>AI 提供元</strong> &mdash; OpenAI / Anthropic / Google (Gemini)、およびお客様が追加した OpenAI 互換プロバイダ。プロンプト・市場データ・添付された資料が送信されます。各社のプライバシーポリシーが適用されます。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Market and filing data</strong> &mdash; Yahoo Finance, SEC EDGAR, and (if you choose them) Financial Modeling Prep or Alpha Vantage. The app sends the ticker symbol and, for SEC EDGAR, the User-Agent string you configured.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>市場データ・開示資料</strong> &mdash; Yahoo Finance / SEC EDGAR、およびお客様が選択した場合は Financial Modeling Prep / Alpha Vantage。銘柄コードと、SEC EDGAR についてはお客様が設定した User-Agent が送信されます。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Google Drive</strong> &mdash; only if you connect it. The app requests the <code>drive.appdata</code> scope only, which can read and write nothing but its own backup file. It cannot see your other files.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>Google Drive</strong> &mdash; お客様が連携した場合のみ。要求するのは <code>drive.appdata</code> スコープのみで、本アプリ自身のバックアップファイル以外は読み書きできません。お客様の他のファイルは参照できません。</p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>4. Payment information</span><span data-ja>4. 決済情報</span>
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Payment is processed by Lemon Squeezy. Your card details are handled by Lemon Squeezy and are never obtained or held by the developer.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>決済は Lemon Squeezy を通じて処理されます。クレジットカード情報等は Lemon Squeezy が取り扱い、開発者が取得・保持することはありません。</p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>5. This website</span><span data-ja>5. 本サイトについて</span>
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>This site is a static page hosted on GitHub Pages. It sets no tracking cookies and runs no analytics. Your language preference is kept in your browser&rsquo;s local storage and never leaves your device.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>本サイトは GitHub Pages 上の静的ページです。トラッキング Cookie もアクセス解析も使用していません。言語設定はブラウザのローカルストレージに保存され、お客様の端末から出ることはありません。</p>
+        </section>
+      </div>
+
+      <div
+        class="mt-12 rounded-xl border border-slate-800 bg-slate-900/40 px-5 py-4 text-sm leading-relaxed text-slate-400"
+      >
+        <p class="mb-1 font-medium text-slate-300">
+          <span data-en>Questions?</span><span data-ja>お問い合わせ</span>
+        </p>
+        <p>
+          <a href="mailto:superpuzanoza@gmail.com" class="text-emerald-400 hover:text-emerald-300">
+            superpuzanoza@gmail.com
+          </a>
+        </p>
+      </div>
+    </main>
+
+    <footer class="border-t border-slate-900 bg-slate-950 py-10">
+      <div
+        class="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-5 text-xs text-slate-500 sm:flex-row"
+      >
+        <p>&copy; 2026 StoQ AI Analyzer. All Rights Reserved.</p>
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <a href="./terms.html" class="transition-colors hover:text-slate-300">
+            <span data-en>Terms</span><span data-ja>利用規約</span>
+          </a>
+          <a href="./privacy.html" class="transition-colors hover:text-slate-300">
+            <span data-en>Privacy</span><span data-ja>プライバシー</span>
+          </a>
+          <a href="./refund.html" class="transition-colors hover:text-slate-300">
+            <span data-en>Refunds</span><span data-ja>返金について</span>
+          </a>
+          <a href="mailto:superpuzanoza@gmail.com" class="transition-colors hover:text-slate-300">
+            <span data-en>Contact</span><span data-ja>お問い合わせ</span>
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var stored = null;
+        try {
+          stored = localStorage.getItem("stoq.lp.lang");
+        } catch (e) {}
+        root.lang =
+          stored || ((navigator.language || "en").toLowerCase().indexOf("ja") === 0 ? "ja" : "en");
+        document.getElementById("lang-toggle").addEventListener("click", function () {
+          var next = root.lang === "ja" ? "en" : "ja";
+          root.lang = next;
+          try {
+            localStorage.setItem("stoq.lp.lang", next);
+          } catch (e) {}
+        });
+      })();
+    </script>
+  </body>
+</html>
