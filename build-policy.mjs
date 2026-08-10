@@ -69,6 +69,11 @@ function page({ slug, titleEn, titleJa, leadEn, leadJa, body }) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${titleEn} — StoQ AI Analyzer</title>
     <meta name="robots" content="index,follow" />
+    <!-- アイコンは index.html と同じもの（＝アプリ本体のアイコン） -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <meta name="theme-color" content="#020617" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       html[lang="en"] [data-ja] { display: none; }

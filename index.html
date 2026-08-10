@@ -8,12 +8,22 @@
       name="description"
       content="A Windows desktop tool that collects 10-K / 10-Q filings and summarises them with AI, so reading them takes less time. Bring your own API key; everything stays on your machine."
     />
+    <!--
+      **アプリと同じアイコンを使う。** `src-tauri/icons/` から持ってきたもので、
+      タブに出る絵と、インストール後にデスクトップに並ぶ絵が一致する。
+      別の絵にすると、落とした人が「これで合っているのか」を確かめられない。
+    -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <meta name="theme-color" content="#020617" />
     <meta property="og:title" content="StoQ AI Analyzer" />
     <meta
       property="og:description"
       content="AI fundamental analysis for US & global equities. Bring your own API key. Your data never leaves your machine."
     />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://motojet-bit.github.io/stoq-ai/favicon.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
