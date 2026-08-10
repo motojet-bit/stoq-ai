@@ -1,0 +1,1475 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StoQ AI Analyzer — cut the time it takes to read earnings filings</title>
+    <meta
+      name="description"
+      content="A Windows desktop tool that collects 10-K / 10-Q filings and summarises them with AI, so reading them takes less time. Bring your own API key; everything stays on your machine."
+    />
+    <meta property="og:title" content="StoQ AI Analyzer" />
+    <meta
+      property="og:description"
+      content="AI fundamental analysis for US & global equities. Bring your own API key. Your data never leaves your machine."
+    />
+    <meta property="og:type" content="website" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Hiragino Sans",
+                "Noto Sans JP",
+                "sans-serif",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* 言語の切り替え。既定は英語（アプリ本体と同じ方針） */
+      html[lang="en"] [data-ja] { display: none; }
+      html[lang="ja"] [data-en] { display: none; }
+      /*
+       * ヒーローの背景。**写真をはっきり見せる。**
+       *
+       * 以前は全体を薄く沈ませていたが、それだと
+       * 「ANNUAL REPORT」「四半期決算書」といった**題字が読めない。**
+       * 何の書類が置いてあるかが伝わらないなら、写真を敷く意味がない。
+       *
+       * そこで **写真はほぼそのまま**にし、
+       * 読みやすさは**文字側**（暗いカード）で確保する。
+       * ぼかす／薄くするのではなく、文字の下に板を敷く。
+       *
+       * フェードは**下端だけ。** 次のセクションへの継ぎ目を消すためで、
+       * 四辺を溶かすと写真が中央に寄って見え、書類が切れる。
+       */
+      .hero {
+        --hero-image: url("./hero-en.jpg");
+        position: relative;
+        isolation: isolate;
+        /*
+         * **写真の縦横比に器を寄せる。**
+         *
+         * `cover` は器からはみ出したぶんを切り落とす。器が横長すぎると
+         * 上下が大きく削られ、**寄って見える**——書類が画面いっぱいに映り、
+         * 何が置いてあるのか分からなくなっていた。
+         *
+         * 写真は 2200×1200（横 ÷ 縦 ≒ 1.83）。器の高さを幅の 54% 前後に
+         * すれば比率がほぼ一致し、切り落とされる部分がほとんど無くなる。
+         * 縦長の窓では画面を埋めすぎないよう 88vh で頭打ちにする。
+         */
+        min-height: min(54vw, 88vh);
+        display: flex;
+        /*
+         * **カードを上へ寄せる。** 中央に置くと、写真の下側——
+         * 書類の題字がいちばん大きく写っている帯——を覆ってしまう。
+         * 切り出しをどう動かしても、覆われていては読めない。
+         */
+        align-items: flex-start;
+      }
+      html[lang="ja"] .hero {
+        --hero-image: url("./hero-ja.jpg");
+      }
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background-image: var(--hero-image);
+        background-size: cover;
+        /*
+         * **上端を残す。** 左上のバインダー（CORPORATE EARNINGS PRESENTATION /
+         * GROWTH STRATEGY）は写真のいちばん上にあり、上から削ると題字が丸ごと消える。
+         *
+         * 一方、下端に写っているのは机の余白で、削っても失うものが無い。
+         * **書いてある部分を残し、何も書いていない部分を捨てる。**
+         */
+        background-position: 50% 0%;
+        /* はみ出したぶんが出ないよう、器の外へ広げない */
+        background-repeat: no-repeat;
+        /* 少しだけ落ち着かせる。読めなくなるほどは触らない */
+        filter: saturate(0.92) brightness(0.94);
+      }
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        /*
+         * **下端だけをページ本体（slate-950）へ溶かす。**
+         * 上と左右は触らない——書類の題字を隠さないため。
+         */
+        background: linear-gradient(
+          to bottom,
+          rgba(2, 6, 23, 0.18),
+          rgba(2, 6, 23, 0) 26%,
+          rgba(2, 6, 23, 0) 58%,
+          rgba(2, 6, 23, 0.72) 88%,
+          rgb(2, 6, 23)
+        );
+      }
+      /*
+       * 見出しを載せる板。**写真の上で文字を読ませる唯一の手段。**
+       * 写真を暗くする方向で解決すると、書類が見えなくなる。
+       */
+      .hero-card {
+        background: rgba(2, 6, 23, 0.86);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.85);
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-950 font-sans text-slate-300 antialiased">
+    <!-- ============================================================ ヘッダー -->
+    <header
+      class="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur"
+    >
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+        <a href="#top" class="flex items-center gap-2.5">
+          <span
+            class="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-500/30"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 4 5-8" /><path d="M3 21h18" />
+            </svg>
+          </span>
+          <span class="text-[15px] font-semibold tracking-tight">
+            <span class="text-emerald-400" data-ja>株究</span>
+            <span class="text-emerald-400" data-en>StoQ</span>
+            <span class="ml-0.5 text-slate-200" data-ja>- StoQ AI Analyzer</span>
+            <span class="ml-0.5 text-slate-200" data-en>AI Analyzer</span>
+          </span>
+        </a>
+
+        <nav class="flex items-center gap-1.5 sm:gap-3">
+          <a
+            href="#features"
+            class="hidden rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100 sm:block"
+          >
+            <span data-en>What it does</span><span data-ja>できること</span>
+          </a>
+          <a
+            href="#screens"
+            class="hidden rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100 sm:block"
+          >
+            <span data-en>Screens</span><span data-ja>画面</span>
+          </a>
+          <a
+            href="#byok"
+            class="hidden rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100 lg:block"
+          >
+            <span data-en>Before you buy</span><span data-ja>購入前に</span>
+          </a>
+          <a
+            href="#pricing"
+            class="hidden rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100 sm:block"
+          >
+            <span data-en>Pricing</span><span data-ja>価格</span>
+          </a>
+
+          <button
+            type="button"
+            id="lang-toggle"
+            class="rounded-md border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
+            aria-label="Switch language"
+          >
+            <span data-en>🇯🇵 日本語</span><span data-ja>🇺🇸 English</span>
+          </button>
+
+          <a
+            href="#download"
+            class="rounded-md bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+          >
+            <span data-en>Free download</span><span data-ja>無料ダウンロード</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- ========================================================== ヒーロー -->
+      <section class="hero relative overflow-hidden">
+        <div class="mx-auto w-full max-w-5xl px-5 pb-32 pt-8 sm:pb-40 sm:pt-12">
+          <div
+            class="hero-card mx-auto max-w-lg rounded-2xl border border-slate-800/80 px-5 py-6 text-center sm:px-7 sm:py-7"
+          >
+          <p
+            class="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-900/70 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+            <span data-en>Desktop app for Windows &middot; Bring your own API key</span>
+            <span data-ja>Windows デスクトップアプリ &middot; APIキー持ち込み型</span>
+          </p>
+
+          <!--
+            **日本語は明示的に改行を入れる。** 自動折り返しは読点を無視するので、
+            意味の切れ目でないところで行が変わる。
+            **「卒業」だけを 2 行目に落として色を乗せる。** 1 行に流すと結論が埋もれる。
+            15 文字を 6xl にすると横幅（max-w-4xl）を超えるので、上限は 5xl に留める。
+          -->
+          <h1
+            class="text-balance text-2xl font-bold leading-[1.25] tracking-tight text-white sm:text-4xl"
+          >
+            <span data-en>
+              Cut the time it takes<br />
+              <span class="text-emerald-400">to read a filing.</span>
+            </span>
+            <span data-ja>
+              決算書を読み解く時間を、<br />
+              <span class="text-emerald-400">徹底的に短縮。</span>
+            </span>
+          </h1>
+
+          <!--
+            **文の切れ目（。）ごとに改行する。** 3 つの文を続けて流すと、
+            どこまでが 1 つの主張なのかが読み取れなくなる。
+          -->
+          <p class="mx-auto mt-4 max-w-lg text-pretty text-sm leading-relaxed text-slate-400 sm:text-base">
+            <span data-en>The grind &mdash; collecting, finding, extracting &mdash; handed to an AI.</span>
+            <span data-ja>泥臭い作業を、AI で徹底効率化。</span>
+          </p>
+
+          <div class="mt-6 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
+            <a
+              href="#download"
+              class="w-full rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/40 transition-colors hover:bg-emerald-500 sm:w-auto sm:text-base"
+            >
+              <span data-en>Start the $0 free trial</span>
+              <span data-ja>$0 の無料トライアルを始める</span>
+            </a>
+            <a
+              href="#pricing"
+              class="w-full rounded-lg border border-slate-700 px-6 py-3 text-sm font-medium text-slate-200 transition-colors hover:border-slate-600 hover:bg-slate-900 sm:w-auto sm:text-base"
+            >
+              <span data-en>See pricing</span><span data-ja>価格を見る</span>
+            </a>
+          </div>
+
+          <p class="mt-4 text-xs text-slate-500">
+            <span data-en>3 weeks &middot; 10 items &middot; every feature unlocked &middot; no card required</span>
+            <span data-ja>3 週間 &middot; 10 件 &middot; 全機能を開放 &middot; クレジットカード不要</span>
+          </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== お悩み・課題 -->
+      <!--
+        ヒーローの直後、Core Value の**手前**に置く。
+        「何をしなくてよくなるか」を見せる前に、**読み手が自分の詰まりを言語化できる**
+        場所を作る。ここで頷けた人だけが、以降の機能説明を自分ごととして読む。
+
+        **他社・他者を名指しで批判しない。** 主語は常に読み手側の状態に置き、
+        「スクールが悪い」ではなく「ハードルが高い」と書く。
+        色も警告色を使わず本文と同じ寒色に留める（煽ると知的なトーンが崩れる）。
+      -->
+            <!-- ========================================================== これは何か -->
+      <!--
+        **1 枚に畳んだ。** 以前は「悩み」「価値」「機能」「対象者」で 4 節・700 行あり、
+        読み終える前に何のツールなのかが分からなかった。
+        **何・誰・何ができる・訴求点**の 4 つだけを置く。
+
+        **投資の言葉を使わない。** 銘柄の良し悪し・売買・判断には触れない。
+        これは**書類を読むための道具**であって、答えを出す道具ではない。
+      -->
+            <!-- ========================================================== これは何か -->
+      <!--
+        **分析ではなく、時短として書く。**
+        「決算書を評価する」ではなく「読むまでの手間を減らす」。
+        投資の言葉（判断・売買・銘柄の良し悪し）は一切置かない。
+      -->
+      <section id="features" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-5xl px-5">
+
+          <h2 class="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>What StoQ does</span>
+            <span data-ja>株究 StoQ AI Analyzer</span>
+          </h2>
+          <p class="mx-auto mt-5 max-w-3xl text-pretty text-center text-base leading-relaxed text-slate-400">
+            <span data-en>
+              It&rsquo;s a workflow optimisation tool that minimises the time and effort of
+              reading corporate earnings filings, powered by AI (BYOK).
+            </span>
+            <span data-ja>
+              決算書類を読む時間と手間を最小化する、作業効率化ツールです。
+              AI で動きます（APIキーはご自身のものをお使いいただく BYOK 方式）。
+            </span>
+          </p>
+
+          <!-- ------------------------------------------------ 誰のためか -->
+          <h3 class="mt-16 text-center text-2xl font-bold tracking-tight text-white">
+            <span data-en>Who it is for</span>
+            <span data-ja>誰のためのものか</span>
+          </h3>
+          <ul class="mx-auto mt-6 grid max-w-4xl gap-4 sm:grid-cols-2">
+            <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+              <p class="text-base font-semibold text-emerald-300">
+                <span data-en>If you want to read one without wrestling with it</span>
+                <span data-ja>決算書を、気軽に読んでみたい方</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Get the shape of the document first, then go where you want. When a term stops
+                  you, ask what it means &mdash; right there, as many times as you like, without
+                  asking a person.
+                </span>
+                <span data-ja>
+                  まず全体像をつかんでから、気になるところへ入っていけます。
+                  知らない言葉で止まったら、その場で聞けます。何度でも、誰にも気兼ねなく。
+                </span>
+              </p>
+            </li>
+            <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+              <p class="text-base font-semibold text-emerald-300">
+                <span data-en>If you already read them, and want the hours back</span>
+                <span data-ja>すでに読めるが、時間を短くしたい方</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Collecting, extracting and lining things up is the part that takes the time,
+                  and none of it needs you. Hand that over and keep the part that does.
+                </span>
+                <span data-ja>
+                  集める・拾う・並べる——時間を食うのはそこで、しかもあなたでなくてもできます。
+                  そこを渡してしまって、あなたにしかできない部分だけを手元に残してください。
+                </span>
+              </p>
+            </li>
+          </ul>
+
+          <!-- ------------------------------------------------ 何をするか -->
+          <h3 class="mt-16 text-center text-2xl font-bold tracking-tight text-white">
+            <span data-en>What it does</span>
+            <span data-ja>何をするのか</span>
+          </h3>
+          <ul class="mx-auto mt-6 grid max-w-4xl gap-4 sm:grid-cols-2">
+            <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+              <p class="text-base font-semibold text-white">
+                <span data-en>Fetches the documents for you</span>
+                <span data-ja>資料を自動で取ってくる</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  It pulls the 10-K and 10-Q from SEC EDGAR, with market data alongside.
+                  No hunting for the right PDF.
+                </span>
+                <span data-ja>
+                  SEC EDGAR から 10-K・10-Q を取りに行き、市場データも一緒に揃えます。
+                  目当ての PDF を探し回る必要はありません。
+                </span>
+              </p>
+            </li>
+            <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+              <p class="text-base font-semibold text-white">
+                <span data-en>Reads what you bring, too</span>
+                <span data-ja>手元の資料も読み解く</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Earnings decks, quarterly presentations, PDF, Word, PowerPoint, CSV, plain
+                  text. Drop them in and they go through the same reading.
+                </span>
+                <span data-ja>
+                  決算説明資料や四半期プレゼン、PDF・Word・PowerPoint・CSV・テキスト。
+                  放り込めば、取ってきた資料と同じように読み解きます。
+                </span>
+              </p>
+            </li>
+          </ul>
+
+          <!-- ------------------------------------------------ 効いてくる 3 つ -->
+          <h3 class="mt-16 text-center text-2xl font-bold tracking-tight text-white">
+            <span data-en>Three things that matter</span>
+            <span data-ja>効いてくるのは、この 3 つ</span>
+          </h3>
+          <ul class="mx-auto mt-6 grid max-w-4xl gap-4 sm:grid-cols-3">
+            <li class="rounded-xl border border-emerald-900/60 bg-emerald-950/20 p-6">
+              <p class="text-base font-semibold text-emerald-300">
+                <span data-en>No subscription</span>
+                <span data-ja>サブスク不要</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Buy it once. Nothing keeps running in the months you don&rsquo;t open it.
+                </span>
+                <span data-ja>
+                  買い切りです。開かなかった月に、黙って引き落とされることはありません。
+                </span>
+              </p>
+            </li>
+            <li class="rounded-xl border border-emerald-900/60 bg-emerald-950/20 p-6">
+              <p class="text-base font-semibold text-emerald-300">
+                <span data-en>The AI does the summarising</span>
+                <span data-ja>AI が要約する</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  Long documents come back at a length you can actually read, with the source
+                  &mdash; document and period &mdash; attached to the figures.
+                </span>
+                <span data-ja>
+                  長い資料が、読み切れる長さになって返ってきます。
+                  数字には出どころ（資料名と期）が付いてきます。
+                </span>
+              </p>
+            </li>
+            <li class="rounded-xl border border-emerald-900/60 bg-emerald-950/20 p-6">
+              <p class="text-base font-semibold text-emerald-300">
+                <span data-en>It all stays traceable</span>
+                <span data-ja>記録が残り、追える</span>
+              </p>
+              <p class="mt-2.5 text-sm leading-relaxed text-slate-400">
+                <span data-en>
+                  What you read stays on your PC and can be lined up across quarters. Months
+                  later you can still see what you looked at, and where it came from.
+                </span>
+                <span data-ja>
+                  読んだ内容は PC に残り、期をまたいで並べ直せます。
+                  何か月あとでも「あのとき何を見たか」を辿れます。
+                </span>
+              </p>
+            </li>
+          </ul>
+
+          <!-- ------------------------------------------------ 前提 -->
+          <!--
+            **買う前に知っておくべき条件なので残す。**
+            APIキーと接続は、あとから知らされると「聞いていない」になる。
+          -->
+          <div id="byok" class="mx-auto mt-16 max-w-3xl rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+            <p class="text-base font-semibold text-white">
+              <span data-en>Before you buy: two conditions</span>
+              <span data-ja>購入前に、2 つの前提</span>
+            </p>
+            <ul class="mt-4 space-y-4 text-sm leading-relaxed text-slate-400">
+              <li>
+                <span data-en>
+                  <strong class="text-emerald-300">You bring your own API key.</strong>
+                  The app has no AI of its own. Get a key from a provider and paste it in.
+                  <strong class="text-slate-200">Usage is billed to you by that provider, not by
+                  us</strong> &mdash; so the ceiling, the model and the pace are yours to set.
+                </span>
+                <span data-ja>
+                  <strong class="text-emerald-300">APIキーはご自身のものを使います。</strong>
+                  本アプリ自体は AI を持ちません。提供事業者から鍵を取得して入力してください。
+                  <strong class="text-slate-200">利用料は当方ではなく、各事業者から直接ご請求されます。</strong>
+                  上限も、使うモデルも、ペースも、ご自身で決められます。
+                </span>
+              </li>
+              <li>
+                <span data-en>
+                  <strong class="text-slate-200">A connection is needed to summarise.</strong>
+                  Fetching documents, running the AI and checking your licence all happen online.
+                  <span class="mt-1.5 block">
+                    <strong class="text-slate-200">Reading back does not need one.</strong>
+                    Everything you have already saved lives on your PC and opens offline.
+                  </span>
+                </span>
+                <span data-ja>
+                  <strong class="text-slate-200">要約させるときは、インターネット接続が必要です。</strong>
+                  資料の取得、AI の実行、ライセンスの確認は、オンラインで行われます。
+                  <span class="mt-1.5 block">
+                    <strong class="text-slate-200">読み返すだけなら、接続は要りません。</strong>
+                    保存済みの記録は PC の中にあるので、オフラインでも開けます。
+                  </span>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== 画面 -->
+      <!--
+        **説明の直後、価格の手前に置く。**
+        「読む時間が短くなる」と文章で言われても、実際に何が並ぶのかは
+        絵を見るまで分からない。買うかどうかを考える直前に置く。
+
+        ライトを上段・画像を左に大きく取る（主役はこちら）。
+        ダークは下段で左右を入れ替え、同じアプリの別の顔として見せる。
+
+        **クリックで原寸を開く。** 画面が密なので、縮めると文字が潰れる。
+        拡大手段が無いと「読めない画像を貼っただけ」になる。
+      -->
+      <section id="screens" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-6xl px-5">
+          <h2 class="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>What it looks like</span>
+            <span data-ja>実際の画面</span>
+          </h2>
+          <p class="mx-auto mt-5 max-w-2xl text-pretty text-center text-base leading-relaxed text-slate-400">
+            <span data-en>
+              Light and dark, switched from the header. Click a screen to open it full size.
+            </span>
+            <span data-ja>
+              ライト／ダークはヘッダーから切り替えられます。画像をクリックすると原寸で開きます。
+            </span>
+          </p>
+          <!--
+            **画面の中の文章が誰の言葉なのかを、先に言っておく。**
+            断りが無いと、当方が書いた企業の評価に読める。
+            AI が資料を読んで要約したものだと分かれば、そう読まれない。
+          -->
+          <p class="mx-auto mt-3 max-w-2xl text-center text-xs leading-relaxed text-slate-500">
+            <span data-en>
+              The text shown inside the screens is written by the AI, summarising the documents
+              it was given.
+            </span>
+            <span data-ja>
+              画像内の文章は、AI が与えられた資料を読んで要約したものです。
+            </span>
+          </p>
+
+          <!-- ------------------------------------------------ ライト -->
+          <div class="mt-14 grid items-center gap-8 lg:grid-cols-5 lg:gap-10">
+            <figure class="lg:col-span-3">
+              <button
+                type="button"
+                data-shot="./screen-light.jpg"
+                class="group block w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/60 transition-colors hover:border-emerald-600/70"
+              >
+                <img
+                  src="./screen-light.jpg"
+                  width="1676"
+                  height="912"
+                  loading="lazy"
+                  alt="StoQ AI Analyzer in light theme: saved items on the left, figures from the filing in the middle, the AI summary on the right."
+                  class="block w-full"
+                />
+              </button>
+              <figcaption class="mt-2.5 text-center text-xs text-slate-500 lg:text-left">
+                <span data-en>Click to enlarge</span>
+                <span data-ja>クリックで拡大</span>
+              </figcaption>
+            </figure>
+
+            <div class="lg:col-span-2">
+              <span
+                class="inline-block rounded-full border border-emerald-800/70 bg-emerald-950/40 px-2.5 py-1 text-xs font-medium text-emerald-300"
+              >
+                <span data-en>Light</span><span data-ja>ライト</span>
+              </span>
+              <h3 class="mt-4 text-2xl font-bold tracking-tight text-white">
+                <span data-en>The documents, summarised</span>
+                <span data-ja>開示資料の中身を、要約</span>
+              </h3>
+              <p class="mt-4 text-base leading-relaxed text-slate-400">
+                <span data-en>
+                  AI summarises what the disclosure documents say. In a short time, you have
+                  what a professional would be looking for.
+                </span>
+                <span data-ja>
+                  企業開示資料に書かれた内容を AI が要約。
+                  わずかな時間で、プロが求める情報が手に入ります。
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <!-- ------------------------------------------------ ダーク -->
+          <!-- 画像を先に置く。**スマホでは常に絵が先**に来た方が読み進めやすい -->
+          <div class="mt-16 grid items-center gap-8 lg:grid-cols-5 lg:gap-10">
+            <figure class="lg:order-2 lg:col-span-3">
+              <button
+                type="button"
+                data-shot="./screen-dark.jpg"
+                class="group block w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/60 transition-colors hover:border-emerald-600/70"
+              >
+                <img
+                  src="./screen-dark.jpg"
+                  width="1682"
+                  height="914"
+                  loading="lazy"
+                  alt="StoQ AI Analyzer in dark theme: quarterly trend across four quarters in the middle, the AI summary on the right."
+                  class="block w-full"
+                />
+              </button>
+              <figcaption class="mt-2.5 text-center text-xs text-slate-500 lg:text-right">
+                <span data-en>Click to enlarge</span>
+                <span data-ja>クリックで拡大</span>
+              </figcaption>
+            </figure>
+
+            <div class="lg:order-1 lg:col-span-2">
+              <span
+                class="inline-block rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-300"
+              >
+                <span data-en>Dark</span><span data-ja>ダーク</span>
+              </span>
+              <h3 class="mt-4 text-2xl font-bold tracking-tight text-white">
+                <span data-en>Saved, and kept across quarters</span>
+                <span data-ja>保存して、期をまたいで残す</span>
+              </h3>
+              <p class="mt-4 text-base leading-relaxed text-slate-400">
+                <span data-en>
+                  Summaries and AI chats are saved, so the record carries across quarters.
+                </span>
+                <span data-ja>
+                  分析結果や AI とのチャット内容を保存し、期をまたいで記録できます。
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+<section id="pricing" class="border-t border-slate-900 bg-slate-900/20 py-20 sm:py-24">
+        <div class="mx-auto max-w-5xl px-5">
+          <h2 class="text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>Try it first. Buy it once.</span>
+            <span data-ja>まず試して、買うのは一度だけ。</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+            <span data-en>
+              No subscription. The license is tied to you, not to a billing cycle — nothing to
+              renew, nothing to cancel, no one to answer to.
+            </span>
+            <span data-ja>
+              サブスクリプションはありません。買い切りです。
+              更新も退会の手続きもなく、誰かに合わせる必要もありません。
+            </span>
+          </p>
+
+          <div class="mt-14 grid gap-6 md:grid-cols-2">
+            <!-- Free -->
+            <div class="rounded-2xl border border-slate-800 bg-slate-950 p-8">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <span data-en>Free Trial</span><span data-ja>無料トライアル</span>
+              </h3>
+              <p class="mt-4 flex items-baseline gap-1">
+                <span class="text-5xl font-bold tracking-tight text-white">$0</span>
+              </p>
+              <p class="mt-3 text-sm text-slate-400">
+                <span data-en>Every feature, for three weeks.</span>
+                <span data-ja>全機能を 3 週間。</span>
+              </p>
+
+              <ul class="mt-7 space-y-3 text-sm text-slate-300">
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>3 weeks from first launch</span>
+                  <span data-ja>初回起動から 3 週間</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Up to 10 items</span>
+                  <span data-ja>10 件まで</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>No feature is held back</span>
+                  <span data-ja>機能制限なし</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>No credit card</span>
+                  <span data-ja>クレジットカード登録不要</span>
+                </li>
+                <li class="flex gap-2.5 text-slate-400">
+                  <span class="text-slate-600" aria-hidden="true">&#8226;</span>
+                  <span data-en>After the trial, saved analyses stay readable forever</span>
+                  <span data-ja>期間終了後も、保存済みの分析はいつでも閲覧できます</span>
+                </li>
+              </ul>
+
+              <a
+                href="#download"
+                class="mt-8 block rounded-lg border border-slate-700 px-5 py-3 text-center text-sm font-medium text-slate-100 transition-colors hover:border-slate-600 hover:bg-slate-900"
+              >
+                <span data-en>Download for Windows</span><span data-ja>Windows 版をダウンロード</span>
+              </a>
+            </div>
+
+            <!-- Lifetime -->
+            <div
+              class="relative rounded-2xl border border-emerald-700/60 bg-slate-950 p-8 shadow-2xl shadow-emerald-950/30 ring-1 ring-emerald-500/10"
+            >
+              <span
+                class="absolute -top-3 right-8 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white"
+              >
+                <span data-en>Buy once</span><span data-ja>買い切り</span>
+              </span>
+
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-emerald-400">
+                <span data-en>Lifetime License</span><span data-ja>ライフタイムライセンス</span>
+              </h3>
+              <p class="mt-4 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                <span class="text-2xl font-semibold text-slate-500 line-through decoration-slate-600"
+                  >USD&nbsp;$228</span
+                >
+                <span class="text-slate-600" aria-hidden="true">&rarr;</span>
+                <span class="text-5xl font-bold tracking-tight text-white">USD&nbsp;$62</span>
+                <span class="text-sm text-slate-500">
+                  <span data-en>one time</span><span data-ja>一度きり</span>
+                </span>
+              </p>
+              <p class="mt-3">
+                <span
+                  class="inline-block rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300"
+                >
+                  <span data-en>V0 feedback period &middot; limited quantity</span>
+                  <span data-ja>V0 フィードバック期間・数量限定価格</span>
+                </span>
+              </p>
+              <p class="mt-3 text-sm text-slate-400">
+                <span data-en>
+                  Lifetime licence for the major version you buy. Unlimited items, no time limit.
+                </span>
+                <span data-ja>
+                  ご購入いただいたメジャーバージョンを無期限でお使いいただけます。件数・期間の制限はありません。
+                </span>
+              </p>
+
+              <!--
+                **買う前に、届き方と線引きを見せる。**
+                「いつ届くのか」「どこまでが無償か」は、買ったあとに知ると
+                問い合わせと支払い紛争の種になる。価格のすぐ下に置く。
+              -->
+              <p class="mt-4 rounded-lg border border-slate-800 bg-slate-950/60 px-3.5 py-3 text-xs leading-relaxed text-slate-400">
+                <span data-en>
+                  <strong class="text-slate-200">Delivery:</strong> your licence key is sent
+                  automatically to the e-mail address used at checkout, normally within a few
+                  minutes.<br />
+                  <strong class="text-slate-200">Included:</strong> minor updates and bug fixes.
+                  Future major versions may be offered as paid upgrades.
+                </span>
+                <span data-ja>
+                  <strong class="text-slate-200">お届け:</strong>
+                  ライセンスキーは、ご購入時のメールアドレス宛に自動送信されます（通常は数分以内）。<br />
+                  <strong class="text-slate-200">含まれるもの:</strong>
+                  軽微な更新と不具合修正。将来のメジャーバージョンは、有償アップグレードとなる場合があります。
+                </span>
+              </p>
+
+              <ul class="mt-6 space-y-3 text-sm text-slate-300">
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Unlimited items and runs</span>
+                  <span data-ja>件数・実行回数ともに無制限</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>No time limit</span>
+                  <span data-ja>期間の制限なし</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Signed automatic updates</span>
+                  <span data-ja>署名付きの自動アップデート</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Everything you already analyzed carries over</span>
+                  <span data-ja>それまでのデータをそのまま引き継ぎ</span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-emerald-400" aria-hidden="true">&#10003;</span>
+                  <span data-en>Optional encrypted backup to your own Google Drive</span>
+                  <span data-ja>自分の Google Drive へのバックアップにも対応</span>
+                </li>
+              </ul>
+
+              <!--
+                **決済の繋ぎ先が決まるまで、どこへも飛ばさない。**
+                旧事業者のページが残っていると、サイトと申請内容が食い違って見える。
+                `href` は同じページ内に留め、押されたら状況を返す
+                （リンクを消すだけだと「押しても無反応」になる）。
+              -->
+              <a
+                href="#pricing"
+                data-checkout
+                class="mt-8 block rounded-lg bg-emerald-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+              >
+                <span data-en>Buy the lifetime license</span>
+                <span data-ja>ライフタイムライセンスを購入</span>
+              </a>
+              <p class="mt-3 text-center text-xs text-slate-500">
+                <span data-en>You will be taken to a secure checkout page</span>
+                <span data-ja>安全な決済ページへ移動します</span>
+              </p>
+              <p
+                class="mt-4 rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3 text-[11px] leading-relaxed text-slate-400"
+              >
+                <span data-en>
+                  * We are currently in a feature-building and feedback period (V0), so the price is
+                  discounted. It will return to the regular price when V1 ships, without prior
+                  notice.
+                </span>
+                <span data-ja>
+                  ※現在は機能拡充およびフィードバック収集期間（V0）のため特別価格で提供中です。
+                  V1 リリースに伴い予告なく通常価格へ改定されます。
+                </span>
+              </p>
+              <p class="mt-3 text-center text-[11px] leading-relaxed text-slate-600">
+                <span data-en>
+                  * If a major new generation ships in future, we may offer an upgrade at the
+                  difference in price rather than full price.
+                </span>
+                <span data-ja>
+                  ※将来的な大規模アップデートの際は、差額でのアップグレードをご案内する場合があります。
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== ダウンロード -->
+      <section id="download" class="border-t border-slate-900 py-20 sm:py-24">
+        <div class="mx-auto max-w-3xl px-5 text-center">
+          <!--
+            **ダウンロードボタンの手前に置く。** 落としてから制限を知るのがいちばん悪い順番。
+            解錠されたあと何が起きるか（永続・無制限）まで同じ枠に書く。
+            制限だけを読ませると「試用版の押し売り」に見える。
+          -->
+          <div
+            class="mb-12 rounded-2xl border border-emerald-700/60 bg-emerald-950/20 p-6 text-left shadow-lg shadow-emerald-950/20 sm:p-7"
+          >
+            <p class="flex items-center gap-2.5 text-sm font-bold text-emerald-300">
+              <span aria-hidden="true">&#128712;</span>
+              <span data-en>How the free trial works &mdash; and how to upgrade</span>
+              <span data-ja>【無料トライアルの仕様とアップグレードについて】</span>
+            </p>
+            <ul class="mt-4 space-y-3 text-sm leading-relaxed text-slate-300">
+              <li class="flex gap-2.5">
+                <span class="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true">&#10003;</span>
+                <span data-en>
+                  Free for <strong class="text-white">10 items</strong> and
+                  <strong class="text-white">3 weeks from first launch</strong>.
+                </span>
+                <span data-ja>
+                  <strong class="text-white">10 件</strong>、および
+                  <strong class="text-white">初回起動から 3 週間</strong>まで無料でお試しいただけます。
+                </span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="mt-0.5 shrink-0 text-amber-400" aria-hidden="true">&#9888;</span>
+                <span data-en>
+                  Once the period ends, or once you pass 10 items, adding new ones is locked.
+                </span>
+                <span data-ja>
+                  無料期間の終了後、または 10 件を超過した後は、新規の追加がロックされます。
+                </span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true">&#128273;</span>
+                <span data-en>
+                  Entering the activation key issued after purchase unlocks it, and from then on
+                  there is no limit and no expiry.
+                </span>
+                <span data-ja>
+                  購入後に発行されるアクティベーションキーをアプリに入力することでロックが解除され、
+                  以降は永続的に無制限でご利用いただけるようになります。
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <span data-en>Download and start in a few minutes</span>
+            <span data-ja>数分ではじめられます</span>
+          </h2>
+          <p class="mx-auto mt-4 max-w-xl text-slate-400">
+            <span data-en>
+              Install, paste in an API key from your provider, type a ticker. The app walks you
+              through getting a key if you do not have one yet.
+            </span>
+            <span data-ja>
+              インストールして、AI 提供各社の APIキーを貼り付け、ティッカーを入力するだけ。
+              キーの取り方はアプリ内のガイドが案内します。
+            </span>
+          </p>
+
+          <!--
+            **インストーラーへの直リンク。** リリース一覧を挟むと、
+            どのファイルを落とせばよいか分からず脱落する。
+
+            **バージョンを URL に埋めない。** 以前は v0.1.0 を直に書いていたが、
+            リリースを作り直した時点でこのボタンが 404 になった。
+            `latest/download/<ファイル名>` は、GitHub が
+            **最新リリースの同名アセットへ転送してくれる**ので、
+            バージョンを上げても LP を触らずに済む。
+
+            🔴 **そのかわり、アセット名を毎回そろえること。**
+            Tauri が吐く名前にはバージョンが入る
+            （`StoQ.AI.Analyzer_0.9.0_x64-setup.exe`）ので、
+            **同じ中身を下の名前でもう 1 つアップロードする。**
+            これを忘れると、ここが 404 に戻る。手順は README を参照。
+
+            ファイル名に空白を入れない。GitHub がアセット登録時にドットへ置き換える。
+          -->
+          <a
+            href="https://github.com/motojet-bit/stoq-releases/releases/latest/download/StoQ-AI-Analyzer-x64-setup.exe"
+            data-download
+            class="mt-9 inline-flex items-center gap-2.5 rounded-lg bg-emerald-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
+            </svg>
+            <span data-en>Download for Windows &mdash; free</span>
+            <span data-ja>Windows 版を無料ダウンロード</span>
+          </a>
+
+          <p class="mt-5 text-xs text-slate-500">
+            <span data-en>Windows 10 / 11 (64-bit) &middot; about 3 MB installer</span>
+            <span data-ja>Windows 10 / 11（64bit）&middot; インストーラー約 3 MB</span>
+          </p>
+
+          <!--
+            SmartScreen の青い画面は、署名の無い新しいアプリでは必ず出る。
+            先に伝えておかないと「危険なソフト」と受け取られて離脱する。
+          -->
+          <p
+            class="mx-auto mt-6 max-w-xl rounded-lg border border-slate-800 bg-slate-900/50 px-4 py-3 text-left text-xs leading-relaxed text-slate-400"
+          >
+            <span data-en>
+              &#9888; On first run, Windows may show a blue &ldquo;Windows protected your PC&rdquo;
+              screen. Click <strong class="text-slate-200">More info</strong>, then
+              <strong class="text-slate-200">Run anyway</strong>.
+            </span>
+            <span data-ja>
+              &#9888; Windows の仕様上、初回実行時に「Windows によって PC が保護されました」と
+              青い画面が表示される場合があります。その際は
+              <strong class="text-slate-200">詳細情報</strong>をクリックし、
+              <strong class="text-slate-200">実行</strong>を選択してください。
+            </span>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================================================ フッター -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-14">
+      <div class="mx-auto max-w-4xl px-5">
+        <div
+          class="rounded-xl border border-amber-900/40 bg-amber-950/15 px-5 py-4 text-xs leading-relaxed text-amber-100/70"
+        >
+          <p class="mb-1.5 font-semibold text-amber-200/90">
+            <span data-en>&#9888; Disclaimer</span><span data-ja>&#9888; 免責事項</span>
+          </p>
+          <p data-en>
+            StoQ AI Analyzer is a research-support tool. It does not provide investment advice
+            and is not a solicitation to buy or sell any security. AI systems can produce
+            incorrect figures and may answer the same question differently each time; no warranty
+            is made as to accuracy, currency or completeness. How you use the output is entirely
+            your own decision, as are any consequences of doing so.
+            The developer accepts no liability.
+          </p>
+          <p data-ja>
+            本ソフトはリサーチ支援ツールであり、投資助言を行うものではありません。
+            特定の有価証券・金融商品の売買を推奨するものでもありません。
+            AI は事実と異なる数値を生成することがあり、同じ質問でも回答が変わる場合があります。
+            出力の正確性・最新性・完全性について保証はいたしません。
+            出力をどのように用いるかは、すべてご自身のご判断によります。
+            その結果生じる事柄についても同様であり、開発者は一切の責任を負いません。
+          </p>
+        </div>
+
+        <div
+          class="mt-8 flex flex-col items-center justify-between gap-4 text-xs text-slate-500 sm:flex-row"
+        >
+          <p>&copy; 2026 StoQ AI Analyzer. All Rights Reserved.</p>
+          <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <a href="./terms.html" class="transition-colors hover:text-slate-300">
+              <span data-en>Terms</span><span data-ja>利用規約</span>
+            </a>
+            <a href="./privacy.html" class="transition-colors hover:text-slate-300">
+              <span data-en>Privacy</span><span data-ja>プライバシー</span>
+            </a>
+            <a href="./refund.html" class="transition-colors hover:text-slate-300">
+              <span data-en>Refunds</span><span data-ja>返金について</span>
+            </a>
+            <a
+              href="mailto:superpuzanoza@gmail.com"
+              data-support
+              class="transition-colors hover:text-slate-300"
+            >
+              <span data-en>Contact support</span><span data-ja>お問い合わせ</span>
+            </a>
+            <a
+              href="https://github.com/motojet-bit/stoq-releases/releases"
+              class="transition-colors hover:text-slate-300"
+            >
+              <span data-en>Release notes</span><span data-ja>更新履歴</span>
+            </a>
+          </div>
+
+          <!--
+            **販売元の所在地は常時掲示する。**
+            カード決済の国際規約では、国または都市名の明記が求められる。
+            「請求に応じて開示」だけだと販売元が不審と見なされ、審査が止まる。
+            番地までは出さない（求められているのは所在の特定であって、
+            自宅住所の公開ではない）。
+          -->
+          <p class="mt-6 border-t border-slate-900 pt-4 text-xs leading-relaxed text-slate-500">
+            <span data-en>
+              Published under the trade name StoQ AI Analyzer.
+              Seller location: Chaiyaphum, Thailand.
+              Legal name and full address disclosed on request.
+            </span>
+            <span data-ja>
+              提供: StoQ AI Analyzer（屋号）／所在地: タイ王国 チャイヤプーム県／
+              氏名および詳細住所はご請求に応じて開示いたします。
+            </span>
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ========================================================== 購入前の確認と同意 -->
+    <!--
+      決済ページへ直接飛ばさず、ここを必ず通す。
+      7 点はいずれも**買ったあとで知ると返金要求になる**種類の前提
+      （投資助言ではない / API 費用は別 / 個別サポートは無い / 言語は 2 つだけ /
+      メジャーアップデートは有償になりうる / β版であること / 専用キーの推奨）。
+
+      **リード文の件数は JS が数え直す**（`[data-consent-count]`）。
+      項目を足したときに文言の数字だけ古いまま残る事故を防ぐ。
+      JS が動かない場合に備えて、HTML 側にも正しい数字を書いておく。
+
+      **スマホでは中身が長くなる。** 見出しとボタンは動かさず、
+      チェック項目の帯だけをスクロールさせる（3 段の flex）。
+      全体を 1 つのスクロール面にすると、
+      **同意し終わってもボタンが画面外**にあり、押せないと思われてしまう。
+    -->
+    <div
+      id="consent"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="consent-title"
+    >
+      <div
+        class="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl"
+      >
+        <!-- 見出し（固定） -->
+        <div class="shrink-0 border-b border-slate-800 px-5 py-5 sm:px-8 sm:py-6">
+          <h2 id="consent-title" class="text-lg font-bold text-white sm:text-xl">
+            <span data-en>Before you buy</span>
+            <span data-ja>ご購入前の確認と同意</span>
+          </h2>
+          <p class="mt-2 text-sm text-slate-400">
+            <span data-en>
+              Please confirm all <span data-consent-count>7</span> before continuing to checkout.
+            </span>
+            <span data-ja>
+              以下の <span data-consent-count>7</span> 点にご同意のうえ、購入手続きへお進みください。
+            </span>
+          </p>
+        </div>
+
+        <!-- チェック項目（ここだけスクロールする） -->
+        <div class="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand this is a tool for reading and organising disclosure documents.
+              It does not provide investment advice and does not recommend any security.
+            </span>
+            <span data-ja>
+              本ツールは開示書類を読み・整理するための道具であり、投資助言や特定の銘柄の推奨を
+              行うものではないことに同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand I must obtain and configure the AI and data API keys myself, and that the
+              providers may charge me separately.
+            </span>
+            <span data-ja>
+              AIおよびデータ利用に必要なAPIキーはユーザー自身で取得・設定する必要があり、
+              別途プロバイダー側で費用が発生する場合があることに同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that individual technical support for obtaining and configuring API keys
+              is not provided.
+            </span>
+            <span data-ja>
+              APIキーの取得および設定手順について、当方による個別技術サポートは提供されないことに
+              同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand the interface is currently available in Japanese and English only.
+            </span>
+            <span data-ja>
+              現時点での対応インターフェース言語は「日本語」および「英語」のみであることに同意します。
+            </span>
+          </label>
+
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that a future major update may be a paid upgrade, offered to existing
+              users at a preferential price (for example, the difference in price).
+              <span class="mt-1.5 block text-slate-500">
+                (Ordinary bug fixes and minor updates remain free.)
+              </span>
+            </span>
+            <span data-ja>
+              将来の大規模なメジャーアップデートの際は、既存ユーザー特別価格（差額等）での
+              有償アップデートとなる場合があることに同意します。
+              <span class="mt-1.5 block text-slate-500">
+                （※通常の不具合修正やマイナーアップデートは無料です）
+              </span>
+            </span>
+          </label>
+
+          <!-- ⑥ β版であること -->
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand this app is distributed as a <strong class="text-slate-200">paid
+              beta</strong>: the core features shown in the demo video are verified to work, but it
+              is not guaranteed to be free of bugs.
+              <span class="mt-1.5 block text-slate-500">
+                (Fixes and improvements ship as free minor updates, roughly every one to four
+                weeks, guided by user feedback.)
+              </span>
+            </span>
+            <span data-ja>
+              本アプリは<strong class="text-slate-200">β版として有料配布</strong>されており、
+              紹介動画にある基本機能は動作確認済みですが、
+              完全なバグフリーを保証するものではないことに同意します。
+              <span class="mt-1.5 block text-slate-500">
+                （※ユーザーの声に応じて、1 週間〜1 か月間隔の無料マイナーアップデートで
+                修正・改善を続けます）
+              </span>
+            </span>
+          </label>
+
+          <!-- ⑦ 本アプリ専用の新規 APIキー -->
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that creating a
+              <strong class="text-slate-200">new API key dedicated to this app</strong> is strongly
+              recommended, for safe key management and clear usage tracking.
+              <span class="mt-1.5 block text-slate-500">
+                (Keeping it separate from your other work means you can see exactly what this app
+                spent — and revoke just that key if anything looks wrong.)
+              </span>
+            </span>
+            <span data-ja>
+              APIキーの安全な管理と利用状況の把握のため、
+              <strong class="text-slate-200">本アプリ専用の新規APIキー</strong>を作成・設定することを
+              強く推奨する旨に同意します。
+              <span class="mt-1.5 block text-slate-500">
+                （※他の用途と分けておくと、本アプリがいくら使ったかが正確に分かり、
+                不審な消費があってもそのキーだけを無効化できます）
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <!-- ボタン（固定。スクロールで画面外へ逃げない） -->
+        <div class="shrink-0 border-t border-slate-800 px-5 py-5 sm:px-8 sm:py-6">
+          <!--
+            **押せない理由を数で見せる。** 7 項目もあると、
+            どれを見落としているのか分からないまま「壊れている」と受け取られる。
+          -->
+          <p class="mb-3 text-center text-xs text-slate-500 sm:text-left">
+            <span data-en>
+              <span data-consent-progress>0</span> of
+              <span data-consent-count>7</span> confirmed
+            </span>
+            <span data-ja>
+              <span data-consent-count>7</span> 点中
+              <span data-consent-progress>0</span> 点を確認済み
+            </span>
+          </p>
+          <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              id="consent-cancel"
+              class="w-full rounded-lg border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800 sm:w-auto"
+            >
+              <span data-en>Cancel</span><span data-ja>キャンセル</span>
+            </button>
+            <button
+              type="button"
+              id="consent-proceed"
+              disabled
+              class="w-full rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none sm:w-auto"
+            >
+              <span data-en>I agree &mdash; continue to checkout</span>
+              <span data-ja>上記に同意して購入手続きへ進む</span>
+            </button>
+          </div>
+
+          <!--
+            **繋ぎ先がまだ無いときの答え。** 同意まで済ませた人を
+            無反応で放置すると、壊れていると受け取られる。
+            決済の口ができたら、この段落は表に出なくなる。
+          -->
+          <p
+            id="consent-pending"
+            class="mt-4 hidden rounded-lg border border-amber-900/70 bg-amber-950/30 px-4 py-3 text-center text-sm leading-relaxed text-amber-200"
+            role="status"
+          >
+            <span data-en>
+              Checkout is being set up and is not open yet. The free trial is available now &mdash;
+              please try it, and write to us if you would like to be told when it opens.
+            </span>
+            <span data-ja>
+              購入手続きは現在準備中で、まだ開いていません。無料トライアルは今すぐご利用いただけます。
+              開始のご連絡をご希望の場合は、お問い合わせ先までご一報ください。
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== 画面の拡大 -->
+    <!--
+      **画面が密なので、縮めたままでは文字が読めない。**
+      別タブで生の JPG を開かせると製品ページとして雑に見えるので、
+      同じページの上に重ねて出す。閉じ方は 3 つ用意する
+      （どこかを押す / ✕ / Esc）——閉じられない重ねものが一番困る。
+    -->
+    <div
+      id="shot-view"
+      class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/92 p-4 backdrop-blur-sm sm:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Screenshot"
+    >
+      <img id="shot-view-img" src="" alt="" class="max-h-full max-w-full rounded-lg shadow-2xl" />
+      <button
+        type="button"
+        id="shot-close"
+        class="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border border-slate-700 bg-slate-900/90 text-lg text-slate-300 transition-colors hover:border-slate-500 hover:text-white sm:right-6 sm:top-6"
+        aria-label="Close"
+      >
+        &times;
+      </button>
+    </div>
+
+    <script>
+      /*
+       * スクリーンショットの拡大表示。
+       *
+       * ライブラリは入れない。**この 1 か所のためだけに CDN を増やすと、
+       * 落ちたときにページごと巻き添えになる。**
+       */
+      (function () {
+        var view = document.getElementById("shot-view");
+        var img = document.getElementById("shot-view-img");
+        if (!view || !img) return;
+
+        function close() {
+          view.classList.add("hidden");
+          view.classList.remove("flex");
+          img.removeAttribute("src");
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll("[data-shot]"), function (el) {
+          el.addEventListener("click", function () {
+            var full = el.getAttribute("data-shot");
+            var inner = el.querySelector("img");
+            img.src = full;
+            img.alt = inner ? inner.alt : "";
+            view.classList.remove("hidden");
+            view.classList.add("flex");
+          });
+        });
+
+        /* 重ねた場所ならどこを押しても閉じる（写真そのものを除く） */
+        view.addEventListener("click", function (e) {
+          if (e.target !== img) close();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" || e.key === "Esc") close();
+        });
+      })();
+    </script>
+
+    <script>
+      /*
+       * 購入前の同意モーダル。
+       *
+       * `href` は残したまま `preventDefault` で止める。
+       * こうしておくと、**JS が動かない環境でも決済ページには行ける**
+       * （同意を取り損ねるより、買えなくなるほうが損失が大きい）。
+       *
+       * **いまは繋ぎ先が無い。** `href` はページ内アンカーにしてあり、
+       * 「進む」を押すと準備中の案内を出す（`#consent-pending`）。
+       * 決済事業者が決まったら `href` を差し替えるだけでよい。
+       */
+      (function () {
+        var modal = document.getElementById("consent");
+        var proceed = document.getElementById("consent-proceed");
+        var boxes = modal.querySelectorAll("[data-consent]");
+        var url = null;
+        var opener = null;
+
+        // リード文の「以下の N 点」を実際のチェック項目数に合わせる。
+        // **文言側の数字を手で直し忘れても、ここでずれが消える。**
+        var counters = modal.querySelectorAll("[data-consent-count]");
+        for (var c = 0; c < counters.length; c++) {
+          counters[c].textContent = String(boxes.length);
+        }
+
+        var progress = modal.querySelectorAll("[data-consent-progress]");
+
+        function sync() {
+          var done = 0;
+          for (var i = 0; i < boxes.length; i++) {
+            if (boxes[i].checked) done++;
+          }
+          for (var p = 0; p < progress.length; p++) {
+            progress[p].textContent = String(done);
+          }
+          proceed.disabled = done < boxes.length;
+        }
+
+        function close() {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          // 開き直したときに前回のチェックが残っていると、同意を取った意味が無い
+          for (var i = 0; i < boxes.length; i++) boxes[i].checked = false;
+          sync();
+          if (opener) opener.focus();
+        }
+
+        function open(href, from) {
+          url = href;
+          opener = from;
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+          if (boxes.length > 0) boxes[0].focus();
+        }
+
+        for (var i = 0; i < boxes.length; i++) {
+          boxes[i].addEventListener("change", sync);
+        }
+
+        var links = document.querySelectorAll("[data-checkout]");
+        for (var j = 0; j < links.length; j++) {
+          links[j].addEventListener("click", function (event) {
+            event.preventDefault();
+            open(this.getAttribute("href"), this);
+          });
+        }
+
+        var pending = document.getElementById("consent-pending");
+
+        proceed.addEventListener("click", function () {
+          if (proceed.disabled) return;
+          /*
+           * **繋ぎ先がまだ無いときは、黙って閉じない。**
+           * 同意まで済ませた人を無反応で放置すると、壊れていると受け取られる。
+           */
+          if (!url || url.charAt(0) === "#") {
+            if (pending) pending.classList.remove("hidden");
+            return;
+          }
+          window.location.href = url;
+        });
+
+        document.getElementById("consent-cancel").addEventListener("click", close);
+
+        // 背景のクリックで閉じる（中身のクリックでは閉じない）
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) close();
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && !modal.classList.contains("hidden")) close();
+        });
+      })();
+    </script>
+
+    <script>
+      /*
+       * 言語の切り替え。
+       * 既定は英語（アプリ本体と同じく英語を原文とする）。
+       * 日本語圏のブラウザから来た人には、最初から日本語で見せる。
+       */
+      (function () {
+        var root = document.documentElement;
+        var stored = null;
+        try {
+          stored = localStorage.getItem("stoq.lp.lang");
+        } catch (e) {
+          /* プライベートモード等では保存しない */
+        }
+        var initial =
+          stored || ((navigator.language || "en").toLowerCase().indexOf("ja") === 0 ? "ja" : "en");
+        root.lang = initial;
+
+        document.getElementById("lang-toggle").addEventListener("click", function () {
+          var next = root.lang === "ja" ? "en" : "ja";
+          root.lang = next;
+          try {
+            localStorage.setItem("stoq.lp.lang", next);
+          } catch (e) {
+            /* 保存できなくても切り替えは効く */
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

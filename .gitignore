@@ -1,0 +1,13 @@
+# === 秘密情報（公開リポジトリなので最優先） ===
+*.key
+*.pem
+.stoq-updater/
+.env
+.env.*
+secrets/
+credentials.json
+
+# 生成物・OS の余計なもの
+Thumbs.db
+.DS_Store
+desktop.ini
