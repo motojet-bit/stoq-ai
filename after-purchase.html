@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>After your purchase — StoQ AI Analyzer</title>
+    <meta
+      name="description"
+      content="How to download, install and activate StoQ AI Analyzer after buying it."
+    />
+    <meta name="robots" content="index,follow" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <meta name="theme-color" content="#020617" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html[lang="en"] [data-ja] { display: none; }
+      html[lang="ja"] [data-en] { display: none; }
+    </style>
+  </head>
+  <body class="bg-slate-950 font-sans text-slate-200 antialiased">
+    <header class="border-b border-slate-900 bg-slate-950/90 backdrop-blur">
+      <div class="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
+        <a href="./index.html" class="text-sm font-semibold text-slate-100">
+          StoQ AI Analyzer
+        </a>
+        <a
+          href="./index.html"
+          class="ml-auto rounded-md px-2.5 py-1.5 text-sm text-slate-400 transition-colors hover:text-slate-100"
+        >
+          <span data-en>&larr; Back to the site</span><span data-ja>&larr; トップへ戻る</span>
+        </a>
+        <button
+          type="button"
+          id="lang-toggle"
+          class="rounded-md border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800"
+          aria-label="Switch language"
+        >
+          <span data-en>🇯🇵 日本語</span><span data-ja>🇺🇸 English</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-5 py-12">
+      <h1 class="text-2xl font-semibold text-slate-50">
+        <span data-en>After your purchase</span><span data-ja>購入後の操作</span>
+      </h1>
+      <p class="mt-2 text-sm leading-relaxed text-slate-400">
+        <span data-en>
+          Three steps, about five minutes. Check the e-mail, install the app, enter your licence key.
+        </span>
+        <span data-ja>
+          全体で 3 ステップ、5 分ほどです。メールを開き、アプリを入れ、ライセンスキーを入力します。
+        </span>
+      </p>
+
+      <!--
+        **最初に全体像を出す。** いくつ作業があるのか分からないまま
+        1 つ目を読ませると、途中で止まったときに「あと何が残っているか」が分からない。
+      -->
+      <ol class="mt-8 grid gap-3 sm:grid-cols-3">
+        <li class="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Step 1</span>
+          <p class="mt-1 text-sm text-slate-200">
+            <span data-en>Open the e-mail</span><span data-ja>メールを確認する</span>
+          </p>
+          <p class="mt-1 text-xs leading-relaxed text-slate-500">
+            <span data-en>Download link and licence key</span>
+            <span data-ja>ダウンロードリンクとライセンスキー</span>
+          </p>
+        </li>
+        <li class="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Step 2</span>
+          <p class="mt-1 text-sm text-slate-200">
+            <span data-en>Download and install</span><span data-ja>ダウンロードして入れる</span>
+          </p>
+          <p class="mt-1 text-xs leading-relaxed text-slate-500">
+            <span data-en>Windows may show a warning &mdash; see below</span>
+            <span data-ja>Windows の警告が出ます（対処は下記）</span>
+          </p>
+        </li>
+        <li class="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Step 3</span>
+          <p class="mt-1 text-sm text-slate-200">
+            <span data-en>Enter the licence key</span><span data-ja>ライセンスキーを入れる</span>
+          </p>
+          <p class="mt-1 text-xs leading-relaxed text-slate-500">
+            <span data-en>Copy and paste from the e-mail</span>
+            <span data-ja>メールからコピー＆ペースト</span>
+          </p>
+        </li>
+      </ol>
+
+      <div class="mt-12 space-y-14">
+        <!-- ------------------------------------------------ Step 1 -->
+        <section>
+          <h2 class="flex items-baseline gap-3 text-base font-semibold text-emerald-300">
+            <span class="rounded bg-emerald-600 px-2 py-0.5 text-xs font-bold text-white">1</span>
+            <span data-en>Open the e-mail</span><span data-ja>メールを確認する</span>
+          </h2>
+
+          <p class="mt-4 text-sm leading-relaxed text-slate-300" data-en>
+            When the payment goes through, SendOwl (<code class="text-slate-400">noreply@sendowl.com</code>)
+            sends an order e-mail to the address you used at checkout. It normally arrives within a
+            few minutes.
+          </p>
+          <p class="mt-4 text-sm leading-relaxed text-slate-300" data-ja>
+            決済が完了すると、SendOwl（<code class="text-slate-400">noreply@sendowl.com</code>）から
+            ご購入時のメールアドレス宛に注文メールが届きます。通常は数分以内です。
+          </p>
+
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>
+            <strong class="text-slate-100">Two things in it matter:</strong>
+          </p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>
+            <strong class="text-slate-100">見るところは 2 つです。</strong>
+          </p>
+
+          <ul class="mt-3 space-y-2 text-sm leading-relaxed text-slate-300">
+            <li class="flex gap-2.5">
+              <span class="text-emerald-400" aria-hidden="true">&#9679;</span>
+              <span data-en>
+                <strong class="text-slate-100">The download link</strong> &mdash; this is where the
+                installer (<code class="text-slate-400">.exe</code>) comes from.
+              </span>
+              <span data-ja>
+                <strong class="text-slate-100">ダウンロードリンク</strong> ——
+                インストーラー（<code class="text-slate-400">.exe</code>）はここから取得します。
+              </span>
+            </li>
+            <li class="flex gap-2.5">
+              <span class="text-emerald-400" aria-hidden="true">&#9679;</span>
+              <!--
+                **世代の番号は上がる。** v2 のキーは `V2-` で始まるので、
+                `V1-` と書き切ると、次の世代を買った人には合わない案内になる。
+              -->
+              <span data-en>
+                <strong class="text-slate-100">The licence key</strong> &mdash; a string starting with
+                <code class="text-emerald-300">V</code> and a number
+                (<code class="text-emerald-300">V1-</code> for the current version). You enter it
+                once, inside the app.
+              </span>
+              <span data-ja>
+                <strong class="text-slate-100">ライセンスキー</strong> ——
+                <code class="text-emerald-300">V</code>＋数字で始まる文字列です
+                （現行版は <code class="text-emerald-300">V1-</code>）。アプリ内で一度だけ入力します。
+              </span>
+            </li>
+          </ul>
+
+          <figure class="mt-5">
+            <img
+              src="./purchase/email-order.png"
+              alt=""
+              class="w-full rounded-lg border border-slate-800"
+            />
+            <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+              <span data-en>
+                The order e-mail. The grey blocks are where your own address, order number, download
+                link and licence key appear.
+              </span>
+              <span data-ja>
+                注文メール。灰色の部分に、ご自身のメールアドレス・注文番号・ダウンロードリンク・ライセンスキーが入ります。
+              </span>
+            </figcaption>
+          </figure>
+
+          <!--
+            **買った直後の画面からも落とせる。** メールが遅れることがあるので、
+            道を 2 本示す。ただし 24 時間で切れることを同じ場所に書く。
+          -->
+          <div class="mt-6 rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3.5">
+            <p class="text-sm font-medium text-slate-200">
+              <span data-en>You can also download straight after checkout</span>
+              <span data-ja>購入直後の画面からもダウンロードできます</span>
+            </p>
+            <p class="mt-2 text-sm leading-relaxed text-slate-400" data-en>
+              The page shown right after payment has the same download button and licence key.
+              <strong class="text-amber-300">That page expires 24 hours after purchase</strong>, so
+              if you plan to install later, use the link in the e-mail instead.
+            </p>
+            <p class="mt-2 text-sm leading-relaxed text-slate-400" data-ja>
+              決済直後に表示されるページにも、同じダウンロードボタンとライセンスキーがあります。
+              <strong class="text-amber-300">このページは購入から 24 時間で期限切れになります</strong>ので、
+              あとで入れる場合はメールのリンクをお使いください。
+            </p>
+            <figure class="mt-4">
+              <img
+                src="./purchase/sendowl-download.png"
+                alt=""
+                class="w-full rounded-lg border border-slate-800"
+              />
+            </figure>
+          </div>
+
+          <div class="mt-5 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm leading-relaxed text-slate-400">
+            <span data-en>
+              <strong class="text-slate-200">No e-mail?</strong> Check your spam folder first, then
+              check that the address you entered at checkout was correct. A separate receipt e-mail
+              also arrives; the licence key is in the <em>order</em> e-mail, not the receipt.
+            </span>
+            <span data-ja>
+              <strong class="text-slate-200">メールが届かないとき:</strong>
+              まず迷惑メールフォルダをご確認ください。次に、決済時のメールアドレスに誤りがないかご確認ください。
+              領収メールも別に届きますが、<em>ライセンスキーが入っているのは注文メールのほう</em>です。
+            </span>
+            <figure class="mt-4">
+              <img
+                src="./purchase/email-receipt.png"
+                alt=""
+                class="w-full rounded-lg border border-slate-800"
+              />
+              <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+                <span data-en>The receipt e-mail. Useful for your records; no licence key here.</span>
+                <span data-ja>領収メール。記録用です。こちらにライセンスキーはありません。</span>
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------ Step 2 -->
+        <section>
+          <h2 class="flex items-baseline gap-3 text-base font-semibold text-emerald-300">
+            <span class="rounded bg-emerald-600 px-2 py-0.5 text-xs font-bold text-white">2</span>
+            <span data-en>Download and install</span><span data-ja>ダウンロードして入れる</span>
+          </h2>
+
+          <p class="mt-4 text-sm leading-relaxed text-slate-300" data-en>
+            Download <code class="text-slate-400">StoQ_AI_Analyzer_x64-setup.exe</code> from the link,
+            then double-click it.
+          </p>
+          <p class="mt-4 text-sm leading-relaxed text-slate-300" data-ja>
+            リンクから <code class="text-slate-400">StoQ_AI_Analyzer_x64-setup.exe</code> をダウンロードし、
+            ダブルクリックで実行します。
+          </p>
+
+          <!--
+            🔴 **警告画面は「出ることがある」ではなく「出る」と書く。**
+            個人開発で証明書を持っていない以上、必ず出る。
+            「想定外のことが起きた」と受け取られると、そこで止まって返金になる。
+          -->
+          <div class="mt-6 rounded-xl border border-amber-800 bg-amber-950/20 px-5 py-4">
+            <p class="text-sm font-semibold text-amber-300">
+              <span data-en>Windows will show a warning. This is expected.</span>
+              <span data-ja>Windows の警告画面が出ます。想定どおりです。</span>
+            </p>
+            <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>
+              StoQ AI Analyzer is built by an individual developer and does not carry a commercial
+              code-signing certificate, so Microsoft Defender SmartScreen shows
+              <strong class="text-slate-100">&ldquo;Windows protected your PC&rdquo;</strong>. It does
+              not mean anything is wrong with the file.
+            </p>
+            <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>
+              本アプリは個人開発のため、商用のコード署名証明書を付けていません。そのため
+              Microsoft Defender SmartScreen が
+              <strong class="text-slate-100">「WindowsによってPCが保護されました」</strong>
+              と表示します。ファイルに問題があるという意味ではありません。
+            </p>
+
+            <ol class="mt-4 space-y-4">
+              <li>
+                <p class="text-sm font-medium text-slate-200">
+                  <span data-en>1. Click <strong class="text-amber-300">More info</strong></span>
+                  <span data-ja>1. <strong class="text-amber-300">詳細情報</strong>（More info）をクリック</span>
+                </p>
+                <p class="mt-1 text-xs leading-relaxed text-slate-400">
+                  <span data-en>
+                    Only &ldquo;Don&rsquo;t run&rdquo; is visible at first. The run button appears
+                    after this.
+                  </span>
+                  <span data-ja>
+                    最初は「実行しない」しか出ていません。押すと実行ボタンが現れます。
+                  </span>
+                </p>
+                <img
+                  src="./purchase/smartscreen-1.png"
+                  alt=""
+                  class="mt-3 w-full max-w-md rounded-lg border border-slate-800"
+                />
+              </li>
+              <li>
+                <p class="text-sm font-medium text-slate-200">
+                  <span data-en>2. Click <strong class="text-amber-300">Run anyway</strong></span>
+                  <span data-ja>2. <strong class="text-amber-300">実行</strong>（Run anyway）をクリック</span>
+                </p>
+                <img
+                  src="./purchase/smartscreen-2.png"
+                  alt=""
+                  class="mt-3 w-full max-w-md rounded-lg border border-slate-800"
+                />
+              </li>
+            </ol>
+          </div>
+
+          <p class="mt-8 text-sm leading-relaxed text-slate-300">
+            <span data-en>After that, the installer runs normally.</span>
+            <span data-ja>あとは通常どおりインストーラーが進みます。</span>
+          </p>
+
+          <div class="mt-4 grid gap-5 sm:grid-cols-2">
+            <figure>
+              <img
+                src="./purchase/install-1-welcome.png"
+                alt=""
+                class="w-full rounded-lg border border-slate-800"
+              />
+              <figcaption class="mt-2 text-xs text-slate-500">
+                <span data-en>Click <strong class="text-slate-300">Next</strong>.</span>
+                <span data-ja><strong class="text-slate-300">Next</strong> を押します。</span>
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./purchase/install-2-location.png"
+                alt=""
+                class="w-full rounded-lg border border-slate-800"
+              />
+              <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+                <span data-en>
+                  The default folder is fine. No administrator rights are needed.
+                </span>
+                <span data-ja>
+                  インストール先は既定のままで構いません。管理者権限は不要です。
+                </span>
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./purchase/install-3-finish.png"
+                alt=""
+                class="w-full rounded-lg border border-slate-800"
+              />
+              <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+                <span data-en>
+                  Leave <strong class="text-slate-300">Run StoQ AI Analyzer</strong> ticked and click
+                  Finish.
+                </span>
+                <span data-ja>
+                  <strong class="text-slate-300">Run StoQ AI Analyzer</strong> にチェックを入れたまま
+                  Finish を押します。
+                </span>
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./purchase/install-0-already.png"
+                alt=""
+                class="w-full rounded-lg border border-slate-800"
+              />
+              <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+                <span data-en>
+                  Updating from an older version? Leave
+                  <strong class="text-slate-300">Uninstall before installing</strong> selected. Your
+                  saved analyses and settings are kept.
+                </span>
+                <span data-ja>
+                  旧版から入れ替えるときはこの画面が出ます。
+                  <strong class="text-slate-300">Uninstall before installing</strong> のままで結構です。
+                  保存済みの分析や設定は残ります。
+                </span>
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------ Step 3 -->
+        <section>
+          <h2 class="flex items-baseline gap-3 text-base font-semibold text-emerald-300">
+            <span class="rounded bg-emerald-600 px-2 py-0.5 text-xs font-bold text-white">3</span>
+            <span data-en>Enter the licence key</span><span data-ja>ライセンスキーを入れる</span>
+          </h2>
+
+          <ol class="mt-4 space-y-2.5 text-sm leading-relaxed text-slate-300">
+            <li class="flex gap-2.5">
+              <span class="text-slate-500">1.</span>
+              <span data-en>Start StoQ AI Analyzer.</span>
+              <span data-ja>StoQ AI Analyzer を起動します。</span>
+            </li>
+            <li class="flex gap-2.5">
+              <span class="text-slate-500">2.</span>
+              <span data-en>
+                Open <strong class="text-slate-100">Settings &rarr; Licence</strong>.
+              </span>
+              <span data-ja>
+                <strong class="text-slate-100">設定 &rarr; ライセンス認証</strong> を開きます。
+              </span>
+            </li>
+            <li class="flex gap-2.5">
+              <span class="text-slate-500">3.</span>
+              <span data-en>
+                Paste the key from the e-mail
+                (<code class="text-emerald-300">V1-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</code> &mdash;
+                the leading number is the version generation).
+              </span>
+              <span data-ja>
+                メールに記載のキー
+                （<code class="text-emerald-300">V1-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</code>。
+                先頭の数字は世代を表します）をコピー＆ペーストで入力します。
+              </span>
+            </li>
+            <li class="flex gap-2.5">
+              <span class="text-slate-500">4.</span>
+              <span data-en>
+                Press <strong class="text-slate-100">Activate</strong>. When it says the licence is
+                valid, you are done.
+              </span>
+              <span data-ja>
+                <strong class="text-slate-100">ライセンス有効化</strong> を押します。
+                「ライセンスは有効です」と表示されれば完了です。
+              </span>
+            </li>
+          </ol>
+
+          <div class="mt-5 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm leading-relaxed text-slate-400">
+            <span data-en>
+              <strong class="text-slate-200">Your key is never sent anywhere.</strong> It is checked
+              on your own PC, so activation works even without an internet connection.
+            </span>
+            <span data-ja>
+              <strong class="text-slate-200">キーはどこへも送信されません。</strong>
+              確認はお客様の PC の中で行われるため、インターネットに繋がっていなくても有効化できます。
+            </span>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------ 使い方 -->
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>Getting started with the app</span><span data-ja>アプリの使いはじめ</span>
+          </h2>
+
+          <p class="mt-4 text-sm leading-relaxed text-slate-300" data-en>
+            The app carries its own walkthrough. Open
+            <strong class="text-slate-100">Help &rarr; Getting started (tutorial)</strong> from the
+            menu bar and step through it &mdash; it covers the three things you need before your
+            first analysis.
+          </p>
+          <p class="mt-4 text-sm leading-relaxed text-slate-300" data-ja>
+            アプリの中にチュートリアルが入っています。メニューバーの
+            <strong class="text-slate-100">ヘルプ &rarr; はじめかた（チュートリアル）</strong>
+            を開いて順に進めてください。最初の分析を実行する前に必要な 3 点がまとまっています。
+          </p>
+
+          <figure class="mt-5">
+            <img
+              src="./purchase/app-help-menu.png"
+              alt=""
+              class="w-full rounded-lg border border-slate-800"
+            />
+            <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+              <span data-en>Help menu. &ldquo;Getting started&rdquo; is the first item.</span>
+              <span data-ja>ヘルプメニュー。いちばん上が「はじめかた（チュートリアル）」です。</span>
+            </figcaption>
+          </figure>
+
+          <figure class="mt-5">
+            <img
+              src="./purchase/app-tutorial.png"
+              alt=""
+              class="mx-auto w-full max-w-lg rounded-lg border border-slate-800"
+            />
+            <figcaption class="mt-2 text-xs leading-relaxed text-slate-500">
+              <span data-en>
+                The walkthrough asks for three things: your API key, your display and answer
+                language, and where to ask when you get stuck.
+              </span>
+              <span data-ja>
+                チュートリアルでお願いするのは 3 つです。APIキーの登録、表示言語と AI の応答言語の選択、
+                そして分からないときの聞き方。
+              </span>
+            </figcaption>
+          </figure>
+
+          <div class="mt-5 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm leading-relaxed text-slate-400">
+            <span data-en>
+              <strong class="text-slate-200">An API key is required.</strong> The app calls the AI
+              provider you choose (OpenAI, Anthropic, Google, or a local model via Ollama) with your
+              own key, so the usage is billed to you directly and nothing passes through us. Help
+              &rarr; <em>Setting up API keys</em> walks through it.
+            </span>
+            <span data-ja>
+              <strong class="text-slate-200">APIキーの登録が必要です。</strong>
+              本アプリは、お客様ご自身のキーで AI 提供元（OpenAI / Anthropic / Google、
+              または Ollama によるローカルモデル）を呼び出します。利用料は各社から直接請求され、
+              当方を経由しません。ヘルプ &rarr;
+              <em>APIキーの設定</em> に手順があります。
+            </span>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------ FAQ -->
+        <section>
+          <h2 class="text-base font-semibold text-emerald-300">
+            <span data-en>If something does not work</span><span data-ja>うまくいかないとき</span>
+          </h2>
+
+          <div class="mt-4 space-y-5">
+            <div>
+              <p class="text-sm font-medium text-slate-100">
+                <span data-en>The licence key is rejected</span>
+                <span data-ja>ライセンスキーが通りません</span>
+              </p>
+              <ul class="mt-2 space-y-1.5 text-sm leading-relaxed text-slate-400">
+                <li class="flex gap-2.5">
+                  <span class="text-slate-600" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    Check for a stray space before or after the key. Copy and paste rather than
+                    typing it.
+                  </span>
+                  <span data-ja>
+                    キーの前後に余計な空白が入っていないかご確認ください。手入力ではなくコピー＆ペーストを推奨します。
+                  </span>
+                </li>
+                <li class="flex gap-2.5">
+                  <span class="text-slate-600" aria-hidden="true">&#8226;</span>
+                  <span data-en>
+                    The key starts with <code class="text-emerald-300">V</code> and a number
+                    (<code class="text-emerald-300">V1-</code>). Make sure that part was included in
+                    the selection.
+                  </span>
+                  <span data-ja>
+                    キーは <code class="text-emerald-300">V</code>＋数字
+                    （<code class="text-emerald-300">V1-</code> など）から始まります。
+                    その部分まで選択できているかご確認ください。
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p class="text-sm font-medium text-slate-100">
+                <span data-en>I want to use it on another PC</span>
+                <span data-ja>別の PC で使いたい</span>
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-400" data-en>
+                Keep the key. Install the app on the new PC and enter the same key. One licence covers
+                up to two PCs belonging to you.
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-400" data-ja>
+                キーはそのまま保管してください。新しい PC にアプリを入れ、同じキーを入力すれば有効化できます。
+                1 つのライセンスは、ご本人がお使いになる 2 台までご利用いただけます。
+              </p>
+            </div>
+
+            <div>
+              <p class="text-sm font-medium text-slate-100">
+                <span data-en>How do updates work?</span>
+                <span data-ja>アップデートはどうなりますか</span>
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-400" data-en>
+                Fixes and improvements ship as free updates. We e-mail the address you bought with
+                when a new version is available.
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-400" data-ja>
+                不具合修正や改善は無料のアップデートとして提供します。
+                新しい版が出たら、ご購入時のメールアドレス宛にご案内をお送りします。
+              </p>
+            </div>
+
+            <div>
+              <p class="text-sm font-medium text-slate-100">
+                <span data-en>I want to remove it</span>
+                <span data-ja>アンインストールしたい</span>
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-400" data-en>
+                Uninstall from Windows Settings as usual. Leave
+                <strong class="text-slate-300">Delete the application data</strong> unticked to keep
+                your saved analyses; tick it to remove everything.
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-400" data-ja>
+                Windows の設定から通常どおりアンインストールできます。
+                <strong class="text-slate-300">Delete the application data</strong> のチェックを外したままにすると
+                保存済みの分析は残ります。すべて消す場合はチェックを入れてください。
+              </p>
+              <img
+                src="./purchase/uninstall.png"
+                alt=""
+                class="mt-3 w-full max-w-md rounded-lg border border-slate-800"
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div
+        class="mt-12 rounded-xl border border-slate-800 bg-slate-900/40 px-5 py-4 text-sm leading-relaxed text-slate-400"
+      >
+        <p class="mb-1 font-medium text-slate-300">
+          <span data-en>Still stuck?</span><span data-ja>解決しないとき</span>
+        </p>
+        <p data-en>
+          Reply directly to your purchase e-mail, or write to
+          <a href="mailto:superpuzanoza@gmail.com" class="text-emerald-400 hover:text-emerald-300"
+            >superpuzanoza@gmail.com</a
+          >. Telling us what you saw on screen and at which step helps us answer in one round.
+        </p>
+        <p data-ja>
+          購入完了メールにそのまま返信いただくか、
+          <a href="mailto:superpuzanoza@gmail.com" class="text-emerald-400 hover:text-emerald-300"
+            >superpuzanoza@gmail.com</a
+          >
+          までご連絡ください。<strong class="text-slate-300">どの手順で、画面に何が出たか</strong>を
+          添えていただけると、一度のやりとりでお答えできます。
+        </p>
+      </div>
+
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          href="./index.html"
+          class="rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-900"
+        >
+          <span data-en>&larr; Back to the product page</span>
+          <span data-ja>&larr; 製品ページへ戻る</span>
+        </a>
+        <a
+          href="./terms.html"
+          class="rounded-lg border border-slate-800 px-4 py-2.5 text-sm text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
+        >
+          <span data-en>Terms of Use</span><span data-ja>利用規約</span>
+        </a>
+        <a
+          href="./refund.html"
+          class="rounded-lg border border-slate-800 px-4 py-2.5 text-sm text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
+        >
+          <span data-en>Refund Policy</span><span data-ja>返金について</span>
+        </a>
+      </div>
+    </main>
+
+    <footer class="border-t border-slate-900 bg-slate-950 py-10">
+      <div
+        class="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-5 text-xs text-slate-500 sm:flex-row"
+      >
+        <p>&copy; 2026 StoQ AI Analyzer. All Rights Reserved.</p>
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <a href="./terms.html" class="transition-colors hover:text-slate-300">
+            <span data-en>Terms</span><span data-ja>利用規約</span>
+          </a>
+          <a href="./privacy.html" class="transition-colors hover:text-slate-300">
+            <span data-en>Privacy</span><span data-ja>プライバシー</span>
+          </a>
+          <a href="./refund.html" class="transition-colors hover:text-slate-300">
+            <span data-en>Refunds</span><span data-ja>返金について</span>
+          </a>
+          <a href="mailto:superpuzanoza@gmail.com" class="transition-colors hover:text-slate-300">
+            <span data-en>Contact</span><span data-ja>お問い合わせ</span>
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <!--
+      **画面写真は、そのままでは細部が読めない。**
+
+      本文の幅に収めると、メールの文字もウィザードのボタンも小さくなる。
+      「どこを押すのか」を確かめたい人が、拡大する手段を持てるようにする。
+
+      追加の部品は入れない——数十行で足りるものに読み込みを増やすと、
+      その分ページが重くなり、切れたときに写真ごと開けなくなる。
+    -->
+    <div
+      id="zoom"
+      class="fixed inset-0 z-50 hidden cursor-zoom-out items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm"
+    >
+      <img id="zoom-img" src="" alt="" class="max-h-full max-w-full rounded-lg shadow-2xl" />
+      <button
+        type="button"
+        id="zoom-close"
+        class="absolute right-4 top-4 rounded-md border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-slate-500"
+        aria-label="Close"
+      >
+        &times;
+      </button>
+    </div>
+
+    <script>
+      (function () {
+        var box = document.getElementById("zoom");
+        var img = document.getElementById("zoom-img");
+
+        function open(src, alt) {
+          img.src = src;
+          img.alt = alt || "";
+          box.classList.remove("hidden");
+          box.classList.add("flex");
+        }
+        function close() {
+          box.classList.add("hidden");
+          box.classList.remove("flex");
+          // **src を空に戻す。** 大きい画像を掴んだままにしない
+          img.src = "";
+        }
+
+        /*
+         * **押せることを見た目で示す。** 拡大できると分からなければ、
+         * 誰も押さない。カーソルと、うっすらした枠の変化で伝える。
+         */
+        var shots = document.querySelectorAll("main img");
+        Array.prototype.forEach.call(shots, function (el) {
+          el.classList.add("cursor-zoom-in", "transition-opacity", "hover:opacity-90");
+          el.addEventListener("click", function () {
+            open(el.getAttribute("src"), el.getAttribute("alt"));
+          });
+        });
+
+        box.addEventListener("click", close);
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") close();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var stored = null;
+        try {
+          stored = localStorage.getItem("stoq.lp.lang");
+        } catch (e) {}
+        root.lang =
+          stored || ((navigator.language || "en").toLowerCase().indexOf("ja") === 0 ? "ja" : "en");
+        document.getElementById("lang-toggle").addEventListener("click", function () {
+          var next = root.lang === "ja" ? "en" : "ja";
+          root.lang = next;
+          try {
+            localStorage.setItem("stoq.lp.lang", next);
+          } catch (e) {}
+        });
+      })();
+    </script>
+  </body>
+</html>
