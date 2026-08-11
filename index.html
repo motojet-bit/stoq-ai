@@ -23,7 +23,12 @@
       content="AI fundamental analysis for US & global equities. Bring your own API key. Your data never leaves your machine."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://motojet-bit.github.io/stoq-ai/favicon.png" />
+    <!--
+      **OG 画像は絶対 URL でないと拾われない。** 独自ドメインへ移したので
+      こちらも合わせる（旧 URL は転送されるが、SNS 側は転送を追わないことがある）。
+    -->
+    <meta property="og:image" content="https://stoq-ai.com/favicon.png" />
+    <meta property="og:url" content="https://stoq-ai.com/" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {

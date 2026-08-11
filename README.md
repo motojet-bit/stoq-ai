@@ -1,6 +1,13 @@
 # StoQ AI Analyzer — landing page
 
-Source for <https://motojet-bit.github.io/stoq-ai/>.
+Source for <https://stoq-ai.com/>.
+
+Served by GitHub Pages from `main` / `(root)`. The `CNAME` file in this
+directory is what binds the custom domain — **do not delete it.** Removing it
+sends the site back to `motojet-bit.github.io/stoq-ai/` and breaks every link
+that points at the domain.
+
+The old address still redirects, so existing links keep working.
 
 StoQ AI Analyzer is a Windows desktop tool that collects corporate earnings
 filings and summarises them with AI, so that reading them takes less time.
