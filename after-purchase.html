@@ -131,13 +131,20 @@
             </li>
             <li class="flex gap-2.5">
               <span class="text-emerald-400" aria-hidden="true">&#9679;</span>
+              <!--
+                **世代の番号は上がる。** v2 のキーは `V2-` で始まるので、
+                `V1-` と書き切ると、次の世代を買った人には合わない案内になる。
+              -->
               <span data-en>
                 <strong class="text-slate-100">The licence key</strong> &mdash; a string starting with
-                <code class="text-emerald-300">V1-</code>. You enter it once, inside the app.
+                <code class="text-emerald-300">V</code> and a number
+                (<code class="text-emerald-300">V1-</code> for the current version). You enter it
+                once, inside the app.
               </span>
               <span data-ja>
                 <strong class="text-slate-100">ライセンスキー</strong> ——
-                <code class="text-emerald-300">V1-</code> で始まる文字列です。アプリ内で一度だけ入力します。
+                <code class="text-emerald-300">V</code>＋数字で始まる文字列です
+                （現行版は <code class="text-emerald-300">V1-</code>）。アプリ内で一度だけ入力します。
               </span>
             </li>
           </ul>
@@ -383,12 +390,13 @@
               <span class="text-slate-500">3.</span>
               <span data-en>
                 Paste the key from the e-mail
-                (<code class="text-emerald-300">V1-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</code>).
+                (<code class="text-emerald-300">V1-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</code> &mdash;
+                the leading number is the version generation).
               </span>
               <span data-ja>
                 メールに記載のキー
-                （<code class="text-emerald-300">V1-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</code>）を
-                コピー＆ペーストで入力します。
+                （<code class="text-emerald-300">V1-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</code>。
+                先頭の数字は世代を表します）をコピー＆ペーストで入力します。
               </span>
             </li>
             <li class="flex gap-2.5">
@@ -507,11 +515,13 @@
                 <li class="flex gap-2.5">
                   <span class="text-slate-600" aria-hidden="true">&#8226;</span>
                   <span data-en>
-                    The key starts with <code class="text-emerald-300">V1-</code>. Make sure that part
-                    was included in the selection.
+                    The key starts with <code class="text-emerald-300">V</code> and a number
+                    (<code class="text-emerald-300">V1-</code>). Make sure that part was included in
+                    the selection.
                   </span>
                   <span data-ja>
-                    キーは <code class="text-emerald-300">V1-</code> から始まります。
+                    キーは <code class="text-emerald-300">V</code>＋数字
+                    （<code class="text-emerald-300">V1-</code> など）から始まります。
                     その部分まで選択できているかご確認ください。
                   </span>
                 </li>
@@ -639,6 +649,67 @@
         </div>
       </div>
     </footer>
+
+    <!--
+      **画面写真は、そのままでは細部が読めない。**
+
+      本文の幅に収めると、メールの文字もウィザードのボタンも小さくなる。
+      「どこを押すのか」を確かめたい人が、拡大する手段を持てるようにする。
+
+      追加の部品は入れない——数十行で足りるものに読み込みを増やすと、
+      その分ページが重くなり、切れたときに写真ごと開けなくなる。
+    -->
+    <div
+      id="zoom"
+      class="fixed inset-0 z-50 hidden cursor-zoom-out items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm"
+    >
+      <img id="zoom-img" src="" alt="" class="max-h-full max-w-full rounded-lg shadow-2xl" />
+      <button
+        type="button"
+        id="zoom-close"
+        class="absolute right-4 top-4 rounded-md border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-slate-500"
+        aria-label="Close"
+      >
+        &times;
+      </button>
+    </div>
+
+    <script>
+      (function () {
+        var box = document.getElementById("zoom");
+        var img = document.getElementById("zoom-img");
+
+        function open(src, alt) {
+          img.src = src;
+          img.alt = alt || "";
+          box.classList.remove("hidden");
+          box.classList.add("flex");
+        }
+        function close() {
+          box.classList.add("hidden");
+          box.classList.remove("flex");
+          // **src を空に戻す。** 大きい画像を掴んだままにしない
+          img.src = "";
+        }
+
+        /*
+         * **押せることを見た目で示す。** 拡大できると分からなければ、
+         * 誰も押さない。カーソルと、うっすらした枠の変化で伝える。
+         */
+        var shots = document.querySelectorAll("main img");
+        Array.prototype.forEach.call(shots, function (el) {
+          el.classList.add("cursor-zoom-in", "transition-opacity", "hover:opacity-90");
+          el.addEventListener("click", function () {
+            open(el.getAttribute("src"), el.getAttribute("alt"));
+          });
+        });
+
+        box.addEventListener("click", close);
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") close();
+        });
+      })();
+    </script>
 
     <script>
       (function () {
