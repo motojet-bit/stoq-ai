@@ -320,20 +320,43 @@ const terms = page({
      *
      * ⚠ **2 台は契約上の取り決めで、技術的には強制していない。**
      */
-    section("6. Devices", "6. 利用できる端末", [
+    /*
+     * **対象外であることを、理由つきで書く（2026-08-11）。**
+     *
+     * アプリは銘柄の種類を見ていないので、**ETF を入れても止まらない。**
+     * 決算書が 1 枚も無いまま評価を書かせることになり、AI は「資料が無い」と
+     * 言わず学習知識で埋めるので、**読んだように見える出力が出る。**
+     *
+     * 実装で塞ぐのが本筋（`StockAnalyzer/docs/未解決事項.md` の項目 19）。
+     * それまでの間、**文言だけが唯一の歯止め**になる。
+     * 「対象外」と「なぜ対象外か」の両方を書く——理由が無いと、
+     * 単に未対応で後から足されるものだと読まれる。
+     */
+    section("6. What can be analysed", "6. 分析の対象", [
+      [
+        "This app reads the filings a company publishes &mdash; 10-K, 10-Q and the like &mdash; and summarises them. <strong>ETFs, mutual funds and indices do not file such documents</strong>, so there is nothing for the app to read and no analysis can be produced.",
+        "本アプリは、企業が提出する決算書（10-K / 10-Q など）を読み取って要約する道具です。<strong>ETF・投資信託・指数は決算書を提出しない</strong>ため、分析の前提となる資料が存在せず、分析は成立しません。",
+      ],
+      [
+        "At present the app will still run if you enter one, but <strong>the output is meaningless</strong>. Please use it for individual companies only.",
+        "現在のところ、これらを入力しても操作上は実行できてしまいますが、<strong>出力される内容は意味を成しません</strong>。<strong>個別銘柄のみを対象にご利用ください。</strong>",
+      ],
+    ]),
+
+    section("7. Devices", "7. 利用できる端末", [
       [
         "One licence may be used on up to <strong>two devices</strong> belonging to the purchaser &mdash; for example, a desktop and a laptop.",
         "1 つのライセンスは、購入者ご本人がお使いになる <strong>2 台まで</strong>の端末でご利用いただけます（例: デスクトップと持ち運び用のノート）。",
       ],
     ]),
 
-    section("7. Dependence on external services", "7. 外部サービスへの依存", [
+    section("8. Dependence on external services", "8. 外部サービスへの依存", [
       [
         "This app relies on external APIs (LLM providers, market data, SEC EDGAR). If a provider changes its specification, restricts access or discontinues a service, some features may be limited or stop working without notice.",
         "本アプリは外部の API（LLM 提供元・市場データ・SEC EDGAR 等）に依存しています。提供元の仕様変更・アクセス制限・サービス終了により、一部機能が予告なく制限される、または利用できなくなる場合があります。",
       ],
     ]),
-    section("8. Seller", "8. 販売者", [
+    section("9. Seller", "9. 販売者", [
       [
         `This product is developed and published under the trade name <strong>${TRADE_NAME}</strong>.`,
         `本製品は屋号 <strong>${TRADE_NAME}</strong> として開発・提供しています。`,
