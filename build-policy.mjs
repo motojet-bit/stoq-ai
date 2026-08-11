@@ -334,12 +334,12 @@ const terms = page({
      */
     section("6. What can be analysed", "6. 分析の対象", [
       [
-        "This app reads the filings a company publishes &mdash; 10-K, 10-Q and the like &mdash; and summarises them. <strong>ETFs, mutual funds and indices do not file such documents</strong>, so there is nothing for the app to read and no analysis can be produced.",
-        "本アプリは、企業が提出する決算書（10-K / 10-Q など）を読み取って要約する道具です。<strong>ETF・投資信託・指数は決算書を提出しない</strong>ため、分析の前提となる資料が存在せず、分析は成立しません。",
+        "This app reads the filings a company publishes &mdash; 10-K, 10-Q and the like &mdash; and summarises them. Its scope is therefore limited to <strong>shares of individual companies that publish such filings</strong>.",
+        "本アプリは、企業が提出する決算書（10-K / 10-Q など）を読み取って要約する道具です。したがって対象は、<strong>決算書を提出する個別企業の株式</strong>に限られます。",
       ],
       [
-        "At present the app will still run if you enter one, but <strong>the output is meaningless</strong>. Please use it for individual companies only.",
-        "現在のところ、これらを入力しても操作上は実行できてしまいますが、<strong>出力される内容は意味を成しません</strong>。<strong>個別銘柄のみを対象にご利用ください。</strong>",
+        "ETFs, mutual funds, indices, cryptocurrencies, currency pairs, commodities and futures publish nothing of the kind, so there is nothing to read and no analysis can be produced. <strong>If you enter one, the app stops before running.</strong>",
+        "ETF・投資信託・指数・暗号資産・為替・商品・先物などは決算書を提出しないため、分析の前提となる資料が存在せず、分析は成立しません。<strong>これらを入力した場合、アプリが実行を中止します。</strong>",
       ],
     ]),
 
