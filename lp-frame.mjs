@@ -50,10 +50,10 @@ export const TRADE_NAME = "StoQ AI Analyzer";
  * サービス名が空のままだと、プライバシーポリシーが
  * 「どこを経由するか」を書けない（**それは書かずに出してはいけない**）。
  */
-export const CONTACT_FORM_URL = null;
+export const CONTACT_FORM_URL = "https://forms.gle/bFMkMw83yfu1J9uN8";
 
 /** 経由するサービスの名前（プライバシーポリシーに明示する） */
-export const CONTACT_FORM_SERVICE = { en: "", ja: "" };
+export const CONTACT_FORM_SERVICE = { en: "Google Forms", ja: "Google フォーム" };
 
 /** フォームを出してよい状態か。**両方そろって初めて出す。** */
 export function contactFormReady() {
@@ -82,6 +82,21 @@ export function page({ titleEn, titleJa, leadEn, leadJa, body, updated, base = "
           >
             <span data-en>Open the contact form &nearr;</span><span data-ja>お問い合わせフォームを開く &nearr;</span>
           </a>
+        </p>
+        <!--
+          **外部で開くことを、押す前に言う。** 押してから別サイトへ飛ぶと、
+          販売ページから離れたことに気づかない人がいる。
+          経由先を伏せないのは、プライバシーポリシーの記載とも揃える意味がある。
+        -->
+        <p class="mt-1.5 text-xs text-slate-500">
+          <span data-en>
+            Opens an external form (${CONTACT_FORM_SERVICE.en}) in a new tab.
+            Please do not enter API keys or licence keys.
+          </span>
+          <span data-ja>
+            外部フォーム（${CONTACT_FORM_SERVICE.ja}）が別のタブで開きます。
+            APIキー・ライセンスキーは入力しないでください。
+          </span>
         </p>`
     : "";
 

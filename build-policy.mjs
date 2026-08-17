@@ -349,7 +349,47 @@ const privacy = page({
         "購入手続きは決済事業者のページ上で行われ、同社のプライバシーポリシーが適用されます。",
       ],
     ]),
-  ].join("\n\n"),
+    /*
+     * 🔴 **フォームを置いたら、この節を必ず出す。**
+     *
+     * 直前の節で「本サイトは静的ページ、端末から出ることはありません」と
+     * 言い切っている。**フォームを置くと、サイト側が第三者を通じて
+     * 個人情報を受け取ることになり、その記述と食い違う。**
+     *
+     * `contactFormReady()` が偽（URL かサービス名が空）のときは節ごと出さない。
+     * **フォームだけ先に出る状態を作らない**ための作り。
+     */
+    contactFormReady()
+      ? section("9. The contact form", "9. お問い合わせフォームについて", [
+          [
+            `The contact form is hosted by <strong>${CONTACT_FORM_SERVICE.en}</strong> and opens on that service&rsquo;s own site, under its privacy policy. What you send therefore passes through a third party before it reaches us.`,
+            `お問い合わせフォームは <strong>${CONTACT_FORM_SERVICE.ja}</strong> 上に設置しており、同サービスのページが開きます（同社のプライバシーポリシーが適用されます）。<strong>送信内容は第三者を経由して当方へ届きます。</strong>`,
+          ],
+          [
+            "<strong>What we receive.</strong> Your name (or the name you choose to give), e-mail address, the content of your message, and the time it was sent.",
+            "<strong>受け取る情報。</strong> お名前（任意の呼称で構いません）、メールアドレス、お問い合わせ内容、送信日時です。",
+          ],
+          [
+            "<strong>What it is used for.</strong> Replying to your enquiry, and processing refunds where applicable. Nothing else. It is not used for marketing, and it is not passed to anyone other than the form provider described above.",
+            "<strong>利用目的。</strong> お問い合わせへの回答と、該当する場合の返金対応にのみ用います。それ以外には使用せず、上記のフォーム提供元以外の第三者へ提供することもありません。",
+          ],
+          [
+            "<strong>How long we keep it.</strong> Kept while the enquiry is open, and deleted within one year of it being resolved.",
+            "<strong>保存期間。</strong> 対応が完了するまで保管し、完了後 1 年以内に削除します。",
+          ],
+          [
+            "🔴 <strong>Please do not enter API keys or licence keys.</strong> This product uses your own API keys, and a key pasted into a description of an error would be exposed. If we need to confirm a purchase, we will ask for the e-mail address used at checkout or the order number &mdash; never a key.",
+            "🔴 <strong>APIキー・ライセンスキーは入力しないでください。</strong> 本製品はお客様ご自身の APIキーを用いる方式のため、不具合の状況説明に貼り付けると、キーが露出してしまいます。購入の確認が必要な場合は、<strong>キーではなく、ご購入時のメールアドレスまたは注文番号</strong>をお伺いします。",
+          ],
+          [
+            `E-mail remains available as an alternative: ${SUPPORT_EMAIL}.`,
+            `メールでのご連絡も引き続き承ります（${SUPPORT_EMAIL}）。`,
+          ],
+        ])
+      : "",
+  ]
+    .filter((s) => s !== "")
+    .join("\n\n"),
 });
 
 // ---------------------------------------------------------------- 返金
