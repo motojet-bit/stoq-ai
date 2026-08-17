@@ -13,15 +13,49 @@ StoQ AI Analyzer is a Windows desktop tool that collects corporate earnings
 filings and summarises them with AI, so that reading them takes less time.
 You bring your own API key, and the documents stay on your own machine.
 
-| Page | |
-| --- | --- |
-| [`index.html`](./index.html) | Product page |
-| [`terms.html`](./terms.html) | Terms of Use |
-| [`privacy.html`](./privacy.html) | Privacy Policy |
-| [`refund.html`](./refund.html) | Refund Policy |
+| Page | | 直す場所 |
+| --- | --- | --- |
+| [`index.html`](./index.html) | Product page | この HTML を直接 |
+| [`after-purchase.html`](./after-purchase.html) | 購入後の手順 | この HTML を直接 |
+| [`terms.html`](./terms.html) | Terms of Use | 🔴 **`build-policy.mjs`** |
+| [`privacy.html`](./privacy.html) | Privacy Policy | 🔴 **`build-policy.mjs`** |
+| [`refund.html`](./refund.html) | Refund Policy | 🔴 **`build-policy.mjs`** |
+| [`blog/`](./blog/index.html) | 更新履歴（リリースノート） | 🔴 **`build-blog.mjs`** |
 
-Static HTML with no build step — open any file in a browser to view it.
 Tailwind CSS is loaded from a CDN.
+
+## 🔴 生成物を手で直さない
+
+**法務ページ 3 枚と `blog/` 以下は生成物。** HTML を直しても、
+次にビルダーを回した瞬間に元へ戻る（**過去に一度踏んでいる**）。
+
+```bash
+node build-policy.mjs   # terms / privacy / refund
+node build-blog.mjs     # blog/index.html と記事
+```
+
+**枠（ヘッダー・フッター・言語切替・販売元の表示）は `lp-frame.mjs` が持つ。**
+ここを直すと**両方に効く**ので、直したら 2 つとも回し直すこと。
+販売元の表示は決済審査で見られる部分で、**片方だけ古いと食い違う。**
+
+## 更新履歴（リリースノート）を足すとき
+
+`build-blog.mjs` の `POSTS` の**先頭**に 1 件足して、`node build-blog.mjs`。
+生成物もコミットする（GitHub Pages は静的ファイルしか配れない）。
+
+- **免責は自動で入る。** 記事ごとに書かない（書き忘れが構造的に起きないように）
+- **詳しさの程度**は `StockAnalyzer/docs/リリース手順.md` の
+  「リリースノートの書き方」に従う。**GitHub Releases の本文と食い違わせない**
+
+## お問い合わせフォームを置くとき
+
+`lp-frame.mjs` の `CONTACT_FORM_URL` と `CONTACT_FORM_SERVICE` に入れて、
+**両方のビルダーを回す。** それだけで、各ページの問い合わせ欄にボタンが出て、
+プライバシーポリシーに「第三者を経由する」節が入る。
+
+🔴 **URL だけ入れてサービス名を空にしない。**
+プライバシーポリシーが「どこを経由するか」を書けないまま公開されることになる。
+`mailto:` は残すこと（フォームが落ちたときに連絡手段がゼロになる）。
 
 Application downloads are published separately, under
 [`stoq-releases`](https://github.com/motojet-bit/stoq-releases/releases).
