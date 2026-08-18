@@ -99,6 +99,47 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-2",
+    date: "2026-08-17",
+    version: "0.9.2",
+    titleEn: "Version 0.9.2",
+    titleJa: "バージョン 0.9.2",
+    leadEn:
+      "Improvements to printing and export, plus corrections to the calculation and labelling of some metrics.",
+    leadJa:
+      "印刷・書き出しまわりの改善と、一部の指標の計算・表記の修正です。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Printing and export</strong> &mdash; the exported PDF now carries the overall score chart (a donut, plus a bar for each block).",
+          "<strong>印刷・書き出し</strong> &mdash; 書き出した PDF に、総合スコアの図（ドーナツとブロック別の棒）を載せました。",
+        ],
+        [
+          "<strong>Appendix</strong> &mdash; a &ldquo;terms and how to read them&rdquo; section is now added to the end of the PDF. If you do not need it, you can delete that page on its own.",
+          "<strong>巻末付録</strong> &mdash; PDF の末尾に「用語と読み方」を追加しました。不要な場合は、そのページだけ削除できます。",
+        ],
+        [
+          "<strong>Disclaimer</strong> &mdash; the notice now sits on its own final page.",
+          "<strong>免責事項</strong> &mdash; 最終ページに独立して掲載するようにしました。",
+        ],
+        [
+          "<strong>Metrics</strong> &mdash; the calculation and labelling of some indicators have been corrected.",
+          "<strong>指標</strong> &mdash; 一部の指標について、計算と表記を修正しました。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "The app checks for updates on its own and will offer this version. You can also update from Settings &rarr; General &rarr; Check for updates.",
+          "アプリが自動で更新を確認し、この版をご案内します。設定 &rarr;「一般」&rarr;「更新プログラムを確認」からも実行できます。",
+        ],
+        [
+          "Your saved analyses, notes and settings are kept. Nothing needs to be re-entered.",
+          "保存済みの分析・メモ・設定はそのまま残ります。入力し直す必要はありません。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-1",
     date: "2026-08-17",
     version: "0.9.1",

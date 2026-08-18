@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Release notes — StoQ AI Analyzer</title>
+    <title>Version 0.9.2 — StoQ AI Analyzer</title>
     <meta name="robots" content="index,follow" />
     <!-- アイコンは index.html と同じもの（＝アプリ本体のアイコン） -->
     <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png" />
@@ -41,10 +41,10 @@
 
     <main class="mx-auto max-w-3xl px-5 py-12">
       <h1 class="text-2xl font-semibold text-slate-50">
-        <span data-en>Release notes</span><span data-ja>更新履歴</span>
+        <span data-en>Version 0.9.2</span><span data-ja>バージョン 0.9.2</span>
       </h1>
       <p class="mt-2 text-sm leading-relaxed text-slate-400">
-        <span data-en>What changed in each version of StoQ AI Analyzer, newest first.</span><span data-ja>StoQ AI Analyzer の各バージョンで何が変わったかを、新しい順に掲載しています。</span>
+        <span data-en>Improvements to printing and export, plus corrections to the calculation and labelling of some metrics.</span><span data-ja>印刷・書き出しまわりの改善と、一部の指標の計算・表記の修正です。</span>
       </p>
       <p class="mt-1 text-xs text-slate-600">
         <span data-en>Last updated: 2026-08-17</span><span data-ja>最終更新日: 2026-08-17</span>
@@ -53,24 +53,49 @@
       <div class="mt-10 space-y-8">
         <section>
           <h2 class="text-base font-semibold text-emerald-300">
-            <a href="./v0-9-2.html" class="hover:text-emerald-200">
-              <span data-en>Version 0.9.2</span><span data-ja>バージョン 0.9.2</span>
-            </a>
+            <span data-en>What changed</span><span data-ja>変更点</span>
           </h2>
-          <p class="mt-1 text-xs text-slate-600">2026-08-17</p>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Improvements to printing and export, plus corrections to the calculation and labelling of some metrics.</p>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>印刷・書き出しまわりの改善と、一部の指標の計算・表記の修正です。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Printing and export</strong> &mdash; the exported PDF now carries the overall score chart (a donut, plus a bar for each block).</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>印刷・書き出し</strong> &mdash; 書き出した PDF に、総合スコアの図（ドーナツとブロック別の棒）を載せました。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Appendix</strong> &mdash; a &ldquo;terms and how to read them&rdquo; section is now added to the end of the PDF. If you do not need it, you can delete that page on its own.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>巻末付録</strong> &mdash; PDF の末尾に「用語と読み方」を追加しました。不要な場合は、そのページだけ削除できます。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Disclaimer</strong> &mdash; the notice now sits on its own final page.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>免責事項</strong> &mdash; 最終ページに独立して掲載するようにしました。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en><strong>Metrics</strong> &mdash; the calculation and labelling of some indicators have been corrected.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja><strong>指標</strong> &mdash; 一部の指標について、計算と表記を修正しました。</p>
         </section>
 
         <section>
           <h2 class="text-base font-semibold text-emerald-300">
-            <a href="./v0-9-1.html" class="hover:text-emerald-200">
-              <span data-en>Version 0.9.1</span><span data-ja>バージョン 0.9.1</span>
-            </a>
+            <span data-en>If you are already using it</span><span data-ja>すでにお使いの方へ</span>
           </h2>
-          <p class="mt-1 text-xs text-slate-600">2026-08-17</p>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Fixes for the problems found after the first public release.</p>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>公開後に見つかった不具合をまとめて修正しました。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>The app checks for updates on its own and will offer this version. You can also update from Settings &rarr; General &rarr; Check for updates.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>アプリが自動で更新を確認し、この版をご案内します。設定 &rarr;「一般」&rarr;「更新プログラムを確認」からも実行できます。</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-en>Your saved analyses, notes and settings are kept. Nothing needs to be re-entered.</p>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300" data-ja>保存済みの分析・メモ・設定はそのまま残ります。入力し直す必要はありません。</p>
+        </section>
+
+        <section>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300">
+            <a
+              href="https://github.com/motojet-bit/stoq-releases/releases/latest/download/StoQ-AI-Analyzer-x64-setup.exe"
+              class="inline-block rounded-md border border-emerald-800 bg-emerald-950/40 px-4 py-2 font-medium text-emerald-300 transition-colors hover:bg-emerald-900/40"
+            >
+              <span data-en>Download the latest version</span><span data-ja>最新版をダウンロード</span>
+            </a>
+          </p>
+          <p class="mt-2 text-xs leading-relaxed text-slate-500">
+            <span data-en>
+              Windows. The installer is unsigned, so Windows shows a warning &mdash;
+              choose &ldquo;More info&rdquo; then &ldquo;Run anyway&rdquo;.
+              If you already have it installed, the app offers the update itself.
+            </span>
+            <span data-ja>
+              Windows 版です。署名証明書が無いため Windows の警告が出ます。
+              「詳細情報」→「実行」で進めてください。
+              すでにお使いの場合は、アプリ側から更新をご案内します。
+            </span>
+          </p>
         </section>
 
         <section>
