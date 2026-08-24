@@ -46,12 +46,22 @@ import {
  */
 const UPDATED = "2026-08-10";
 
+/**
+ * 利用規約だけ別に持つ（2026-08-24）。
+ *
+ * **3 枚で 1 つの日付を共有すると、1 枚直しただけで 3 枚とも
+ * 「更新されました」と言うことになる。** 法務のページでそれをやると、
+ * 何が変わったのか読む側に確かめようがない。
+ * **直したページの日付だけを動かす。**
+ */
+const UPDATED_TERMS = "2026-08-24";
+
 
 // ---------------------------------------------------------------- 利用規約
 
 const terms = page({
   slug: "terms",
-  updated: UPDATED,
+  updated: UPDATED_TERMS,
   titleEn: "Terms of Use",
   titleJa: "利用規約",
   leadEn: "Please read these terms before purchasing or using StoQ AI Analyzer.",
@@ -199,7 +209,52 @@ const terms = page({
         "本アプリは外部の API（LLM 提供元・市場データ・SEC EDGAR 等）に依存しています。提供元の仕様変更・アクセス制限・サービス終了により、一部機能が予告なく制限される、または利用できなくなる場合があります。",
       ],
     ]),
-    section("9. Seller", "9. 販売者", [
+    /*
+     * **禁止事項（2026-08-24 に追加）。**
+     *
+     * それまで 9 節すべてが免責と条件の説明で、**「してはいけないこと」が
+     * 1 行も無かった。** 書いていないことは「禁止していない」と読まれる。
+     *
+     * **アプリ側（`StockAnalyzer/src-tauri/EULA.txt` 第2条）と同じ内容にする。**
+     * 買う前に読んだものと、インストール時に同意させるものが食い違うと、
+     * どちらが本当の条件なのか分からなくなる。**片方だけ直さないこと。**
+     */
+    section("9. What you may not do", "9. 禁止事項", [
+      [
+        "The app is licensed, not sold. Within the scope of section 3 and section 7 you may use it freely; the following, however, are not permitted.",
+        "本アプリは販売されるものではなく、使用が許諾されるものです。第 3 節・第 7 節の範囲内では自由にお使いいただけますが、次の行為は禁止されています。",
+      ],
+      [
+        "<strong>(1)</strong> Decompiling, disassembling or otherwise reverse engineering the app, or attempting to derive its source code or internal structure.",
+        "<strong>(1)</strong> 逆コンパイル・逆アセンブルその他の方法により本アプリをリバースエンジニアリングし、またはソースコードもしくは内部構造を解析すること。",
+      ],
+      [
+        "<strong>(2)</strong> Copying the app, except for a single copy made for your own backup purposes.",
+        "<strong>(2)</strong> 本アプリを複製すること（ご自身のバックアップの目的で 1 部を作成する場合を除きます）。",
+      ],
+      [
+        "<strong>(3)</strong> Redistributing, publishing, selling, reselling, assigning, lending, renting, sublicensing or sharing the app or your licence key with any third party.",
+        "<strong>(3)</strong> 本アプリまたはライセンスキーを、第三者に再頒布・配布・公開・販売・再販売・譲渡・貸与・賃貸・サブライセンス、または共有すること。",
+      ],
+      [
+        "<strong>(4)</strong> Modifying or adapting the app, or creating derivative works based on it.",
+        "<strong>(4)</strong> 本アプリを改変もしくは翻案し、または本アプリに基づく二次的著作物を作成すること。",
+      ],
+      [
+        "<strong>(5)</strong> Circumventing, disabling or tampering with the licence check or any other technical protection measure, and removing or altering any copyright or other proprietary notice.",
+        "<strong>(5)</strong> ライセンス認証その他の技術的保護手段を回避・無効化・改変すること、および著作権表示その他の権利表示を削除・改変すること。",
+      ],
+      [
+        "<strong>(6)</strong> Extracting the prompts, evaluation criteria or other internal data contained in the app and using them for another product or service, or using the app to develop or provide a competing product or service.",
+        "<strong>(6)</strong> 本アプリに含まれるプロンプト・評価項目その他の内部データを抽出して他の製品・サービスのために利用すること、および本アプリを利用して競合する製品・サービスを開発・提供すること。",
+      ],
+      [
+        "The full text is the End User Licence Agreement shown during installation, and a summary is shown in the app when you first accept the terms.",
+        "全文は、インストール時に表示される「ソフトウェア使用許諾契約書」に定めるとおりです。要約はアプリの初回起動時の同意画面にも表示されます。",
+      ],
+    ]),
+
+    section("10. Seller", "10. 販売者", [
       [
         `This product is developed and published under the trade name <strong>${TRADE_NAME}</strong>.`,
         `本製品は屋号 <strong>${TRADE_NAME}</strong> として開発・提供しています。`,
