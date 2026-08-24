@@ -1084,9 +1084,14 @@
     <!-- ========================================================== 購入前の確認と同意 -->
     <!--
       決済ページへ直接飛ばさず、ここを必ず通す。
-      7 点はいずれも**買ったあとで知ると返金要求になる**種類の前提
+      いずれも**買ったあとで知ると返金要求になる**種類の前提
       （投資助言ではない / API 費用は別 / 個別サポートは無い / 言語は 2 つだけ /
-      メジャーアップデートは有償になりうる / β版であること / 専用キーの推奨）。
+      メジャーアップデートは有償になりうる / β版であること / 専用キーの推奨 /
+      2 台まで / 対象は個別株だけ / 複製と再頒布とリバースエンジニアリングの禁止）。
+
+      🔴 **アプリ内の同意画面（`eula.clause.*`）と同じ内容にすること。**
+      2026-08-24 の時点で **3 つ足りていなかった**（台数・分析対象・禁止事項）。
+      アプリ側にだけ足して、ここを忘れると**買う前と後で条件が変わる。**
 
       **リード文の件数は JS が数え直す**（`[data-consent-count]`）。
       項目を足したときに文言の数字だけ古いまま残る事故を防ぐ。
@@ -1115,10 +1120,10 @@
           </h2>
           <p class="mt-2 text-sm text-slate-400">
             <span data-en>
-              Please confirm all <span data-consent-count>7</span> before continuing to checkout.
+              Please confirm all <span data-consent-count>10</span> before continuing to checkout.
             </span>
             <span data-ja>
-              以下の <span data-consent-count>7</span> 点にご同意のうえ、購入手続きへお進みください。
+              以下の <span data-consent-count>10</span> 点にご同意のうえ、購入手続きへお進みください。
             </span>
           </p>
         </div>
@@ -1276,21 +1281,124 @@
               </span>
             </span>
           </label>
+
+          <!--
+            ⑧⑨⑩ は 2026-08-24 に追加。
+
+            🔴 **アプリ内の同意画面（`eula.clause.*`）と同じ内容にする。**
+            買う前に読んだものと、インストール時・初回起動時に同意させるものが
+            食い違うと、どちらが本当の条件なのか分からなくなる。
+
+            ここが 3 つ足りていなかった——⑧は第246章、⑨は第254章で
+            アプリ側にだけ足され、⑩は第293章。**片方だけ直すと、こうなる。**
+          -->
+
+          <!-- ⑧ 利用できる台数 -->
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that one licence may be used on
+              <strong class="text-slate-200">up to two devices</strong> belonging to me.
+              <span class="mt-1.5 block text-slate-500">
+                (The licence belongs to you, not to a machine — when you replace a PC, enter the
+                same key on the new one.)
+              </span>
+            </span>
+            <span data-ja>
+              1 つのライセンスは、私自身が使う
+              <strong class="text-slate-200">2 台までの端末</strong>で利用できることに同意します。
+              <span class="mt-1.5 block text-slate-500">
+                （※ライセンスは端末ではなく購入者ご本人に紐づきます。PC を買い替えた場合は、
+                新しい PC で同じキーをご入力ください）
+              </span>
+            </span>
+          </label>
+
+          <!-- ⑨ 分析の対象 -->
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that the app analyses only
+              <strong class="text-slate-200">shares of individual companies that publish filings</strong>.
+              <span class="mt-1.5 block text-slate-500">
+                (ETFs, mutual funds, indices, cryptocurrencies, currency pairs, commodities and
+                futures publish nothing to read, so the app stops before running.)
+              </span>
+            </span>
+            <span data-ja>
+              分析の対象は
+              <strong class="text-slate-200">決算書を提出する個別企業の株式</strong>に限られることに
+              同意します。
+              <span class="mt-1.5 block text-slate-500">
+                （※ETF・投資信託・指数・暗号資産・為替・商品・先物などは決算書を提出しないため、
+                読み取る資料が無く、アプリが実行を中止します）
+              </span>
+            </span>
+          </label>
+
+          <!-- ⑩ 禁止事項 -->
+          <label
+            class="flex cursor-pointer gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-sm leading-relaxed text-slate-300 transition-colors hover:border-slate-700"
+          >
+            <input
+              type="checkbox"
+              data-consent
+              class="mt-0.5 h-5 w-5 shrink-0 accent-emerald-500"
+            />
+            <span data-en>
+              I understand that the app is licensed, not sold, and that
+              <strong class="text-slate-200"
+                >copying, redistribution and reverse engineering are prohibited</strong
+              >.
+              <span class="mt-1.5 block text-slate-500">
+                (No redistributing, selling, lending or sharing the app or my licence key; no
+                copying beyond a single backup; no decompiling or modifying it; no circumventing
+                the licence check. Full text:
+                <a href="./terms.html" class="text-slate-400 underline hover:text-slate-200"
+                  >Terms of Use, section 9</a
+                >.)
+              </span>
+            </span>
+            <span data-ja>
+              本アプリは販売されるものではなく使用が許諾されるものであり、
+              <strong class="text-slate-200">複製・再頒布・リバースエンジニアリングが禁止</strong>
+              されていることに同意します。
+              <span class="mt-1.5 block text-slate-500">
+                （※本アプリやライセンスキーの再頒布・販売・貸与・共有、バックアップ 1 部を超える複製、
+                逆コンパイル・改変、ライセンス認証の回避はいずれも禁止です。全文は
+                <a href="./terms.html" class="text-slate-400 underline hover:text-slate-200"
+                  >利用規約 第9節</a
+                >）
+              </span>
+            </span>
+          </label>
         </div>
 
         <!-- ボタン（固定。スクロールで画面外へ逃げない） -->
         <div class="shrink-0 border-t border-slate-800 px-5 py-5 sm:px-8 sm:py-6">
           <!--
-            **押せない理由を数で見せる。** 7 項目もあると、
+            **押せない理由を数で見せる。** 10 項目もあると、
             どれを見落としているのか分からないまま「壊れている」と受け取られる。
           -->
           <p class="mb-3 text-center text-xs text-slate-500 sm:text-left">
             <span data-en>
               <span data-consent-progress>0</span> of
-              <span data-consent-count>7</span> confirmed
+              <span data-consent-count>10</span> confirmed
             </span>
             <span data-ja>
-              <span data-consent-count>7</span> 点中
+              <span data-consent-count>10</span> 点中
               <span data-consent-progress>0</span> 点を確認済み
             </span>
           </p>
