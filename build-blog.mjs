@@ -99,6 +99,45 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-4",
+    date: "2026-08-25",
+    version: "0.9.4",
+    titleEn: "Version 0.9.4",
+    titleJa: "バージョン 0.9.4",
+    leadEn:
+      "System requirements are now stated up front, and the installer asks before fetching anything.",
+    leadJa:
+      "動作環境の案内を追加しました。アプリの機能に変更はありません。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>The installer asks first</strong> &mdash; if the Microsoft Edge WebView2 Runtime is not found on your PC, the installer now tells you and asks whether to download and install it (about 2 MB). Until now it did so without saying anything.",
+          "<strong>インストーラーが先に尋ねます</strong> &mdash; Microsoft Edge WebView2 ランタイムがパソコンに見つからない場合、取得してインストールしてよいかを確認するようになりました（約 2 MB）。これまでは何も言わずに導入していました。",
+        ],
+        [
+          "<strong>System requirements</strong> &mdash; they are now written at the top of the licence agreement shown during installation, and on the sales page.",
+          "<strong>動作環境</strong> &mdash; インストール時に表示される使用許諾契約書の冒頭と、販売ページに記載しました。",
+        ],
+      ]),
+      section("What the app needs", "動作環境", [
+        [
+          "Windows 10 or 11 (64-bit); the Microsoft Edge WebView2 Runtime; an internet connection; and your own API keys for the AI and market-data providers.",
+          "Windows 10 または 11（64bit）／Microsoft Edge WebView2 ランタイム／インターネット接続／AI と市場データの APIキー（ご自身でご用意ください）。",
+        ],
+        [
+          "<strong>Neither the .NET Framework nor the Visual C++ Redistributable is required.</strong> The WebView2 Runtime ships with Windows 11 and is already present on most Windows 10 machines, so in most cases nothing extra is installed.",
+          "<strong>.NET Framework と Visual C++ 再頒布可能パッケージは必要ありません。</strong> WebView2 ランタイムは Windows 11 に標準で入っており、Windows 10 でも多くの場合すでに導入されているため、たいていは何も追加されません。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "<strong>Nothing changes for you.</strong> The app itself is unchanged, and the consent screen does not appear again. Your licence key, saved analyses, notes and settings are kept as they are.",
+          "<strong>とくに何もありません。</strong> アプリ本体に変更は無く、同意画面が再び出ることもありません。ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-3",
     date: "2026-08-25",
     version: "0.9.3",
