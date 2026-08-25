@@ -99,6 +99,43 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-3",
+    date: "2026-08-25",
+    version: "0.9.3",
+    titleEn: "Version 0.9.3",
+    titleJa: "バージョン 0.9.3",
+    leadEn:
+      "The licence terms are now shown during installation, and the in-app consent list has been extended.",
+    leadJa:
+      "利用条件（使用許諾契約書）の追加です。インストール時に表示されるようになりました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Licence agreement at install time</strong> &mdash; the installer now shows an End User Licence Agreement, in Japanese and English, which you accept before the app is installed.",
+          "<strong>インストール時の使用許諾契約書</strong> &mdash; インストーラーに使用許諾契約書のページを追加しました（日本語・英語）。インストールの前にご確認いただけます。",
+        ],
+        [
+          "<strong>What you may not do</strong> &mdash; the consent list inside the app now states plainly that copying, redistribution and reverse engineering are not permitted. The same points are on the sales page and in the Terms of Use.",
+          "<strong>禁止事項</strong> &mdash; アプリ内の同意事項に「複製・再頒布・リバースエンジニアリングの禁止」を追加しました。同じ内容を販売ページと利用規約にも掲載しています。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "<strong>The consent screen appears once more after this update.</strong> Points have been added since you last accepted, so we ask you to read them and confirm again.",
+          "<strong>更新後の初回起動時に、同意画面がもう一度表示されます。</strong> 前回ご同意いただいたあとに項目を追加したため、あらためてご確認をお願いします。",
+        ],
+        [
+          "Your licence key stays valid &mdash; there is nothing to re-enter. Saved analyses, notes and settings are kept as they are.",
+          "ライセンスキーは有効なままです。入れ直す必要はありません。保存済みの分析・メモ・設定もそのまま残ります。",
+        ],
+        [
+          "The app checks for updates on its own and will offer this version. You can also update from Settings &rarr; General &rarr; Check for updates.",
+          "アプリが自動で更新を確認し、この版をご案内します。設定 &rarr;「一般」&rarr;「更新プログラムを確認」からも実行できます。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-2",
     date: "2026-08-17",
     version: "0.9.2",
