@@ -958,10 +958,92 @@
             <span data-ja>Windows 版を無料ダウンロード</span>
           </a>
 
+          <!--
+            **サイズは実測値を書く**（2026-08-25 に直した）。
+            v0.9.0 のころの「約 3 MB」が残っていて、実際は 4.9 MB だった。
+            版を上げるたびに増えるので、**大きめの丸め**にしておく。
+          -->
           <p class="mt-5 text-xs text-slate-500">
-            <span data-en>Windows 10 / 11 (64-bit) &middot; about 3 MB installer</span>
-            <span data-ja>Windows 10 / 11（64bit）&middot; インストーラー約 3 MB</span>
+            <span data-en>Windows 10 / 11 (64-bit) &middot; about 5 MB installer</span>
+            <span data-ja>Windows 10 / 11（64bit）&middot; インストーラー約 5 MB</span>
           </p>
+
+          <!--
+            **動作環境を、押す前に読める場所に置く**（利用者の指示・2026-08-25）:
+
+            > 他の人に頒布したときに条件とかってありますか？ Windows 10 以上とか、
+            > .NET Framework がいるとか。そういうものが要りますよ、とか書いておいてほしい
+
+            🔴 **実測して書いている**（推測で書かない）。配布する exe が参照している
+            DLL を調べたところ、`VCRUNTIME140.dll` も `MSVCP140.dll` も無く、
+            UCRT（`api-ms-win-crt-*`・Windows 10 に標準搭載）だけだった。
+            **.NET も VC++ 再頒布可能パッケージも要らない。**
+            外から足すものは **WebView2 ランタイム 1 つだけ。**
+          -->
+          <details
+            class="mx-auto mt-4 max-w-xl rounded-lg border border-slate-800 bg-slate-900/50 px-4 py-3 text-left"
+          >
+            <summary class="cursor-pointer text-xs text-slate-400 hover:text-slate-200">
+              <span data-en>System requirements &mdash; what needs to be on your PC</span>
+              <span data-ja>動作環境 &mdash; パソコンに必要なもの</span>
+            </summary>
+            <ul class="mt-3 space-y-2 text-xs leading-relaxed text-slate-400">
+              <li>
+                <span data-en
+                  ><strong class="text-slate-200">Windows 10 or 11, 64-bit.</strong> Windows 7 and
+                  8.1 are not supported.</span
+                >
+                <span data-ja
+                  ><strong class="text-slate-200">Windows 10 または 11（64bit）。</strong>
+                  Windows 7 / 8.1 には対応していません。</span
+                >
+              </li>
+              <li>
+                <span data-en
+                  ><strong class="text-slate-200">Microsoft Edge WebView2 Runtime.</strong> It ships
+                  with Windows 11 and is already present on most Windows 10 machines. If it is
+                  missing, the installer asks you first, then downloads it from Microsoft and
+                  installs it (about 2 MB).</span
+                >
+                <span data-ja
+                  ><strong class="text-slate-200">Microsoft Edge WebView2 ランタイム。</strong>
+                  Windows 11 には標準で入っており、Windows 10 でも多くの場合すでに導入されています。
+                  見つからなかった場合は、<strong class="text-slate-200"
+                    >インストーラーが確認したうえで</strong
+                  >Microsoft の公式サイトから取得して導入します（約 2 MB）。</span
+                >
+              </li>
+              <li>
+                <span data-en
+                  ><strong class="text-slate-200">An internet connection</strong> &mdash; to fetch
+                  filings and market data, and to run the AI. Saved work can be read offline.</span
+                >
+                <span data-ja
+                  ><strong class="text-slate-200">インターネット接続</strong> &mdash;
+                  資料・株価の取得と AI の実行に必要です。保存済みの内容はオフラインでも読めます。</span
+                >
+              </li>
+              <li>
+                <span data-en
+                  ><strong class="text-slate-200">Your own API keys</strong> for the AI and
+                  market-data providers (see &ldquo;Before you buy&rdquo;).</span
+                >
+                <span data-ja
+                  ><strong class="text-slate-200">AI と市場データの APIキー</strong>（ご自身でご用意ください。「購入前に」をご覧ください）</span
+                >
+              </li>
+              <li>
+                <span data-en
+                  >The <strong class="text-slate-200">.NET Framework is not required</strong>, and
+                  neither is the Visual C++ Redistributable.</span
+                >
+                <span data-ja
+                  ><strong class="text-slate-200">.NET Framework は不要</strong>です。Visual C++
+                  再頒布可能パッケージも必要ありません。</span
+                >
+              </li>
+            </ul>
+          </details>
 
           <!--
             SmartScreen の青い画面は、署名の無い新しいアプリでは必ず出る。

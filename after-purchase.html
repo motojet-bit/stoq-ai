@@ -298,6 +298,41 @@
             <span data-ja>あとは通常どおりインストーラーが進みます。</span>
           </p>
 
+          <!--
+            **出るかもしれない画面は、先に見せておく**（2026-08-25）。
+            SmartScreen と同じ考え方——**知らずに出会うと「何か変なものが入る」**
+            と受け取られる。WebView2 は入っている PC のほうが多いので、
+            「出ないのが普通」であることも併せて書く。
+          -->
+          <div
+            class="mt-6 rounded-lg border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm leading-relaxed text-slate-400"
+          >
+            <p class="font-medium text-slate-200">
+              <span data-en>You may be asked about the WebView2 Runtime</span>
+              <span data-ja>「WebView2 ランタイム」を尋ねられることがあります</span>
+            </p>
+            <p class="mt-2">
+              <span data-en>
+                The app draws its screen with the Microsoft Edge WebView2 Runtime. It ships with
+                Windows 11 and is already on most Windows 10 machines, so
+                <strong class="text-slate-200">usually nothing is asked</strong>. If it is missing,
+                the installer asks whether to fetch it, then downloads it from Microsoft and
+                installs it (about 2 MB). Answer <strong class="text-slate-200">Yes</strong> &mdash;
+                the app cannot start without it.
+              </span>
+              <span data-ja>
+                本アプリは画面の描画に Microsoft Edge WebView2
+                ランタイムを使います。Windows 11 には標準で入っており、Windows 10
+                でも多くの場合すでに導入されているため、<strong class="text-slate-200"
+                  >通常は何も尋ねられません</strong
+                >。見つからなかった場合のみ、インストーラーが確認のうえ Microsoft
+                の公式サイトから取得して導入します（約 2 MB）。
+                <strong class="text-slate-200">「はい」</strong>をお選びください &mdash;
+                これが無いとアプリは起動できません。
+              </span>
+            </p>
+          </div>
+
           <div class="mt-4 grid gap-5 sm:grid-cols-2">
             <figure>
               <img
