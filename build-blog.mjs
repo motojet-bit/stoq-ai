@@ -99,6 +99,33 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-5",
+    date: "2026-08-25",
+    version: "0.9.5",
+    titleEn: "Version 0.9.5",
+    titleJa: "バージョン 0.9.5",
+    leadEn: "Improvements to the setup screen shown before an analysis, and to the chat composer.",
+    leadJa: "分析開始時の初期設定画面と、対話画面の入力まわりを改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>The setup screen shown before an analysis</strong> &mdash; you can now choose which SEC filings to read (10-Q and 10-K) with checkboxes. Both are ticked by default; untick anything you do not need.",
+          "<strong>分析開始時の初期設定画面を改良</strong> &mdash; SEC から読む書類（10-Q・10-K）を<strong>チェックボックスで選べる</strong>ようになりました。既定では両方にチェックが入っています。不要なものがあれば外してください。",
+        ],
+        [
+          "<strong>The chat composer</strong> &mdash; how much you are about to send is now shown before you press send.",
+          "<strong>対話画面の入力まわりを改良</strong> &mdash; 送る量が<strong>押す前に分かる</strong>ようになりました。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are. The consent screen does not appear again.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。同意画面が再び出ることもありません。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-4",
     date: "2026-08-25",
     version: "0.9.4",
