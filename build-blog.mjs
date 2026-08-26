@@ -99,6 +99,37 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-6",
+    date: "2026-08-26",
+    version: "0.9.6",
+    titleEn: "Version 0.9.6",
+    titleJa: "バージョン 0.9.6",
+    leadEn: "Improvements to how the setup screen shown before an analysis presents things.",
+    leadJa: "分析開始画面の表現を改善しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>A tidier setup screen</strong> &mdash; the list of SEC filings now appears in one place instead of two.",
+          "<strong>分析開始画面の表現を整理</strong> &mdash; SEC の書類の一覧を 1 か所にまとめました。",
+        ],
+        [
+          "<strong>Fiscal periods are shown</strong> &mdash; each SEC filing now says which period it covers (for example <code>FY2026 Q3</code>), not just when it was filed.",
+          "<strong>決算期を表示</strong> &mdash; SEC の書類がどの期のものか（例: <code>FY2026 Q3</code>）が分かるようになりました。提出日だけでは分かりませんでした。",
+        ],
+        [
+          "<strong>Better handling of fiscal periods</strong> &mdash; choosing a period now works correctly for companies whose financial year does not end in December.",
+          "<strong>決算期の取り扱いを改善</strong> &mdash; 12 月決算以外の企業でも、期の指定が正しく働くようになりました。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-5",
     date: "2026-08-25",
     version: "0.9.5",
