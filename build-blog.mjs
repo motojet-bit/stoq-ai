@@ -99,6 +99,37 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-9",
+    date: "2026-08-28",
+    version: "0.9.9",
+    titleEn: "Version 0.9.9",
+    titleJa: "バージョン 0.9.9",
+    leadEn: "More accurate analysis of past fiscal periods.",
+    leadJa: "過去の決算期を分析するときの精度を上げました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Everything is now taken as of that period</strong> &mdash; when you analyse a past quarter, the quarterly trend and the share price are both from that point in time, not today.",
+          "<strong>当時の資料と株価に揃えました</strong> &mdash; 過去の期を選ぶと、四半期推移も株価もその時点のものを使います。今日の数字が混ざりません。",
+        ],
+        [
+          "<strong>Only one window</strong> &mdash; opening the app a second time brings the existing window to the front.",
+          "<strong>二重起動を止めました</strong> &mdash; 2 つ目を開くと、いま開いている画面が前に出ます。",
+        ],
+        [
+          "<strong>Better exports</strong> &mdash; export one file per fiscal period, and the file name now matches what is inside.",
+          "<strong>書き出しを改良</strong> &mdash; 決算期ごとに分けて書き出せます。ファイル名も中身に合わせました。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-8",
     date: "2026-08-28",
     version: "0.9.8",
