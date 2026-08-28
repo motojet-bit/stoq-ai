@@ -99,6 +99,37 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-10",
+    date: "2026-08-28",
+    version: "0.9.10",
+    titleEn: "Version 0.9.10",
+    titleJa: "バージョン 0.9.10",
+    leadEn: "Better exports of your analysis.",
+    leadJa: "分析結果の書き出しを改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>The file name now carries the fiscal period you actually read</strong> &mdash; taken from the filing itself, not from the day you exported it.",
+          "<strong>書き出したファイルの名前と見出しに、読んだ決算資料の決算期が入ります</strong> &mdash; 書き出した日ではなく、資料そのものから取ります。",
+        ],
+        [
+          "<strong>When the period cannot be determined, it says so</strong> &mdash; the file is labelled &ldquo;period unknown&rdquo; rather than left blank.",
+          "<strong>決算期が分からないときは「期不明」と表示します</strong> &mdash; 空欄にせず、分からないことが分かるようにしました。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Files you exported before keep the name they were given. Only new exports are affected.",
+          "すでに書き出したファイルの名前は変わりません。これから書き出すぶんに反映されます。",
+        ],
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-9",
     date: "2026-08-28",
     version: "0.9.9",
