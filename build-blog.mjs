@@ -99,6 +99,37 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-8",
+    date: "2026-08-28",
+    version: "0.9.8",
+    titleEn: "Version 0.9.8",
+    titleJa: "バージョン 0.9.8",
+    leadEn: "You can now choose which fiscal period to analyse.",
+    leadJa: "分析の期を、ご自身で選べるようになりました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>A better setup screen</strong> &mdash; choose which fiscal period to analyse (full years too). Pick the SEC filings to read, preview them, and save the originals before you run.",
+          "<strong>分析開始画面を改良</strong> &mdash; いつの決算で分析するかを選べます（通期も）。SEC の書類を選び、中身を確かめてから実行できます。原本の保存もできます。",
+        ],
+        [
+          "<strong>Better analysis of past periods</strong> &mdash; the 10-K, the earnings release and the share price are all taken as of that period.",
+          "<strong>過去の期の分析を改良</strong> &mdash; その期の 10-K・決算発表資料・当時の株価を使います。",
+        ],
+        [
+          "<strong>Better exports</strong> &mdash; the PDF now lists the sources used, and you can export a single period.",
+          "<strong>書き出しを改良</strong> &mdash; PDF に「分析に使った資料」が入り、決算期を選んで書き出せます。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-6",
     date: "2026-08-26",
     version: "0.9.6",
