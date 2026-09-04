@@ -99,6 +99,37 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-12",
+    date: "2026-09-05",
+    version: "0.9.12",
+    titleEn: "Version 0.9.12",
+    titleJa: "バージョン 0.9.12",
+    leadEn: "The top toolbar and the fiscal period shown on results are easier to read.",
+    leadJa: "上部の操作バーと、分析結果の決算期表示を改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>The top toolbar no longer overlaps</strong> &mdash; the ticker box, the document drop area and the buttons on the right sit on their own rows at any window width.",
+          "<strong>上部の操作バーの表示を改良しました</strong> &mdash; 銘柄入力・資料のドロップ領域・右のボタンが、窓の幅にかかわらず重ならなくなりました。",
+        ],
+        [
+          "<strong>Results show the fiscal period, not a bare date</strong> &mdash; for example <code>FY2027 Q2 (period ended 2026-07-26)</code> instead of just the end date.",
+          "<strong>分析結果の決算期表示を改良しました</strong> &mdash; 日付だけではなく、<code>FY2027 Q2（期末 2026-07-26）</code> のように決算期と並べて出ます。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Nothing needs redoing. Saved analyses keep the wording they were generated with.",
+          "やり直していただくことはありません。保存済みの分析は生成したときのままです。",
+        ],
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-11",
     date: "2026-09-04",
     version: "0.9.11",
