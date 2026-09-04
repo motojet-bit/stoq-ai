@@ -99,6 +99,45 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-11",
+    date: "2026-09-04",
+    version: "0.9.11",
+    titleEn: "Version 0.9.11",
+    titleJa: "バージョン 0.9.11",
+    leadEn: "Japanese filings can now be read.",
+    leadJa: "日本語の決算資料を取り込めるようになりました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Japanese filings now import</strong> &mdash; documents that used to be rejected as &ldquo;an image-only PDF&rdquo; are read properly.",
+          "<strong>日本語の決算資料を取り込めます</strong> &mdash; これまで「画像だけの PDF」と表示されて読み込めなかった資料が読めるようになりました。",
+        ],
+        [
+          "<strong>PDF export remembers the page orientation</strong> &mdash; you no longer have to pick landscape every time.",
+          "<strong>PDF で書き出すときの用紙の向きを覚えます</strong> &mdash; 毎回選び直す必要がなくなりました。",
+        ],
+        [
+          "<strong>The download notice closes anywhere</strong> &mdash; click outside the card instead of hunting for the &times;.",
+          "<strong>ダウンロードの通知カードを、画面のどこかを押せば閉じられます</strong> &mdash; ×印を探さずに済みます。",
+        ],
+        [
+          "<strong>A tidier record list</strong> &mdash; tickers with no analyses left are removed from the list.",
+          "<strong>分析記録の一覧を改良しました</strong> &mdash; 記録の無くなった銘柄が一覧に残らなくなりました。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "If a document failed to import before, try it again &mdash; nothing else needs redoing.",
+          "取り込めなかった資料は、もう一度お試しください。ほかにやり直していただくことはありません。",
+        ],
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-10",
     date: "2026-08-28",
     version: "0.9.10",
