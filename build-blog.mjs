@@ -99,6 +99,41 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-13",
+    date: "2026-09-06",
+    version: "0.9.13",
+    titleEn: "Version 0.9.13",
+    titleJa: "バージョン 0.9.13",
+    leadEn: "Quit from the menu now works, and filings are easier to bring in.",
+    leadJa: "メニューの「終了」と、決算資料の取り込みを改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Quit from the menu now works</strong> &mdash; <code>File &rarr; Quit</code> closes the app as expected.",
+          "<strong>メニューの「終了」で閉じられるようになりました</strong> &mdash; <code>ファイル &rarr; 終了</code> が効きます。",
+        ],
+        [
+          "<strong>Bringing in filings is easier</strong> &mdash; for EDINET filings, paste the document ID (for example <code>S100ABCD</code>) into the document drop area and the original PDF is fetched for you.",
+          "<strong>決算資料の取り込みを改良しました</strong> &mdash; EDINET の書類なら、書類 ID（例: <code>S100ABCD</code>）を資料のドロップ欄に貼るだけで、原本の PDF を取り込めます。",
+        ],
+        [
+          "<strong>Clearer guidance when a PDF has no text</strong> &mdash; a PDF re-saved through Print to PDF loses its text layer, so the message now says to fetch the original instead.",
+          "<strong>資料からテキストを読み取れないときの案内を改良しました</strong> &mdash; 印刷（PDF に保存）で作り直した PDF は文字が失われるため、配布元の原本を取り直すようご案内します。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Nothing needs redoing. Saved analyses keep the wording they were generated with.",
+          "やり直していただくことはありません。保存済みの分析は生成したときのままです。",
+        ],
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-12",
     date: "2026-09-05",
     version: "0.9.12",
