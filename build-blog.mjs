@@ -99,6 +99,45 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-14",
+    date: "2026-09-07",
+    version: "0.9.14",
+    titleEn: "Version 0.9.14",
+    titleJa: "バージョン 0.9.14",
+    leadEn: "Key metrics on results are now split by source, and the figures behind them were reworked.",
+    leadJa: "分析結果の主要指標の表示と、数値の算出方法を改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Key metrics are split by source</strong> &mdash; quarterly figures taken from SEC filings and figures from market data are now shown as two separate tables instead of one.",
+          "<strong>主要指標を出どころで分けて表示するよう改良しました</strong> &mdash; 決算書（SEC）から取った四半期の数値と、市場データの数値を、1 つの表にまとめず 2 つに分けて出します。",
+        ],
+        [
+          "<strong>Every figure carries its period and source</strong> &mdash; each row shows which fiscal quarter it covers and where the number came from.",
+          "<strong>各数値に対象期と出どころを添えるよう改良しました</strong> &mdash; どの決算期の数字で、どこから来たものかが行ごとに分かります。",
+        ],
+        [
+          "<strong>Revenue growth and cash runway were reworked</strong> &mdash; revenue growth is now the latest SEC quarter compared with the same quarter a year earlier, and cash runway is measured over the trailing four quarters.",
+          "<strong>売上成長率と Cash Runway の算出方法を改良しました</strong> &mdash; 売上成長率は決算書の最新四半期と前年同期の比較に、Cash Runway は直近 4 四半期をならした値になりました。",
+        ],
+        [
+          "<strong>Text in results reads more cleanly</strong> &mdash; emphasis written by the model is shown as formatting rather than as raw symbols.",
+          "<strong>分析結果・分析記録の文字表示を改良しました</strong> &mdash; 記号がそのまま出ていた箇所が、書式として表示されます。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Nothing needs redoing. Saved analyses keep the wording and the figures they were generated with.",
+          "やり直していただくことはありません。保存済みの分析は、生成したときの文面と数値のままです。",
+        ],
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-13",
     date: "2026-09-06",
     version: "0.9.13",
