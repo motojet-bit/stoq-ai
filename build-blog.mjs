@@ -99,6 +99,37 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-16",
+    date: "2026-09-14",
+    version: "0.9.16",
+    titleEn: "Version 0.9.16",
+    titleJa: "バージョン 0.9.16",
+    leadEn: "The top command bar and the market data display were improved.",
+    leadJa: "上部の操作バーと、市場データの表示を改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>The top command bar stays at two rows</strong> &mdash; whatever the window width or text size, the bar no longer grows to a third row.",
+          "<strong>上部の操作バーが 2 段に収まるよう改良しました</strong> &mdash; 窓の幅や文字サイズを変えても、3 段目にはみ出しません。",
+        ],
+        [
+          "<strong>Market cap and 52-week range show as space allows</strong> &mdash; next to the share price, they appear when there is room and step aside when there is not.",
+          "<strong>株価の横の時価総額・52週レンジを、入る分だけ表示するよう改良しました</strong> &mdash; 幅に余裕があるときに表示し、足りないときは控えます。",
+        ],
+        [
+          "<strong>The SEC filings status in market data reads more cleanly</strong> &mdash; the label no longer breaks into single characters in a narrow panel.",
+          "<strong>市場データの「SEC 資料」の表示を改良しました</strong> &mdash; パネルが狭いときも、見出しが 1 文字ずつ折れずに表示されます。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Nothing needs redoing. Your licence key, saved analyses, notes and settings are kept as they are.",
+          "やり直していただくことはありません。ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-15",
     date: "2026-09-14",
     version: "0.9.15",
