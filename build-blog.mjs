@@ -99,6 +99,45 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-15",
+    date: "2026-09-14",
+    version: "0.9.15",
+    titleEn: "Version 0.9.15",
+    titleJa: "バージョン 0.9.15",
+    leadEn: "The way figures are calculated, and PDF and Markdown exports, were improved.",
+    leadJa: "分析の数値の算出方法と、書き出し（PDF・Markdown）を改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Analyses of past fiscal periods were improved</strong> &mdash; when you pick a period, metrics use the closing price on the period end and the figures first filed for that period.",
+          "<strong>過去の決算期の分析を改良しました</strong> &mdash; 期を選んだ分析は、決算期末日の終値と、その期について最初に提出された決算数値から指標を算出します。",
+        ],
+        [
+          "<strong>Financial metrics were reworked</strong> &mdash; D/E, FCF, cash runway, ROIC, ROE and share dilution are calculated from period-end filings with fixed definitions.",
+          "<strong>財務指標の算出方法を改良しました</strong> &mdash; D/E・FCF・Cash Runway・ROIC・ROE・株式の希薄化を、期末の決算数値から決まった定義で算出します。",
+        ],
+        [
+          "<strong>Scoring of the 20 criteria was improved</strong> &mdash; a criterion without the material it needs is marked as not assessable, with the reason shown.",
+          "<strong>20 項目の採点を改良しました</strong> &mdash; 判定に必要な材料がそろわない項目は判定不能とし、その理由を表示します。",
+        ],
+        [
+          "<strong>PDF and Markdown exports were improved</strong> &mdash; PDFs come in report and presentation layouts, and exports end with where the analysis came from.",
+          "<strong>PDF・Markdown の書き出しを改良しました</strong> &mdash; PDF をレポートとプレゼンの 2 種類にし、書き出しの巻末に分析の出どころを載せます。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Saved analyses keep the wording and the figures they were generated with. Running the same stock and period again may give different figures.",
+          "保存済みの分析は、生成したときの文面と数値のままです。同じ銘柄・同じ期を分析し直すと、数値が変わる場合があります。",
+        ],
+        [
+          "Your licence key, saved analyses, notes and settings are kept as they are.",
+          "ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-14",
     date: "2026-09-07",
     version: "0.9.14",
