@@ -99,6 +99,45 @@ function downloadBox() {
  */
 const POSTS = [
   {
+    slug: "v0-9-17",
+    date: "2026-09-17",
+    version: "0.9.17",
+    titleEn: "Version 0.9.17",
+    titleJa: "バージョン 0.9.17",
+    leadEn: "Reading of Japanese company filings and the analysis judgements were improved.",
+    leadJa: "日本株の決算資料の読み取りと、分析の判定を改良しました。",
+    body: [
+      section("What changed", "変更点", [
+        [
+          "<strong>Japanese half-year reports and earnings summaries (kessan tanshin) are read more reliably</strong>.",
+          "<strong>日本株の中間期・決算短信の読み取りを改良しました</strong>。",
+        ],
+        [
+          "<strong>Cross-checking against the same EDINET filing</strong> &mdash; when you set an EDINET API key, figures are checked against the numbers in the same filing. The key is optional.",
+          "<strong>EDINET API キーを設定すると、同じ提出書類の数値で照合する機能を追加しました</strong> &mdash; キーの設定は任意です。",
+        ],
+        [
+          "<strong>PBR and ROE for companies with multiple share classes</strong> are handled more carefully.",
+          "<strong>種類株式がある会社の PBR・ROE の扱いを改良しました</strong>。",
+        ],
+        [
+          "<strong>Reading of past earnings forecasts for Japanese companies</strong> was improved.",
+          "<strong>日本株の業績予想履歴の読み取りを改良しました</strong>。",
+        ],
+        [
+          "<strong>The ROIC / ROE judgement</strong> was improved.",
+          "<strong>ROIC／ROE の判定を改良しました</strong>。",
+        ],
+      ]),
+      section("If you are already using it", "すでにお使いの方へ", [
+        [
+          "Nothing needs redoing. Your licence key, saved analyses, notes and settings are kept as they are.",
+          "やり直していただくことはありません。ライセンスキー・保存済みの分析・メモ・設定はそのままです。",
+        ],
+      ]),
+    ],
+  },
+  {
     slug: "v0-9-16",
     date: "2026-09-14",
     version: "0.9.16",
