@@ -202,12 +202,12 @@
             <span data-en>🇯🇵 日本語</span><span data-ja>🇺🇸 English</span>
           </button>
 
-          <a
-            href="#download"
-            class="rounded-md bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white shadow-lg shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
-          >
-            <span data-en>Free download</span><span data-ja>無料ダウンロード</span>
-          </a>
+          <!--
+            **ヘッダーの「無料ダウンロード」ボタンは外した**（配布を停止したため）。
+            ここは全画面で追従して出るので、押せないボタンを残すと
+            「止まっている」より先に「壊れている」と受け取られる。
+            再開するときは、`#download` へ繋ぐ緑のボタンを戻す。
+          -->
         </nav>
       </div>
     </header>
@@ -255,26 +255,39 @@
             <span data-ja>泥臭い作業を、AI で徹底効率化。</span>
           </p>
 
-          <div class="mt-6 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
-            <a
-              href="#download"
-              class="w-full rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/40 transition-colors hover:bg-emerald-500 sm:w-auto sm:text-base"
-            >
-              <span data-en>Start the $0 free trial</span>
-              <span data-ja>$0 の無料トライアルを始める</span>
-            </a>
-            <a
-              href="#pricing"
-              class="w-full rounded-lg border border-slate-700 px-6 py-3 text-sm font-medium text-slate-200 transition-colors hover:border-slate-600 hover:bg-slate-900 sm:w-auto sm:text-base"
-            >
-              <span data-en>See pricing</span><span data-ja>価格を見る</span>
-            </a>
-          </div>
+          <!--
+            **販売も配布も止めた。** ヒーローのボタンは外す。
+            押した先が「停止しています」では、押させるだけ無駄に期待させる。
 
-          <p class="mt-4 text-xs text-slate-500">
-            <span data-en>3 weeks &middot; 10 items &middot; every feature unlocked &middot; no card required</span>
-            <span data-ja>3 週間 &middot; 10 件 &middot; 全機能を開放 &middot; クレジットカード不要</span>
-          </p>
+            再開するときは、ここに 2 つ戻す：
+            「$0 の無料トライアルを始める」（`#download`）と
+            「価格を見る」（`#pricing`）。
+          -->
+          <div
+            class="mx-auto mt-6 max-w-lg rounded-lg border border-amber-900/70 bg-amber-950/30 px-4 py-4"
+            role="status"
+          >
+            <p class="text-sm font-semibold text-amber-200">
+              <span data-en>Sales and downloads are currently paused</span>
+              <span data-ja>現在、販売・配布を停止しています</span>
+            </p>
+            <!--
+              **すでに持っている人を、まっさきに安心させる。**
+              「停止」とだけ書くと、買った人は自分のライセンスまで
+              止まったのかと受け取る。
+            -->
+            <p class="mt-2 text-xs leading-relaxed text-amber-200/80">
+              <span data-en>
+                StoQ AI Analyzer cannot be bought or downloaded at the moment, and that includes
+                the free trial. If you already have a license, it keeps working.
+              </span>
+              <span data-ja>
+                無料トライアルを含め、StoQ AI Analyzer のご購入・ダウンロードは
+                現在お受けしていません。すでにライセンスをお持ちの方は、
+                これまでどおりお使いいただけます。
+              </span>
+            </p>
+          </div>
           </div>
         </div>
       </section>
@@ -698,12 +711,17 @@
                 </li>
               </ul>
 
-              <a
-                href="#download"
-                class="mt-8 block rounded-lg border border-slate-700 px-5 py-3 text-center text-sm font-medium text-slate-100 transition-colors hover:border-slate-600 hover:bg-slate-900"
+              <!--
+                **無料トライアルも止めた。** 配布していないので、ボタンは置かない。
+                再開するときは `#download` へのボタンを戻す。
+              -->
+              <p
+                class="mt-8 rounded-lg border border-amber-900/70 bg-amber-950/30 px-4 py-3 text-center text-sm font-semibold text-amber-200"
+                role="status"
               >
-                <span data-en>Download for Windows</span><span data-ja>Windows 版をダウンロード</span>
-              </a>
+                <span data-en>Downloads are currently paused</span>
+                <span data-ja>現在、配布を停止しています</span>
+              </p>
             </div>
 
             <!-- Lifetime -->
@@ -806,8 +824,8 @@
                 リンクを戻せば「同意 → 決済」の流れがそのまま再び効く。
 
                 🔴 **LP を閉じても、決済ページ自体は閉じていない。**
-                SendOwl 側で商品を非公開（販売停止）にしない限り、
-                URL を知っている人はそのまま買える。**両方やる。**
+                SendOwl の商品は**意図的にそのままにしてある**（利用者の判断・2026-09-21）。
+                URL を直接知っている人は、今も買える。**「LP から消えた＝売れない」ではない。**
               -->
               <div
                 class="mt-8 rounded-lg border border-amber-900/70 bg-amber-950/30 px-4 py-4 text-center"
@@ -819,27 +837,15 @@
                 </p>
                 <p class="mt-2 text-xs leading-relaxed text-amber-200/80">
                   <span data-en>
-                    The lifetime license cannot be purchased at the moment. The free trial is
-                    available as usual.
+                    The lifetime license cannot be purchased at the moment. If you already have a
+                    license, it keeps working.
                   </span>
                   <span data-ja>
                     ライフタイムライセンスは、現在ご購入いただけません。
-                    無料トライアルは、これまでどおりご利用いただけます。
+                    すでにお持ちのライセンスは、これまでどおりお使いいただけます。
                   </span>
                 </p>
               </div>
-
-              <!--
-                **止めただけで終わらせない。** 買おうとして来た人の行き先を、
-                同じ場所に置く。無料トライアルは止めていない。
-              -->
-              <a
-                href="#download"
-                class="mt-3 block rounded-lg border border-slate-700 px-5 py-3 text-center text-sm font-medium text-slate-100 transition-colors hover:border-slate-600 hover:bg-slate-900"
-              >
-                <span data-en>Start the $0 free trial</span>
-                <span data-ja>$0 の無料トライアルを始める</span>
-              </a>
 
               <!--
                 **買ったあとの道筋を、買う前から見せる。**
@@ -894,109 +900,42 @@
       <!-- ========================================================== ダウンロード -->
       <section id="download" class="border-t border-slate-900 py-20 sm:py-24">
         <div class="mx-auto max-w-3xl px-5 text-center">
-          <!--
-            **ダウンロードボタンの手前に置く。** 落としてから制限を知るのがいちばん悪い順番。
-            解錠されたあと何が起きるか（永続・無制限）まで同じ枠に書く。
-            制限だけを読ませると「試用版の押し売り」に見える。
-          -->
-          <div
-            class="mb-12 rounded-2xl border border-emerald-700/60 bg-emerald-950/20 p-6 text-left shadow-lg shadow-emerald-950/20 sm:p-7"
-          >
-            <p class="flex items-center gap-2.5 text-sm font-bold text-emerald-300">
-              <span aria-hidden="true">&#128712;</span>
-              <span data-en>How the free trial works &mdash; and how to upgrade</span>
-              <span data-ja>【無料トライアルの仕様とアップグレードについて】</span>
-            </p>
-            <ul class="mt-4 space-y-3 text-sm leading-relaxed text-slate-300">
-              <li class="flex gap-2.5">
-                <span class="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true">&#10003;</span>
-                <span data-en>
-                  Free for <strong class="text-white">10 items</strong> and
-                  <strong class="text-white">3 weeks from first launch</strong>.
-                </span>
-                <span data-ja>
-                  <strong class="text-white">10 件</strong>、および
-                  <strong class="text-white">初回起動から 3 週間</strong>まで無料でお試しいただけます。
-                </span>
-              </li>
-              <li class="flex gap-2.5">
-                <span class="mt-0.5 shrink-0 text-amber-400" aria-hidden="true">&#9888;</span>
-                <span data-en>
-                  Once the period ends, or once you pass 10 items, adding new ones is locked.
-                </span>
-                <span data-ja>
-                  無料期間の終了後、または 10 件を超過した後は、新規の追加がロックされます。
-                </span>
-              </li>
-              <li class="flex gap-2.5">
-                <span class="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true">&#128273;</span>
-                <span data-en>
-                  Entering the activation key issued after purchase unlocks it, and from then on
-                  there is no limit and no expiry.
-                </span>
-                <span data-ja>
-                  購入後に発行されるアクティベーションキーをアプリに入力することでロックが解除され、
-                  以降は永続的に無制限でご利用いただけるようになります。
-                </span>
-              </li>
-            </ul>
-          </div>
-
           <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            <span data-en>Download and start in a few minutes</span>
-            <span data-ja>数分ではじめられます</span>
+            <span data-en>Downloads are paused</span>
+            <span data-ja>現在、配布を停止しています</span>
           </h2>
           <p class="mx-auto mt-4 max-w-xl text-slate-400">
             <span data-en>
-              Install, paste in an API key from your provider, type a ticker. The app walks you
-              through getting a key if you do not have one yet.
+              StoQ AI Analyzer is not available for download at the moment, and no new free trials
+              are being issued. If you already have it installed, it keeps working.
             </span>
             <span data-ja>
-              インストールして、AI 提供各社の APIキーを貼り付け、ティッカーを入力するだけ。
-              キーの取り方はアプリ内のガイドが案内します。
+              StoQ AI Analyzer のダウンロードは現在お受けしておらず、
+              無料トライアルの新規提供も停止しています。
+              すでにインストールされている方は、これまでどおりお使いいただけます。
             </span>
           </p>
 
           <!--
-            **インストーラーへの直リンク。** リリース一覧を挟むと、
-            どのファイルを落とせばよいか分からず脱落する。
+            **配布を止めているあいだは、ボタンを置かない。**
+            リリース一覧への直リンクも、ここには置かない
+            （フッターの「更新履歴」からは今も辿れる。すでに買った人が
+            入れ直せなくなるほうが困るので、そちらは残してある）。
 
-            **バージョンを URL に埋めない。** 以前は v0.1.0 を直に書いていたが、
-            リリースを作り直した時点でこのボタンが 404 になった。
-            `latest/download/<ファイル名>` は、GitHub が
-            **最新リリースの同名アセットへ転送してくれる**ので、
-            バージョンを上げても LP を触らずに済む。
-
-            🔴 **そのかわり、アセット名を毎回そろえること。**
-            Tauri が吐く名前にはバージョンが入る
-            （`StoQ.AI.Analyzer_0.9.0_x64-setup.exe`）ので、
-            **同じ中身を下の名前でもう 1 つアップロードする。**
-            これを忘れると、ここが 404 に戻る。手順は README を参照。
-
-            ファイル名に空白を入れない。GitHub がアセット登録時にドットへ置き換える。
+            再開するときは、ここへ直リンクのボタンを戻す：
+            https://github.com/motojet-bit/stoq-releases/releases/latest/download/StoQ-AI-Analyzer-x64-setup.exe
+            **バージョンを URL に埋めない。** `latest/download/<ファイル名>` は
+            最新リリースの同名アセットへ GitHub が転送してくれる。
+            そのかわり、リリースのたびに**同じ名前でもう 1 つ**上げること
+            （Tauri が吐く名前にはバージョンが入る）。手順は README。
           -->
-          <a
-            href="https://github.com/motojet-bit/stoq-releases/releases/latest/download/StoQ-AI-Analyzer-x64-setup.exe"
-            data-download
-            class="mt-9 inline-flex items-center gap-2.5 rounded-lg bg-emerald-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-emerald-900/40 transition-colors hover:bg-emerald-500"
+          <p
+            class="mx-auto mt-9 max-w-xl rounded-lg border border-amber-900/70 bg-amber-950/30 px-4 py-4 text-sm font-semibold text-amber-200"
+            role="status"
           >
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
-            </svg>
-            <span data-en>Download for Windows &mdash; free</span>
-            <span data-ja>Windows 版を無料ダウンロード</span>
-          </a>
-
-          <!--
-            **サイズは実測値を書く**（2026-08-25 に直した）。
-            v0.9.0 のころの「約 3 MB」が残っていて、実際は 4.9 MB だった。
-            版を上げるたびに増えるので、**大きめの丸め**にしておく。
-          -->
-          <p class="mt-5 text-xs text-slate-500">
-            <span data-en>Windows 10 / 11 (64-bit) &middot; about 5 MB installer</span>
-            <span data-ja>Windows 10 / 11（64bit）&middot; インストーラー約 5 MB</span>
+            <span data-en>The installer is not available for download right now</span>
+            <span data-ja>インストーラーの配布は、現在停止しています</span>
           </p>
-
           <!--
             **動作環境を、押す前に読める場所に置く**（利用者の指示・2026-08-25）:
 
